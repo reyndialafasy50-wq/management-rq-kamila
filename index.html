@@ -4,38 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Management RQ Kamila V3</title>
-    
-    <!-- PWA Meta Tags -->
-    <meta name="description" content="Sistem Manajemen Rumah Qur'an Kamila" />
     <meta name="theme-color" content="#4F567D" />
-    <!-- <link rel="manifest" href="pwa/manifest.json" /> -->
-
-    <!-- Google Fonts & FontAwesome -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <!-- CSS Modular -->
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-
-    <!-- Struktur Utama Aplikasi (Hybrid Holy Grail) -->
     <div class="holy-grail-layout">
         
-        <!-- ==========================================
-             1. REGION: ASIDE LEFT (Sidebar Navigasi)
-             ========================================== -->
+        <!-- SIDEBAR KIRI -->
         <aside class="region region--aside-left" id="sidebar">
             <div class="brand-logo-area">
                 <img src="images/logorqkamila.png" alt="Logo" onerror="this.src='https://ui-avatars.com/api/?name=RQ&background=F0DCD7&color=4F567D'">
-                <h1 style="font-size: 1.2rem; font-weight: 700; margin: 0; letter-spacing: 0.5px;">RQ Kamila</h1>
+                <h1 style="font-size: 1.2rem; font-weight: 700; margin: 0;">RQ Kamila</h1>
             </div>
-            
             <nav style="flex: 1;" id="main-nav">
                 <a href="#dashboard" class="nav-link active"><i class="fas fa-border-all w-[20px]"></i> Dashboard</a>
                 <a href="#santri" class="nav-link"><i class="fas fa-user-graduate w-[20px]"></i> Data Santri</a>
@@ -43,26 +28,21 @@
                 <a href="#laporan" class="nav-link"><i class="fas fa-chart-pie w-[20px]"></i> Laporan</a>
                 <a href="#setting" class="nav-link"><i class="fas fa-cog w-[20px]"></i> Pengaturan</a>
             </nav>
-            
             <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; margin-top: auto;">
-                <a href="#logout" class="nav-link" style="color: #F39B96;"><i class="fas fa-sign-out-alt"></i> Keluar Sesi</a>
+                <a href="#logout" class="nav-link" style="color: var(--clr-koral);"><i class="fas fa-sign-out-alt"></i> Keluar</a>
             </div>
         </aside>
 
-        <!-- ==========================================
-             2. REGION: HEADER UTAMA
-             ========================================== -->
+        <!-- HEADER -->
         <header class="region region--header">
-            <div style="display: flex; align-items: center; gap: 15px;">
+            <div class="header-left">
                 <button class="mobile-toggle" id="btnToggleSidebar"><i class="fas fa-bars"></i></button>
-                <h2 style="font-size: 1.2rem; font-weight: 700; color: var(--text-main);" id="page-title">Beranda Global</h2>
+                <h2 id="page-title">Dashboard</h2>
             </div>
-            
             <div class="header-actions">
                 <button class="theme-btn" id="btnThemeToggle"><i class="fas fa-moon" id="themeIcon"></i></button>
-                <button class="theme-btn" style="position: relative;" aria-label="Notifikasi">
-                    <i class="fas fa-bell"></i>
-                    <span class="notif-badge"></span>
+                <button class="theme-btn notif-btn">
+                    <i class="fas fa-bell"></i><span class="notif-badge"></span>
                 </button>
                 <div class="user-profile-box">
                     <span class="user-name-text">Halo, Admin</span>
@@ -71,62 +51,18 @@
             </div>
         </header>
 
-        <!-- ==========================================
-             3. REGION: NAV (Baris Breadcrumb Ramping)
-             ========================================== -->
-        <nav class="region region--nav" id="breadcrumb-nav">
-            <i class="fas fa-home" style="font-size: 0.85rem;"></i>
-            <span id="breadcrumb-text">/ Dashboard</span>
-        </nav>
-
-        <!-- ==========================================
-             4. REGION: MAIN CONTENT (Area Dinamis Tengah)
-             ========================================== -->
+        <!-- MAIN CONTENT -->
         <main class="region region--main" id="main-content">
-            <!-- Konten Utama Dikelola oleh dashboard.js & router.js -->
-            <div class="greeting-area">
-                <h3 id="welcomeGreeting">Ahlan wa Sahlan!</h3>
-                <p>"Setiap huruf Al-Qur'an yang Ustadz ajarkan adalah pahala jariyah yang mengalir tanpa henti."</p>
-            </div>
-
-            <div class="info-grid">
-                <div class="info-card">
-                    <p class="info-label">Tanggal & Waktu</p>
-                    <p class="info-value" id="currentDateDisplay">Memuat...</p>
-                    <p class="info-sub" id="realtimeClock">00:00:00</p>
-                </div>
-                
-                <div class="info-card target-card">
-                    <p class="info-label">Target KBM</p>
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <p class="info-value highlight" id="academicTargetDisplay">24 Hari</p>
-                        <i class="fas fa-bullseye" style="font-size: 1.2rem; opacity: 0.5;"></i>
-                    </div>
-                </div>
-            </div>
-
-            <div class="chart-card">
-                <div style="text-align: center; color: var(--text-muted); padding: 40px;">
-                    <i class="fas fa-chart-pie fa-3x" style="color: var(--primary); margin-bottom: 15px;"></i>
-                    <p>Diagram dan log aktivitas sedang dimuat oleh sistem...</p>
-                </div>
-            </div>
+            <!-- Akan diisi otomatis oleh js/dashboard.js -->
         </main>
 
-        <!-- ==========================================
-             5. REGION: ASIDE RIGHT (Panel Asisten Kanan)
-             ========================================== -->
+        <!-- ASIDE KANAN -->
         <aside class="region region--aside-right" id="sidebar-right">
             <div class="aside-right-section">
                 <p class="menu-title-right">Akses Cepat</p>
-                <button class="btn-shortcut">
-                    <i class="fas fa-user-plus"></i> Tambah Santri
-                </button>
-                <button class="btn-shortcut btn-shortcut-secondary">
-                    <i class="fas fa-calendar-plus"></i> Buat Agenda
-                </button>
+                <button class="btn-shortcut"><i class="fas fa-user-plus"></i> Tambah Santri</button>
+                <button class="btn-shortcut btn-shortcut-secondary"><i class="fas fa-calendar-plus"></i> Buat Agenda</button>
             </div>
-            
             <div class="aside-right-section" style="margin-top: 30px;">
                 <p class="menu-title-right">Agenda Hari Ini</p>
                 <div id="widget-agenda-list">
@@ -134,36 +70,21 @@
                         <span class="agenda-dot dot-koral"></span>
                         <div class="agenda-details">
                             <p class="agenda-time">08:00 - selesai</p>
-                            <p class="agenda-title">Semaan Akbar Juz 30</p>
-                        </div>
-                    </div>
-                    <div class="agenda-item">
-                        <span class="agenda-dot dot-toska"></span>
-                        <div class="agenda-details">
-                            <p class="agenda-time">16:00 - 17:30</p>
-                            <p class="agenda-title">Rapat Evaluasi Bulanan</p>
+                            <p class="agenda-title">Semaan Akbar</p>
                         </div>
                     </div>
                 </div>
             </div>
         </aside>
 
-        <!-- ==========================================
-             6. REGION: FOOTER
-             ========================================== -->
+        <!-- FOOTER -->
         <footer class="region region--footer">
-            <div><i class="fas fa-shield-alt" style="color: var(--primary);"></i> Sistem API Terenkripsi</div>
-            <div id="network-status">Terkoneksi</div>
+            <div><i class="fas fa-shield-alt" style="color: var(--primary);"></i> Enkripsi Aktif</div>
             <div>RQ Kamila &copy; 2026</div>
         </footer>
-
     </div>
 
-    <!-- Overlay Sidebar untuk Mobile -->
     <div id="sidebarOverlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99;"></div>
-
-    <!-- Engine JavaScript -->
     <script type="module" src="js/main.js"></script>
-
 </body>
 </html>
