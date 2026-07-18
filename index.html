@@ -1,154 +1,131 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Management RQ Kamila V3</title>
     
-    <!-- PWA Meta Tags & Web App Manifest -->
-    <meta name="description" content="Aplikasi Manajemen Rumah Qur'an Kamila (Progressive Web App)" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="theme-color" content="#2563EB" />
-    <!-- manifest.json akan kita isi di Bagian 12 -->
-    <!-- <link rel="manifest" href="pwa/manifest.json" /> -->
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="Sistem Manajemen Rumah Qur'an Kamila" />
+    <meta name="theme-color" content="#4F567D" />
+    <!-- <link rel="manifest" href="pwa/manifest.json" /> (Akan diaktifkan di Bagian 12) -->
 
-    <!-- Google Fonts: Poppins & Material Symbols -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet" />
+    <!-- Google Fonts & FontAwesome -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- CSS Internal Utama -->
-    <link rel="stylesheet" href="css/style.css" />
-    <link rel="stylesheet" href="css/custom.css" />
+    <!-- Chart.js (Satu-satunya library eksternal yang diizinkan untuk diagram) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- CSS Modular -->
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-    <!-- CONTAINER UTAMA -->
-    <div class="layout-wrap">
-        <div class="layout" aria-label="Holy Grail Management RQ">
+    <!-- Struktur Utama Aplikasi -->
+    <div class="holy-grail-layout">
+        
+        <!-- ==========================================
+             ASIDE / SIDEBAR KIRI
+             ========================================== -->
+        <aside class="region region--aside-left" id="sidebar">
+            <div class="brand-logo-area">
+                <!-- Gunakan inisial otomatis jika logo tidak ditemukan -->
+                <img src="images/logorqkamila.png" alt="Logo" onerror="this.src='https://ui-avatars.com/api/?name=RQ&background=F0DCD7&color=4F567D'">
+                <h1 style="font-size: 1.2rem; font-weight: 700; margin: 0; letter-spacing: 0.5px;">RQ Kamila</h1>
+            </div>
             
-            <!-- REGION: HEADER -->
-            <header class="region region--header">
-                <!-- <span class="region__tag">HEADER</span> (Dihapus untuk versi production) -->
-                
-                <div class="header__brand">
-                    <span class="material-symbols-rounded header__logo">menu_book</span>
-                    <h1 class="header__title">RQ Kamila</h1>
-                </div>
-                
-                <div class="sk--spacer"></div> <!-- Pendorong ke kanan -->
-                
-                <div class="header__info">
-                    <span class="header__date" id="current-date">--/--/----</span>
-                    <button class="icon-btn" aria-label="Notifikasi">
-                        <span class="material-symbols-rounded">notifications</span>
-                    </button>
-                    <div class="header__profile">
-                        <span class="material-symbols-rounded">account_circle</span>
-                        <span class="header__username">Admin</span>
-                    </div>
-                </div>
-            </header>
-
-            <!-- REGION: NAV (Sub-navigasi / Breadcrumbs) -->
-            <nav class="region region--nav" id="top-nav">
-                <span class="material-symbols-rounded sk--dim" style="font-size: 1.2rem;">home</span>
-                <span style="font-size: 0.9rem; font-weight: 500; color: #fff;">/ Dashboard</span>
+            <!-- Navigasi SPA (Menggunakan Hash # agar halaman tidak reload) -->
+            <nav style="flex: 1;" id="main-nav">
+                <a href="#dashboard" class="nav-link active"><i class="fas fa-border-all w-[20px]"></i> Dashboard</a>
+                <a href="#santri" class="nav-link"><i class="fas fa-user-graduate w-[20px]"></i> Data Santri</a>
+                <a href="#harian" class="nav-link"><i class="fas fa-clipboard-list w-[20px]"></i> Input Harian</a>
+                <a href="#laporan" class="nav-link"><i class="fas fa-chart-pie w-[20px]"></i> Laporan</a>
+                <a href="#setting" class="nav-link"><i class="fas fa-cog w-[20px]"></i> Pengaturan</a>
             </nav>
+            
+            <!-- Area Logout -->
+            <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; margin-top: auto;">
+                <a href="#logout" class="nav-link" style="color: #F39B96;"><i class="fas fa-sign-out-alt"></i> Keluar Sesi</a>
+            </div>
+        </aside>
 
-            <!-- REGION: ASIDE LEFT (Menu Utama) -->
-            <aside class="region region--aside-left">
-                <div class="region__body menu-container">
-                    <p class="menu-title">MENU UTAMA</p>
-                    
-                    <a href="#dashboard" class="menu-item active" id="menu-dashboard">
-                        <span class="material-symbols-rounded">dashboard</span>
-                        <span>Dashboard</span>
-                    </a>
-                    
-                    <a href="#santri" class="menu-item" id="menu-santri">
-                        <span class="material-symbols-rounded">group</span>
-                        <span>Data Santri</span>
-                    </a>
-                    
-                    <a href="#harian" class="menu-item" id="menu-harian">
-                        <span class="material-symbols-rounded">edit_document</span>
-                        <span>Input Harian</span>
-                    </a>
-                    
-                    <p class="menu-title" style="margin-top: 1rem;">SISTEM</p>
-                    
-                    <a href="#laporan" class="menu-item" id="menu-laporan">
-                        <span class="material-symbols-rounded">analytics</span>
-                        <span>Laporan</span>
-                    </a>
-                    
-                    <a href="#setting" class="menu-item" id="menu-setting">
-                        <span class="material-symbols-rounded">settings</span>
-                        <span>Pengaturan</span>
-                    </a>
+        <!-- ==========================================
+             HEADER UTAMA
+             ========================================== -->
+        <header class="region region--header">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <button class="mobile-toggle" id="btnToggleSidebar"><i class="fas fa-bars"></i></button>
+                <h2 style="font-size: 1.2rem; font-weight: 700; color: var(--text-main);" id="page-title">Beranda Global</h2>
+            </div>
+            
+            <div class="header-actions">
+                <button class="theme-btn" id="btnThemeToggle"><i class="fas fa-moon" id="themeIcon"></i></button>
+                <div class="avatar-box" id="avatarHeader">A</div>
+            </div>
+        </header>
+
+        <!-- ==========================================
+             MAIN CONTENT (Area Dinamis)
+             ========================================== -->
+        <main class="region region--main" id="main-content">
+            <!-- 
+                Konten di dalam sini adalah "Placeholder" untuk Dashboard.
+                Nantinya akan dikontrol sepenuhnya oleh router.js dan dashboard.js 
+            -->
+            
+            <!-- 1. SAPAAN -->
+            <div class="greeting-area">
+                <h3 id="welcomeGreeting">Ahlan wa Sahlan!</h3>
+                <p>"Setiap huruf Al-Qur'an yang Ustadz ajarkan adalah pahala jariyah yang mengalir tanpa henti."</p>
+            </div>
+
+            <!-- 2. WIDGET INFO -->
+            <div class="info-grid">
+                <div class="info-card">
+                    <p class="info-label">Tanggal & Waktu</p>
+                    <p class="info-value" id="currentDateDisplay">Memuat...</p>
+                    <p class="info-sub" id="realtimeClock">00:00:00</p>
                 </div>
-            </aside>
-
-            <!-- REGION: MAIN (Area Dinamis yang akan berubah-ubah) -->
-            <main class="region region--main" id="main-content">
-                <div class="region__body">
-                    <!-- SKELETON BAWAAN (Loading state) -->
-                    <span class="sk-row sk-row--between">
-                        <span class="sk sk--bar sk--w-60"></span>
-                        <span class="sk sk--pill"></span>
-                    </span>
-                    <span class="sk sk--bar sk--w-40 sk--dim"></span>
-                    <br>
-                    <span class="sk-row">
-                        <span class="sk sk--card sk--grow"></span>
-                        <span class="sk sk--card sk--grow"></span>
-                        <span class="sk sk--card sk--grow"></span>
-                    </span>
-                    <span class="sk sk--chart"></span>
-                </div>
-            </main>
-
-            <!-- REGION: ASIDE RIGHT (Widget / Asisten) -->
-            <aside class="region region--aside-right">
-                <div class="region__body">
-                    <p class="menu-title">AKSES CEPAT</p>
-                    <button class="btn-action">
-                        <span class="material-symbols-rounded">person_add</span>
-                        Tambah Santri
-                    </button>
-                    <button class="btn-action">
-                        <span class="material-symbols-rounded">calendar_add_on</span>
-                        Buat Agenda
-                    </button>
-                    
-                    <span class="sk sk--divider"></span>
-                    
-                    <p class="menu-title">AGENDA HARI INI</p>
-                    <div id="widget-agenda">
-                        <!-- Agenda dirender oleh JS nanti -->
-                        <span class="sk-row"><span class="sk sk--dot"></span><span class="sk sk--bar sk--grow sk--dim"></span></span>
-                        <span class="sk-row"><span class="sk sk--dot"></span><span class="sk sk--bar sk--grow sk--dim"></span></span>
+                
+                <div class="info-card target-card">
+                    <p class="info-label">Target KBM</p>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <p class="info-value highlight" id="academicTargetDisplay">24 Hari</p>
+                        <i class="fas fa-bullseye" style="font-size: 1.2rem; opacity: 0.5;"></i>
                     </div>
                 </div>
-            </aside>
+            </div>
 
-            <!-- REGION: FOOTER -->
-            <footer class="region region--footer">
-                <div class="footer__status online">
-                    <span class="status-indicator"></span>
-                    <span id="network-status">Online - Terhubung ke Server</span>
+            <!-- 3. FILTER & CHART (Akan diisi fungsionalitasnya di Bagian 7) -->
+            <div class="chart-card">
+                <div style="text-align: center; color: var(--text-muted); padding: 40px;">
+                    <i class="fas fa-chart-pie fa-3x" style="color: var(--primary); margin-bottom: 15px;"></i>
+                    <p>Diagram dan log aktivitas sedang dimuat oleh sistem...</p>
                 </div>
-                <span class="sk--spacer"></span>
-                <span class="footer__copyright">© 2026 Management RQ Kamila V3.1.0</span>
-            </footer>
+            </div>
             
-        </div>
+        </main>
+
+        <!-- ==========================================
+             FOOTER
+             ========================================== -->
+        <footer class="region region--footer">
+            <div><i class="fas fa-shield-alt" style="color: var(--primary);"></i> Sistem API Terenkripsi</div>
+            <div id="network-status">Terkoneksi</div>
+            <div>RQ Kamila &copy; 2026</div>
+        </footer>
+
     </div>
 
-    <!-- Script Utama (Menggunakan type="module" untuk mendukung export/import) -->
-    <!-- Penamaan file router dan main kita panggil disini -->
-    <script type="module" src="js/router.js"></script>
+    <!-- Overlay Sidebar untuk Mobile -->
+    <div id="sidebarOverlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99;"></div>
+
+    <!-- Engine JavaScript (Modular) -->
+    <!-- Script ini akan mulai bekerja setelah kita masuk ke Bagian 7 -->
+    <!-- <script type="module" src="js/main.js"></script> -->
 
 </body>
 </html>
