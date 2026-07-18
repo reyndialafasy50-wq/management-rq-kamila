@@ -1,0 +1,217 @@
+/* ─────────────────────────────────────────────
+   Layout 01 · Holy Grail — Standalone Skeleton
+───────────────────────────────────────────────── */
+
+:root {
+    --bg:         #F4F6FB;
+    --surface:    #FFFFFF;
+    --text:       #1A1A2E;
+    --text-muted: #7E7E9A;
+    --border:     #E8E6F0;
+
+    --c-header:      #D97706;
+    --c-nav:         #059669;
+    --c-aside-left:  #7C3AED;
+    --c-main:        #2563EB;
+    --c-aside-right: #DB2777;
+    --c-footer:      #E11D48;
+
+    --sh-mix:    26%;
+    --sh-dim:    12%;
+    --sh-border: 45%;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body { height: 100%; }
+body {
+    font-family: 'Poppins', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+}
+
+/* ══════════════════════════════════════
+   LAYOUT (fills viewport)
+   ══════════════════════════════════════ */
+.layout-wrap {
+    width: 100vw;
+    height: 100vh;
+    padding: 1.25rem;
+    container-type: inline-size;
+    container-name: hg;
+}
+
+.layout {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    gap: 0.75rem;
+
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto minmax(55vh, 1fr) auto auto;
+    grid-template-areas:
+        'header'
+        'nav'
+        'aside-left'
+        'main'
+        'aside-right'
+        'footer';
+}
+
+@container hg (min-width: 40rem) {
+    .layout {
+        grid-template-columns: 12rem 1fr 12rem;
+        grid-template-rows: auto auto 1fr auto;
+        grid-template-areas:
+            'header      header  header'
+            'nav         nav     nav'
+            'aside-left  main    aside-right'
+            'footer      footer  footer';
+    }
+}
+
+@container hg (min-width: 60rem) {
+    .layout {
+        grid-template-columns: 16rem 1fr 16rem;
+        grid-template-rows: auto auto 1fr auto;
+    }
+}
+
+@container hg (min-width: 80rem) {
+    .layout {
+        grid-template-columns: 18rem 1fr 18rem;
+    }
+}
+
+.region { min-height: 0; min-width: 0; }
+
+/* ══════════════════════════════════════
+   REGIONS
+   ══════════════════════════════════════ */
+.region {
+    --hue: var(--c-main);
+    position: relative;
+    background:
+        linear-gradient(180deg,
+            color-mix(in srgb, var(--hue) 6%, var(--surface)) 0%,
+            var(--surface) 100%);
+    border: 1px dashed color-mix(in srgb, var(--hue) var(--sh-border), transparent);
+    border-radius: 0.8rem;
+    padding: 1.6rem 0.9rem 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.region__tag {
+    position: absolute;
+    top: -0.6rem;
+    left: 0.9rem;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    color: #fff;
+    background: var(--hue);
+    padding: 0.28rem 0.65rem;
+    border-radius: 999px;
+    box-shadow: 0 2px 10px color-mix(in srgb, var(--hue) 35%, transparent);
+    line-height: 1;
+}
+
+.region--header      { grid-area: header;      --hue: var(--c-header);      flex-direction: row; align-items: center; gap: 0.6rem; padding: 1.2rem 1rem 0.7rem; }
+.region--nav         { grid-area: nav;         --hue: var(--c-nav);         flex-direction: row; align-items: center; gap: 0.6rem; padding: 1.2rem 1rem 0.7rem; }
+.region--aside-left  { grid-area: aside-left;  --hue: var(--c-aside-left); }
+.region--main        { grid-area: main;        --hue: var(--c-main); }
+.region--aside-right { grid-area: aside-right; --hue: var(--c-aside-right); }
+.region--footer      { grid-area: footer;      --hue: var(--c-footer);      flex-direction: row; align-items: center; gap: 0.6rem; padding: 1.2rem 1rem 0.7rem; }
+
+.region__body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    overflow-y: auto;
+    margin: 0 -0.3rem 0 0;
+    padding-right: 0.3rem;
+}
+.region__body > .sk,
+.region__body > .sk-row { flex-shrink: 0; }
+.region__tag { z-index: 2; }
+
+/* ══════════════════════════════════════
+   SKELETON PRIMITIVES
+   ══════════════════════════════════════ */
+.sk {
+    display: block;
+    background: color-mix(in srgb, var(--hue) var(--sh-mix), transparent);
+    border-radius: 999px;
+}
+.sk--dim { background: color-mix(in srgb, var(--hue) var(--sh-dim), transparent); }
+
+.sk--bar    { height: 0.7rem; width: 5rem; border-radius: 4px; }
+.sk--w-40   { width: 40%; }
+.sk--w-50   { width: 50%; }
+.sk--w-60   { width: 60%; }
+.sk--grow   { flex: 1; }
+
+.sk--dot    { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--hue); flex-shrink: 0; }
+.sk--dot-lg { width: 1.25rem; height: 1.25rem; border-radius: 50%; background: color-mix(in srgb, var(--hue) var(--sh-mix), transparent); flex-shrink: 0; }
+.sk--sq     { width: 0.85rem; height: 0.85rem; border-radius: 4px; flex-shrink: 0; }
+.sk--pill   { width: 3.2rem; height: 1.1rem; border-radius: 999px; }
+
+.sk--search {
+    flex: 1;
+    height: 1.3rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--hue) 10%, transparent);
+    border: 1px dashed color-mix(in srgb, var(--hue) var(--sh-border), transparent);
+}
+
+.sk--spacer { flex: 1; background: transparent; }
+
+.sk--block {
+    height: 2.2rem;
+    border-radius: 0.5rem;
+    background: color-mix(in srgb, var(--hue) 14%, transparent);
+    border: 1px dashed color-mix(in srgb, var(--hue) var(--sh-border), transparent);
+}
+
+.sk--divider {
+    height: 1px;
+    width: 100%;
+    background: color-mix(in srgb, var(--hue) 22%, transparent);
+    border-radius: 0;
+    margin: 0.3rem 0;
+}
+
+.sk--card {
+    height: 3rem;
+    border-radius: 0.45rem;
+    background: color-mix(in srgb, var(--hue) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--hue) 28%, transparent);
+}
+
+.sk--chart {
+    flex: 1;
+    min-height: 4rem;
+    border-radius: 0.5rem;
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--hue) 18%, transparent), transparent 80%),
+        repeating-linear-gradient(
+            0deg,
+            transparent 0,
+            transparent 0.9rem,
+            color-mix(in srgb, var(--hue) 14%, transparent) 0.9rem,
+            color-mix(in srgb, var(--hue) 14%, transparent) calc(0.9rem + 1px)
+        );
+    border: 1px solid color-mix(in srgb, var(--hue) 28%, transparent);
+}
+
+.sk-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+}
+.sk-row--between { justify-content: space-between; }
