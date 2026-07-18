@@ -72,8 +72,8 @@
              ========================================== -->
         <main class="region region--main" id="main-content">
             <!-- 
-                Konten di dalam sini adalah "Placeholder" untuk Dashboard.
-                Nantinya akan dikontrol sepenuhnya oleh router.js dan dashboard.js 
+                Konten di dalam sini adalah "Placeholder".
+                Saat web dimuat, main.js akan otomatis mengganti isinya dengan renderDashboard()
             -->
             
             <!-- 1. SAPAAN -->
@@ -99,7 +99,7 @@
                 </div>
             </div>
 
-            <!-- 3. FILTER & CHART (Akan diisi fungsionalitasnya di Bagian 7) -->
+            <!-- 3. FILTER & CHART (Akan dirender ulang oleh dashboard.js) -->
             <div class="chart-card">
                 <div style="text-align: center; color: var(--text-muted); padding: 40px;">
                     <i class="fas fa-chart-pie fa-3x" style="color: var(--primary); margin-bottom: 15px;"></i>
@@ -123,9 +123,8 @@
     <!-- Overlay Sidebar untuk Mobile -->
     <div id="sidebarOverlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99;"></div>
 
-    <!-- Engine JavaScript (Modular) -->
-    <!-- Script ini akan mulai bekerja setelah kita masuk ke Bagian 7 -->
-    <!-- <script type="module" src="js/main.js"></script> -->
+    <!-- Engine JavaScript (Modular) -> SUDAH DIAKTIFKAN -->
+    <script type="module" src="js/main.js"></script>
 
 </body>
 </html>
