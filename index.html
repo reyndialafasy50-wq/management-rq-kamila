@@ -5,11 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Management RQ Kamila V3</title>
     <meta name="theme-color" content="#4F567D" />
+    
+    <!-- Google Fonts & FontAwesome -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- SheetJS (Untuk Import/Export Excel Dapodik) -->
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    
+    <!-- CSS Modular -->
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -53,7 +62,7 @@
 
         <!-- MAIN CONTENT -->
         <main class="region region--main" id="main-content">
-            <!-- Akan diisi otomatis oleh js/dashboard.js -->
+            <!-- Akan diisi otomatis oleh js/dashboard.js & js/santri.js -->
         </main>
 
         <!-- ASIDE KANAN -->
@@ -84,7 +93,10 @@
         </footer>
     </div>
 
+    <!-- OVERLAY SIDEBAR MOBILE -->
     <div id="sidebarOverlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99;"></div>
+    
+    <!-- SCRIPT UTAMA -->
     <script type="module" src="js/main.js"></script>
 </body>
 </html>
