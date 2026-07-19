@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * BAGIAN 8: MODUL DATA SANTRI (Dengan Form Kelas & Jam)
+ * BAGIAN 8: MODUL DATA SANTRI (Form Kelas Modern UI)
  * File: js/santri.js
  * ==================================================
  */
@@ -12,14 +12,13 @@ let kelasData = [];
 // 1. Ekspor Struktur HTML UI
 export function renderSantri() {
     return `
-        <!-- Area Pengaturan & Aksi (Grup Atas) -->
+        <!-- Area Pengaturan & Aksi -->
         <div style="background: var(--surface); padding: 20px; border-radius: 16px; margin-bottom: 20px; border: 1px solid var(--border);">
             <div>
                 <h4 style="margin: 0; font-size: 1rem; color: var(--text-main);"><i class="fas fa-chalkboard-teacher text-info"></i> Manajemen Santri & Kelas</h4>
                 <p style="margin: 3px 0 0; font-size: 0.75rem; color: var(--text-muted);">Atur kelas, tambah santri, atau unggah data dari Dapodik.</p>
             </div>
             
-            <!-- 3 Tombol Sejajar Presisi -->
             <div class="action-grid-3">
                 <button class="btn-secondary" id="btnTambahKelas"><i class="fas fa-plus"></i> Kelas</button>
                 <button class="btn-secondary" id="btnTambahSantri"><i class="fas fa-user-plus"></i> Santri</button>
@@ -28,7 +27,7 @@ export function renderSantri() {
             </div>
         </div>
 
-        <!-- Toolbar Pencarian & Filter (Grup Bawah) -->
+        <!-- Toolbar Pencarian & Filter -->
         <div class="toolbar-flex">
             <div class="search-box">
                 <i class="fas fa-search"></i>
@@ -36,7 +35,6 @@ export function renderSantri() {
             </div>
             <select class="filter-select" id="filterKelas">
                 <option value="">Semua Kelas</option>
-                <!-- Options dimuat dinamis -->
             </select>
             <button class="btn-secondary btn-export" id="btnExportExcel"><i class="fas fa-download"></i> Export</button>
         </div>
@@ -61,27 +59,45 @@ export function renderSantri() {
 
         <!-- ================= MODALS ================= -->
 
-        <!-- Modal Tambah Kelas Baru (REVISI) -->
+        <!-- Modal Tambah Kelas Baru (MODERN UI SEPERTI REFERENSI GAMBAR) -->
         <div class="modal-overlay" id="modalKelas">
-            <div class="modal-card" style="max-width: 400px;">
-                <div class="modal-header">
-                    <h3 class="modal-title">Buat Kelas Baru</h3>
-                    <button class="btn-close" onclick="document.getElementById('modalKelas').classList.remove('active')"><i class="fas fa-times"></i></button>
+            <div class="modal-card" style="max-width: 420px; padding: 25px;">
+                <div class="modern-modal-header">
+                    <h3>Buat Kelas Baru</h3>
+                    <button type="button" class="btn-close" onclick="document.getElementById('modalKelas').classList.remove('active')"><i class="fas fa-times"></i></button>
                 </div>
                 <form id="formKelas">
-                    <div class="form-group">
-                        <label class="form-label">Nama Kelas</label>
-                        <input type="text" id="inputNamaKelas" class="form-input" required placeholder="Contoh: Tahfidz A">
+                    <div style="margin-bottom: 20px;">
+                        <label class="modern-label">Nama Kelas</label>
+                        <input type="text" id="inputNamaKelas" class="modern-input" required placeholder="Contoh: Abu Bakar">
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Jam Pelaksanaan</label>
-                        <div style="display: flex; gap: 10px; align-items: center;">
-                            <input type="time" id="inputJamMulai" class="form-input" required>
-                            <span style="font-weight: 700; color: var(--text-muted);">s/d</span>
-                            <input type="time" id="inputJamSelesai" class="form-input" required>
+                    
+                    <div class="time-grid">
+                        <div>
+                            <label class="modern-label">Jam Mulai</label>
+                            <input type="time" id="inputJamMulai" class="modern-input" required>
+                        </div>
+                        <div>
+                            <label class="modern-label">Jam Selesai</label>
+                            <input type="time" id="inputJamSelesai" class="modern-input" required>
                         </div>
                     </div>
-                    <button type="submit" class="btn-primary" style="width: 100%; justify-content: center;" id="btnSimpanKelas">Simpan Kelas</button>
+
+                    <div style="margin-bottom: 10px;">
+                        <label class="modern-label">Hari Belajar</label>
+                        <div class="day-chips-container" id="dayChipsContainer">
+                            <div class="day-chip" data-hari="SEN">SEN</div>
+                            <div class="day-chip" data-hari="SEL">SEL</div>
+                            <div class="day-chip" data-hari="RAB">RAB</div>
+                            <div class="day-chip" data-hari="KAM">KAM</div>
+                            <div class="day-chip" data-hari="JUM">JUM</div>
+                            <div class="day-chip" data-hari="SAB">SAB</div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn-modern-submit" id="btnSimpanKelas">
+                        <i class="fas fa-save"></i> Simpan Kelas
+                    </button>
                 </form>
             </div>
         </div>
@@ -112,9 +128,7 @@ export function renderSantri() {
                     </div>
                     <div class="form-group">
                         <label class="form-label">Pilih Kelas</label>
-                        <select id="kelasId" class="form-select" required>
-                            <!-- Diisi dinamis -->
-                        </select>
+                        <select id="kelasId" class="form-select" required></select>
                     </div>
                     <button type="submit" class="btn-primary" style="width: 100%; justify-content: center;" id="btnSimpanSantri">Simpan Data</button>
                 </form>
@@ -137,7 +151,7 @@ export function renderSantri() {
             </div>
         </div>
 
-        <!-- Kartu Profil Santri (Estetik) -->
+        <!-- Kartu Profil Santri -->
         <div class="modal-overlay" id="modalProfil">
             <div class="profile-card">
                 <button class="profile-close" onclick="document.getElementById('modalProfil').classList.remove('active')"><i class="fas fa-times"></i></button>
@@ -175,8 +189,11 @@ export async function initSantri() {
         try {
             kelasData = await api.get('tabel_kelas', 'select=*');
             let opsiKelas = '';
-            // Teks dropdown diubah untuk menampilkan Jam, bukan Nama Ustadz
-            kelasData.forEach(k => opsiKelas += `<option value="${k.nama_kelas}">${k.nama_kelas} (${k.jam_kelas})</option>`);
+            // Teks dropdown menampilkan Hari & Jam agar lebih informatif
+            kelasData.forEach(k => {
+                const infoHari = k.hari_kelas ? `${k.hari_kelas} | ` : '';
+                opsiKelas += `<option value="${k.nama_kelas}">${k.nama_kelas} (${infoHari}${k.jam_kelas})</option>`;
+            });
             
             filterKelas.innerHTML = '<option value="">Semua Kelas</option>' + opsiKelas;
             selectKelasForm.innerHTML = opsiKelas;
@@ -219,7 +236,6 @@ export async function initSantri() {
         document.querySelectorAll('.btn-delete').forEach(b => b.addEventListener('click', handleDelete));
     };
 
-    // Fungsi Profil 
     window.bukaProfil = (id) => {
         const s = santriData.find(x => x.id === id);
         if(!s) return;
@@ -233,8 +249,8 @@ export async function initSantri() {
         document.getElementById('modalProfil').classList.add('active');
     };
 
-    filterKelas.addEventListener('change', () => filterData());
-    document.getElementById('searchSantri').addEventListener('input', () => filterData());
+    filterKelas.addEventListener('change', filterData);
+    document.getElementById('searchSantri').addEventListener('input', filterData);
     
     function filterData() {
         const keyword = document.getElementById('searchSantri').value.toLowerCase();
@@ -247,15 +263,34 @@ export async function initSantri() {
     }
 
     // ============================================
-    // REVISI LOGIKA PEMBUATAN KELAS (DENGAN MODAL)
+    // LOGIKA PEMBUATAN KELAS MODERN (REVISI)
     // ============================================
     document.getElementById('btnTambahKelas').addEventListener('click', () => {
         document.getElementById('formKelas').reset();
+        // Reset warna chips
+        document.querySelectorAll('.day-chip').forEach(c => c.classList.remove('active'));
         document.getElementById('modalKelas').classList.add('active');
+    });
+
+    // Interaksi klik pada pil hari
+    document.querySelectorAll('.day-chip').forEach(chip => {
+        chip.addEventListener('click', function() {
+            this.classList.toggle('active');
+        });
     });
 
     document.getElementById('formKelas').addEventListener('submit', async (e) => {
         e.preventDefault();
+        
+        // Ambil array hari yang sedang memiliki class 'active'
+        const selectedDays = Array.from(document.querySelectorAll('.day-chip.active'))
+                                  .map(chip => chip.getAttribute('data-hari'));
+                                  
+        if(selectedDays.length === 0) {
+            alert("Silakan pilih minimal 1 hari belajar!");
+            return;
+        }
+
         const btn = document.getElementById('btnSimpanKelas');
         btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Menyimpan...`;
 
@@ -263,15 +298,20 @@ export async function initSantri() {
         const jamMulai = document.getElementById('inputJamMulai').value;
         const jamSelesai = document.getElementById('inputJamSelesai').value;
         const jamK = `${jamMulai} - ${jamSelesai}`;
+        const hariK = selectedDays.join(', '); // Hasilnya jadi: "SEN, RAB, JUM"
 
         try {
-            await api.post('tabel_kelas', { nama_kelas: namaK, jam_kelas: jamK });
+            await api.post('tabel_kelas', { 
+                nama_kelas: namaK, 
+                jam_kelas: jamK, 
+                hari_kelas: hariK // Mengirim ke kolom baru di Supabase
+            });
             document.getElementById('modalKelas').classList.remove('active');
             await loadData();
         } catch(error) {
-            alert("Gagal menyimpan kelas.");
+            alert("Gagal menyimpan kelas. Pastikan kolom 'hari_kelas' sudah Anda buat di Supabase!");
         } finally {
-            btn.innerHTML = 'Simpan Kelas';
+            btn.innerHTML = `<i class="fas fa-save"></i> Simpan Kelas`;
         }
     });
 
@@ -359,6 +399,5 @@ export async function initSantri() {
         }
     };
 
-    // Eksekusi API
     loadData();
 }
