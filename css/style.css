@@ -390,3 +390,24 @@ body { background-color: var(--bg-body); color: var(--text-main); height: 100vh;
     .custom-table td small { display: block; text-align: right; margin-top: 3px; }
     .custom-table td .btn-action-sm { padding: 10px; margin-left: 5px; }
 }
+/* =========================================
+   REVISI FINAL: PRESISI RUANG MOBILE (HP)
+   ========================================= */
+@media (max-width: 768px) {
+    /* 1. Header Lebih Proporsional & Lega */
+    .region--header { 
+        min-height: 70px; 
+        padding: 10px 12px !important; 
+    }
+    .header-actions { gap: 12px !important; }
+    .avatar-box { width: 34px !important; height: 34px !important; font-size: 0.9rem !important; }
+    
+    /* 2. Perlebar Area Konten (Sisa Space Tipis Kiri-Kanan) */
+    .region--main { padding: 15px 12px !important; }
+    .region--aside-right { padding: 15px 12px !important; }
+    
+    /* 3. Rapatkan Celah 3 Tombol & Pencarian */
+    .action-grid-3 { gap: 4px !important; }
+    .action-grid-3 .btn-secondary { padding: 8px 2px !important; font-size: 0.75rem !important; }
+    .toolbar-flex { gap: 5px !important; }
+}
