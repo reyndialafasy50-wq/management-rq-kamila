@@ -187,7 +187,7 @@ export async function initSantri() {
 
     const loadData = async () => {
         try {
-            kelasData = await api.get('tabel_kelas', 'select=*');
+            kelasData = await api.get('kelas', 'select=*');
             let opsiKelas = '';
             // Teks dropdown menampilkan Hari & Jam agar lebih informatif
             kelasData.forEach(k => {
@@ -301,7 +301,7 @@ export async function initSantri() {
         const hariK = selectedDays.join(', '); // Hasilnya jadi: "SEN, RAB, JUM"
 
         try {
-            await api.post('tabel_kelas', { 
+            await api.post('kelas', { 
                 nama_kelas: namaK, 
                 jam_kelas: jamK, 
                 hari_kelas: hariK // Mengirim ke kolom baru di Supabase
