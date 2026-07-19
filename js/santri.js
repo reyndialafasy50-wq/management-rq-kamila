@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * BAGIAN 8: MODUL DATA SANTRI (SUPER canggih)
+ * BAGIAN 8: MODUL DATA SANTRI (Revisi UI Presisi & Tabel Mobile)
  * File: js/santri.js
  * ==================================================
  */
@@ -12,43 +12,41 @@ let kelasData = [];
 // 1. Ekspor Struktur HTML UI
 export function renderSantri() {
     return `
-        <!-- Area Manajemen Kelas & Import -->
-        <div style="background: var(--surface); padding: 20px; border-radius: 16px; margin-bottom: 20px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+        <!-- Area Pengaturan & Aksi (Grup Atas) -->
+        <div style="background: var(--surface); padding: 20px; border-radius: 16px; margin-bottom: 20px; border: 1px solid var(--border);">
             <div>
-                <h4 style="margin: 0; font-size: 1rem; color: var(--text-main);"><i class="fas fa-chalkboard-teacher text-info"></i> Pengaturan Kelas</h4>
-                <p style="margin: 3px 0 0; font-size: 0.75rem; color: var(--text-muted);">Buat kelas sebelum menambahkan santri.</p>
+                <h4 style="margin: 0; font-size: 1rem; color: var(--text-main);"><i class="fas fa-chalkboard-teacher text-info"></i> Manajemen Santri & Kelas</h4>
+                <p style="margin: 3px 0 0; font-size: 0.75rem; color: var(--text-muted);">Atur kelas, tambah santri, atau unggah data dari Dapodik.</p>
             </div>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn-secondary" id="btnTambahKelas"><i class="fas fa-plus"></i> Kelas Baru</button>
+            
+            <!-- 3 Tombol Sejajar Presisi -->
+            <div class="action-grid-3">
+                <button class="btn-secondary" id="btnTambahKelas"><i class="fas fa-plus"></i> Kelas</button>
+                <button class="btn-secondary" id="btnTambahSantri"><i class="fas fa-user-plus"></i> Santri</button>
                 <input type="file" id="fileExcel" accept=".xlsx, .xls" style="display: none;">
-                <button class="btn-primary" id="btnImportExcel" style="background: var(--clr-dongker);"><i class="fas fa-file-excel"></i> Upload Dapodik</button>
+                <button class="btn-secondary" id="btnImportExcel"><i class="fas fa-file-excel"></i> Dapodik</button>
             </div>
         </div>
 
-        <!-- Toolbar Utama Tabel -->
-        <div class="toolbar-actions">
-            <div class="search-filter-group">
-                <div class="search-box">
-                    <i class="fas fa-search"></i>
-                    <input type="text" id="searchSantri" placeholder="Cari nama santri...">
-                </div>
-                <select class="filter-select" id="filterKelas">
-                    <option value="">Semua Kelas</option>
-                    <!-- Options dimuat dinamis -->
-                </select>
+        <!-- Toolbar Pencarian & Filter (Grup Bawah) -->
+        <div class="toolbar-flex">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchSantri" placeholder="Cari santri...">
             </div>
-            <div class="action-buttons">
-                <button class="btn-secondary" id="btnExportExcel"><i class="fas fa-download"></i> Export</button>
-                <button class="btn-primary" id="btnTambahSantri"><i class="fas fa-user-plus"></i> Tambah Santri</button>
-            </div>
+            <select class="filter-select" id="filterKelas">
+                <option value="">Semua Kelas</option>
+                <!-- Options dimuat dinamis -->
+            </select>
+            <button class="btn-secondary btn-export" id="btnExportExcel"><i class="fas fa-download"></i> Export</button>
         </div>
 
-        <!-- Tabel Data -->
+        <!-- Tabel Data (Bisa berubah jadi bentuk Kartu di HP) -->
         <div class="custom-table-container">
             <table class="custom-table">
                 <thead>
                     <tr>
-                        <th style="width: 50px;"><input type="checkbox" id="checkAll"></th>
+                        <th style="width: 50px;">#</th>
                         <th>NIS</th>
                         <th>Nama Lengkap</th>
                         <th>Kelas</th>
@@ -120,7 +118,6 @@ export function renderSantri() {
                 <button class="profile-close" onclick="document.getElementById('modalProfil').classList.remove('active')"><i class="fas fa-times"></i></button>
                 <div class="profile-cover"></div>
                 <div class="profile-avatar-wrapper">
-                    <!-- Menggunakan UI-Avatars beresolusi tinggi sebagai placeholder rapi -->
                     <img src="" class="profile-avatar" id="profAvatar">
                 </div>
                 <div class="profile-info">
@@ -128,18 +125,9 @@ export function renderSantri() {
                     <p id="profBio">NIS: 000 • Kelas -</p>
                 </div>
                 <div class="profile-stats">
-                    <div class="stat-item">
-                        <h3 id="profHafalan">Juz 30</h3>
-                        <p>Hafalan</p>
-                    </div>
-                    <div class="stat-item">
-                        <h3 id="profHadir">95%</h3>
-                        <p>Hadir</p>
-                    </div>
-                    <div class="stat-item">
-                        <h3 id="profNilai">A</h3>
-                        <p>Nilai</p>
-                    </div>
+                    <div class="stat-item"><h3 id="profHafalan">Juz 30</h3><p>Hafalan</p></div>
+                    <div class="stat-item"><h3 id="profHadir">95%</h3><p>Hadir</p></div>
+                    <div class="stat-item"><h3 id="profNilai">A</h3><p>Nilai</p></div>
                 </div>
                 <div class="profile-actions">
                     <button class="btn-icon-circle" title="Hubungi WA"><i class="fab fa-whatsapp"></i></button>
@@ -153,19 +141,14 @@ export function renderSantri() {
 
 // 2. Logika Utama
 export async function initSantri() {
-    // Referensi Elemen
     const tbody = document.getElementById('tableBodySantri');
     const filterKelas = document.getElementById('filterKelas');
     const selectKelasForm = document.getElementById('kelasId');
     const selectMutasiKelas = document.getElementById('mutasiKelasId');
 
-    // MENGAMBIL DATA KELAS & SANTRI
     const loadData = async () => {
         try {
-            // Ambil daftar kelas
             kelasData = await api.get('tabel_kelas', 'select=*');
-            
-            // Render Opsi Dropdown Kelas
             let opsiKelas = '';
             kelasData.forEach(k => opsiKelas += `<option value="${k.nama_kelas}">${k.nama_kelas} (${k.nama_ustadz})</option>`);
             
@@ -173,7 +156,6 @@ export async function initSantri() {
             selectKelasForm.innerHTML = opsiKelas;
             selectMutasiKelas.innerHTML = opsiKelas;
 
-            // Ambil data santri
             santriData = await api.get('dapodik_santri', 'select=*&order=nama_santri.asc');
             renderTable(santriData);
         } catch (error) {
@@ -181,22 +163,25 @@ export async function initSantri() {
         }
     };
 
-    // RENDER TABEL
     const renderTable = (data) => {
         if (data.length === 0) {
             tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Tidak ada data santri ditemukan.</td></tr>`;
             return;
         }
+        
+        // PENTING: Tambahkan data-label="..." di setiap <td> agar bisa terbaca oleh CSS Mobile
         tbody.innerHTML = data.map(s => `
             <tr>
-                <td><input type="checkbox" class="check-item" value="${s.id}"></td>
-                <td style="font-weight: 600; font-size: 0.85rem;">${s.nis}</td>
-                <td>
+                <td data-label="Pilih"><input type="checkbox" class="check-item" value="${s.id}"></td>
+                <td data-label="NIS" style="font-weight: 600; font-size: 0.85rem;">${s.nis}</td>
+                <td data-label="Nama Lengkap">
                     <span class="clickable-name" onclick="bukaProfil('${s.id}')">${s.nama_santri}</span>
-                    <br><small style="color:var(--text-muted);">${s.jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan'}</small>
+                    <small style="color:var(--text-muted);">${s.jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan'}</small>
                 </td>
-                <td><span style="background:var(--hover-bg); padding:4px 8px; border-radius:6px; font-size:0.75rem;"><i class="fas fa-tag text-info"></i> ${s.nama_kelas || 'Belum ada kelas'}</span></td>
-                <td style="text-align: center; white-space: nowrap;">
+                <td data-label="Kelas">
+                    <span style="background:var(--hover-bg); padding:4px 8px; border-radius:6px; font-size:0.75rem;"><i class="fas fa-tag text-info"></i> ${s.nama_kelas || 'Belum ada kelas'}</span>
+                </td>
+                <td data-label="Aksi" style="white-space: nowrap;">
                     <button class="btn-action-sm text-info btn-edit" data-id="${s.id}" title="Edit Data"><i class="fas fa-edit"></i></button>
                     <button class="btn-action-sm text-success btn-mutasi" data-id="${s.id}" title="Pindah Kelas"><i class="fas fa-exchange-alt"></i></button>
                     <button class="btn-action-sm text-danger btn-delete" data-id="${s.id}" title="Hapus"><i class="fas fa-trash"></i></button>
@@ -204,33 +189,25 @@ export async function initSantri() {
             </tr>
         `).join('');
 
-        // Pasang Event Listener Baris
         document.querySelectorAll('.btn-edit').forEach(b => b.addEventListener('click', handleEdit));
         document.querySelectorAll('.btn-mutasi').forEach(b => b.addEventListener('click', handleMutasi));
         document.querySelectorAll('.btn-delete').forEach(b => b.addEventListener('click', handleDelete));
     };
 
-    // FUNGSI BUKA KARTU PROFIL (Di-expose ke window agar bisa dipanggil HTML)
+    // Fungsi Profil (Sama seperti sebelumnya)
     window.bukaProfil = (id) => {
         const s = santriData.find(x => x.id === id);
         if(!s) return;
-        
-        // Atur Gambar Placeholder menggunakan UI-Avatars (Warna menyesuaikan tema kita)
         document.getElementById('profAvatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(s.nama_santri)}&background=F0DCD7&color=4F567D&size=200&font-size=0.33&bold=true`;
-        
         document.getElementById('profName').textContent = s.nama_santri;
         document.getElementById('profBio').textContent = `NIS: ${s.nis} • ${s.nama_kelas || 'Tanpa Kelas'}`;
-        
-        // Tombol Edit di Profil
         document.getElementById('btnEditDariProfil').onclick = () => {
             document.getElementById('modalProfil').classList.remove('active');
             bukaFormEdit(s);
         };
-        
         document.getElementById('modalProfil').classList.add('active');
     };
 
-    // FILTER & PENCARIAN
     filterKelas.addEventListener('change', () => filterData());
     document.getElementById('searchSantri').addEventListener('input', () => filterData());
     
@@ -244,7 +221,7 @@ export async function initSantri() {
         renderTable(filtered);
     }
 
-    // MANAJEMEN KELAS SEDERHANA
+    // Aksi CRUD & Mutasi (Sama persis seperti sebelumnya)
     document.getElementById('btnTambahKelas').addEventListener('click', async () => {
         const namaK = prompt("Masukkan Nama Kelas (Contoh: Tahfidz A):");
         if(!namaK) return;
@@ -256,7 +233,6 @@ export async function initSantri() {
         }
     });
 
-    // CRUD SANTRI: Form Modal
     document.getElementById('btnTambahSantri').addEventListener('click', () => {
         if(kelasData.length === 0) return alert("Buat Kelas terlebih dahulu sebelum menambah Santri!");
         document.getElementById('formSantri').reset();
@@ -281,7 +257,6 @@ export async function initSantri() {
         if(s) bukaFormEdit(s);
     };
 
-    // FORM SUBMIT (Simpan Data)
     document.getElementById('formSantri').addEventListener('submit', async (e) => {
         e.preventDefault();
         const btn = document.getElementById('btnSimpanSantri');
@@ -305,7 +280,6 @@ export async function initSantri() {
         finally { btn.innerHTML = 'Simpan Data'; }
     });
 
-    // FITUR PINDAH KELAS (MUTASI)
     const handleMutasi = (e) => {
         const id = e.currentTarget.getAttribute('data-id');
         const s = santriData.find(x => x.id === id);
@@ -331,7 +305,6 @@ export async function initSantri() {
         finally { btn.innerHTML = `<i class="fas fa-exchange-alt"></i> Pindahkan Sekarang`; }
     });
 
-    // FITUR DELETE
     const handleDelete = async (e) => {
         if(confirm("Yakin hapus santri ini?")) {
             const id = e.currentTarget.getAttribute('data-id');
@@ -341,71 +314,6 @@ export async function initSantri() {
         }
     };
 
-    // FITUR IMPORT EXCEL (SHEETJS)
-    const fileInput = document.getElementById('fileExcel');
-    document.getElementById('btnImportExcel').addEventListener('click', () => fileInput.click());
-    
-    fileInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if(!file) return;
-        
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, {type: 'array'});
-            const firstSheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[firstSheetName];
-            const json = XLSX.utils.sheet_to_json(worksheet);
-            
-            if(json.length === 0) return alert("File kosong atau format salah.");
-            if(!confirm(`Ditemukan ${json.length} data. Yakin ingin import ke database?`)) return;
-            
-            document.getElementById('btnImportExcel').innerHTML = `<i class="fas fa-spinner fa-spin"></i> Loading...`;
-            
-            // Loop Insert Data
-            for(let row of json) {
-                // Asumsi kolom excel: NIS, NAMA, JK, KELAS
-                let payload = {
-                    nis: String(row.NIS || row.nis || ''),
-                    nama_santri: row.NAMA || row.Nama || row.nama_santri || '',
-                    jenis_kelamin: row.JK || row.jk || 'L',
-                    nama_kelas: row.KELAS || row.Kelas || row.nama_kelas || ''
-                };
-                if(payload.nis && payload.nama_santri) {
-                    await api.post('dapodik_santri', payload);
-                }
-            }
-            alert("Import Selesai!");
-            document.getElementById('btnImportExcel').innerHTML = `<i class="fas fa-file-excel"></i> Upload Dapodik`;
-            fileInput.value = "";
-            await loadData();
-        };
-        reader.readAsArrayBuffer(file);
-    });
-
-    // FITUR EXPORT EXCEL
-    document.getElementById('btnExportExcel').addEventListener('click', () => {
-        // Ambil data yang sedang tampil di layar saat ini (hasil filter)
-        const visibleRows = document.querySelectorAll('#tableBodySantri tr:not(:has(td[colspan]))');
-        const exportData = [];
-        
-        visibleRows.forEach(row => {
-            const cells = row.querySelectorAll('td');
-            exportData.push({
-                "NIS": cells[1].innerText,
-                "Nama Santri": cells[2].querySelector('.clickable-name').innerText,
-                "Kelas": cells[3].innerText.trim()
-            });
-        });
-
-        if(exportData.length === 0) return alert("Tidak ada data untuk di-export.");
-        
-        const worksheet = XLSX.utils.json_to_sheet(exportData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Data_Santri");
-        XLSX.writeFile(workbook, "Data_Santri_RQ_Kamila.xlsx");
-    });
-
-    // Start
+    // Eksekusi API
     loadData();
 }
