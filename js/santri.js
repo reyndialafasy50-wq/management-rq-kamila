@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * BAGIAN 8: MODUL DATA SANTRI (Revisi UI Presisi & Tabel Mobile)
+ * BAGIAN 8: MODUL DATA SANTRI (Dengan Form Kelas & Jam)
  * File: js/santri.js
  * ==================================================
  */
@@ -41,7 +41,7 @@ export function renderSantri() {
             <button class="btn-secondary btn-export" id="btnExportExcel"><i class="fas fa-download"></i> Export</button>
         </div>
 
-        <!-- Tabel Data (Bisa berubah jadi bentuk Kartu di HP) -->
+        <!-- Tabel Data -->
         <div class="custom-table-container">
             <table class="custom-table">
                 <thead>
@@ -60,6 +60,31 @@ export function renderSantri() {
         </div>
 
         <!-- ================= MODALS ================= -->
+
+        <!-- Modal Tambah Kelas Baru (REVISI) -->
+        <div class="modal-overlay" id="modalKelas">
+            <div class="modal-card" style="max-width: 400px;">
+                <div class="modal-header">
+                    <h3 class="modal-title">Buat Kelas Baru</h3>
+                    <button class="btn-close" onclick="document.getElementById('modalKelas').classList.remove('active')"><i class="fas fa-times"></i></button>
+                </div>
+                <form id="formKelas">
+                    <div class="form-group">
+                        <label class="form-label">Nama Kelas</label>
+                        <input type="text" id="inputNamaKelas" class="form-input" required placeholder="Contoh: Tahfidz A">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Jam Pelaksanaan</label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="time" id="inputJamMulai" class="form-input" required>
+                            <span style="font-weight: 700; color: var(--text-muted);">s/d</span>
+                            <input type="time" id="inputJamSelesai" class="form-input" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary" style="width: 100%; justify-content: center;" id="btnSimpanKelas">Simpan Kelas</button>
+                </form>
+            </div>
+        </div>
 
         <!-- Modal Tambah/Edit Santri -->
         <div class="modal-overlay" id="modalSantri">
@@ -150,7 +175,8 @@ export async function initSantri() {
         try {
             kelasData = await api.get('tabel_kelas', 'select=*');
             let opsiKelas = '';
-            kelasData.forEach(k => opsiKelas += `<option value="${k.nama_kelas}">${k.nama_kelas} (${k.nama_ustadz})</option>`);
+            // Teks dropdown diubah untuk menampilkan Jam, bukan Nama Ustadz
+            kelasData.forEach(k => opsiKelas += `<option value="${k.nama_kelas}">${k.nama_kelas} (${k.jam_kelas})</option>`);
             
             filterKelas.innerHTML = '<option value="">Semua Kelas</option>' + opsiKelas;
             selectKelasForm.innerHTML = opsiKelas;
@@ -169,7 +195,6 @@ export async function initSantri() {
             return;
         }
         
-        // PENTING: Tambahkan data-label="..." di setiap <td> agar bisa terbaca oleh CSS Mobile
         tbody.innerHTML = data.map(s => `
             <tr>
                 <td data-label="Pilih"><input type="checkbox" class="check-item" value="${s.id}"></td>
@@ -194,7 +219,7 @@ export async function initSantri() {
         document.querySelectorAll('.btn-delete').forEach(b => b.addEventListener('click', handleDelete));
     };
 
-    // Fungsi Profil (Sama seperti sebelumnya)
+    // Fungsi Profil 
     window.bukaProfil = (id) => {
         const s = santriData.find(x => x.id === id);
         if(!s) return;
@@ -221,18 +246,38 @@ export async function initSantri() {
         renderTable(filtered);
     }
 
-    // Aksi CRUD & Mutasi (Sama persis seperti sebelumnya)
-    document.getElementById('btnTambahKelas').addEventListener('click', async () => {
-        const namaK = prompt("Masukkan Nama Kelas (Contoh: Tahfidz A):");
-        if(!namaK) return;
-        const namaU = prompt("Masukkan Nama Ustadz Pengampu (Contoh: Ustadz Fulan):");
-        if(namaK && namaU) {
-            await api.post('tabel_kelas', { nama_kelas: namaK, nama_ustadz: namaU });
-            alert("Kelas berhasil ditambahkan!");
+    // ============================================
+    // REVISI LOGIKA PEMBUATAN KELAS (DENGAN MODAL)
+    // ============================================
+    document.getElementById('btnTambahKelas').addEventListener('click', () => {
+        document.getElementById('formKelas').reset();
+        document.getElementById('modalKelas').classList.add('active');
+    });
+
+    document.getElementById('formKelas').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('btnSimpanKelas');
+        btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Menyimpan...`;
+
+        const namaK = document.getElementById('inputNamaKelas').value;
+        const jamMulai = document.getElementById('inputJamMulai').value;
+        const jamSelesai = document.getElementById('inputJamSelesai').value;
+        const jamK = `${jamMulai} - ${jamSelesai}`;
+
+        try {
+            await api.post('tabel_kelas', { nama_kelas: namaK, jam_kelas: jamK });
+            document.getElementById('modalKelas').classList.remove('active');
             await loadData();
+        } catch(error) {
+            alert("Gagal menyimpan kelas.");
+        } finally {
+            btn.innerHTML = 'Simpan Kelas';
         }
     });
 
+    // ============================================
+    // LOGIKA CRUD SANTRI
+    // ============================================
     document.getElementById('btnTambahSantri').addEventListener('click', () => {
         if(kelasData.length === 0) return alert("Buat Kelas terlebih dahulu sebelum menambah Santri!");
         document.getElementById('formSantri').reset();
