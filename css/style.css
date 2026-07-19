@@ -411,3 +411,22 @@ body { background-color: var(--bg-body); color: var(--text-main); height: 100vh;
     .action-grid-3 .btn-secondary { padding: 8px 2px !important; font-size: 0.75rem !important; }
     .toolbar-flex { gap: 5px !important; }
 }
+/* =========================================
+   MODAL KELAS MODERN (REVISI DESAIN)
+   ========================================= */
+.modern-modal-header { text-align: center; position: relative; margin-bottom: 25px; }
+.modern-modal-header h3 { font-size: 1.35rem; font-weight: 700; color: var(--text-main); margin: 0; }
+.modern-modal-header .btn-close { position: absolute; right: 0; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 1.2rem; color: var(--text-muted); cursor: pointer; }
+
+.modern-label { font-size: 0.75rem; font-weight: 700; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block; }
+.modern-input { width: 100%; padding: 12px 15px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg-body); color: var(--text-main); font-size: 0.95rem; }
+.modern-input:focus { border-color: var(--primary); outline: none; }
+
+.time-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+
+.day-chips-container { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 25px; }
+.day-chip { padding: 8px 15px; background: var(--bg-body); border: 1px solid var(--border); border-radius: 20px; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); cursor: pointer; transition: 0.2s; user-select: none; }
+.day-chip.active { background: var(--clr-toska); color: white; border-color: var(--clr-toska); }
+
+.btn-modern-submit { width: 100%; background: var(--clr-toska); color: white; border: none; padding: 14px; border-radius: 12px; font-size: 0.95rem; font-weight: 600; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: 0.2s; }
+.btn-modern-submit:hover { opacity: 0.9; transform: translateY(-2px); }
