@@ -26,8 +26,14 @@ const petaJuz = {
 export function renderInputHarian() {
     return `
         <style>
-            .input-header { background: var(--surface); padding: 15px 20px; border-radius: 12px; border: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 20px; position: sticky; top: 70px; z-index: 10; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);}
-            .input-header select, .input-header input { border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 0.9rem; background: var(--bg-main); outline: none; flex: 1; min-width: 140px;}
+            /* Mengembalikan desain kotak pembungkus yang rapi & tidak melayang menimpa nama */
+            .input-header-wrapper { background: var(--surface); padding: 20px; border-radius: 16px; margin-bottom: 20px; border: 1px solid var(--border); }
+            .input-header-title { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+            .input-header-title h4 { margin: 0; font-size: 1rem; color: var(--text-main); font-weight: 700; }
+            .input-header-title p { margin: 0; font-size: 0.75rem; color: var(--text-muted); }
+            
+            .input-header-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+            .input-header-controls select, .input-header-controls input { border: 1px solid var(--border); border-radius: 8px; padding: 10px 15px; font-size: 0.9rem; background: var(--bg-main); outline: none; flex: 1; min-width: 140px;}
             
             .santri-card { background: var(--surface); border-radius: 12px; border: 1px solid var(--border); padding: 15px; margin-bottom: 12px; display: flex; flex-direction: column; transition: 0.3s;}
             .card-header-flex { display: flex; justify-content: space-between; align-items: center; }
@@ -68,12 +74,22 @@ export function renderInputHarian() {
             .toast-save.show { opacity: 1; }
         </style>
 
-        <div class="input-header">
-            <input type="date" id="tglInputHarian">
-            <select id="kelasInputHarian">
-                <option value="">Memuat Kelas...</option>
-            </select>
-            <div id="loadingIndicator" style="display:none; color: var(--primary); font-size: 1.2rem;"><i class="fas fa-circle-notch fa-spin"></i></div>
+        <!-- KOTAK PEMBUNGKUS HEADER DIKEMBALIKAN -->
+        <div class="input-header-wrapper">
+            <div class="input-header-title">
+                <i class="fas fa-clipboard-check text-primary" style="font-size: 1.2rem;"></i>
+                <div>
+                    <h4>Input Harian Cerdas</h4>
+                    <p>Pilih kelas & tanggal untuk memulai input data.</p>
+                </div>
+            </div>
+            <div class="input-header-controls">
+                <input type="date" id="tglInputHarian">
+                <select id="kelasInputHarian">
+                    <option value="">Memuat Kelas...</option>
+                </select>
+                <div id="loadingIndicator" style="display:none; color: var(--primary); font-size: 1.2rem; margin-left: 10px;"><i class="fas fa-circle-notch fa-spin"></i></div>
+            </div>
         </div>
 
         <div id="listSantriContainer" style="padding-bottom: 40px;">
@@ -91,15 +107,12 @@ export async function initInputHarian() {
     const container = document.getElementById('listSantriContainer');
     const loader = document.getElementById('loadingIndicator');
 
-    // 1. Inisialisasi Tanggal Hari Ini
     elTgl.valueAsDate = new Date();
 
-    // 2. Load Daftar Kelas & Otomatis Load Santri
     try {
         const kelasData = await api.get('kelas', 'select=*');
         if(kelasData.length > 0) {
             elKelas.innerHTML = kelasData.map(k => `<option value="${k.nama_kelas}">${k.nama_kelas}</option>`).join('');
-            // Langsung panggil data santri (Tanpa tombol mulai)
             fetchDanRenderSantri();
         } else {
             elKelas.innerHTML = '<option value="">Belum ada kelas dibuat</option>';
@@ -107,7 +120,6 @@ export async function initInputHarian() {
         }
     } catch(err) { console.error(err); }
 
-    // 3. Listener Perubahan (Bisa bolak-balik antar kelas langsung ganti)
     elKelas.addEventListener('change', fetchDanRenderSantri);
     elTgl.addEventListener('change', fetchDanRenderSantri);
 
@@ -136,7 +148,6 @@ export async function initInputHarian() {
         let html = '';
         
         santriList.forEach(s => {
-            // === SIMULASI AUTO-PREDICT DARI KEMARIN ===
             const mem = {
                 mapel: "Iqro", jilid: 3, hal: 15,
                 juz: 30, surat: 78, ayatA: 1, ayatB: 10
@@ -165,12 +176,10 @@ export async function initInputHarian() {
                     </div>
                 </div>
 
-                <!-- Tanda V (Hanya muncul jika Hadir) -->
                 <button class="expand-btn" id="expandBtn_${s.id}" onclick="toggleAccordion('${s.id}')">
                     <i class="fas fa-chevron-down"></i>
                 </button>
 
-                <!-- AREA ACCORDION (Switch Mode Sebaris) -->
                 <div class="accordion-body" id="acc_${s.id}">
                     <div class="tabs-container">
                         <button class="tab-btn active" id="tab_tahsin_${s.id}" onclick="switchMode('${s.id}', 'tahsin')">Tahsin</button>
@@ -204,13 +213,12 @@ export async function initInputHarian() {
                             </div>
                         </div>
 
-                        <!-- Tombol Ini Sekaligus Menyimpan ke Database! -->
                         <button class="btn-status-save btn-status-lulus" id="btn_save_tahsin_${s.id}" data-status="Lulus" onclick="saveDataRealtime('${s.id}', 'tahsin', this)">
                             <i class="fas fa-save"></i> Lulus (Simpan)
                         </button>
                     </div>
 
-                    <!-- FORM TAHFIDZ (Awalnya Sembunyi) -->
+                    <!-- FORM TAHFIDZ -->
                     <div id="form_tahfidz_${s.id}" class="form-grid" style="display:none;">
                         <div class="flex-row-gap">
                             <select id="h_juz_${s.id}" class="compact-input trigger-juz" data-target="h_surat_${s.id}" style="width:100px;">
@@ -225,12 +233,10 @@ export async function initInputHarian() {
                         </div>
                         <input type="text" id="h_catatan_${s.id}" class="compact-input" placeholder="Catatan opsional...">
                         
-                        <!-- Tombol Ini Sekaligus Menyimpan ke Database! -->
                         <button class="btn-status-save btn-status-lulus" id="btn_save_tahfidz_${s.id}" data-status="Lanjut" onclick="saveDataRealtime('${s.id}', 'tahfidz', this)">
                             <i class="fas fa-save"></i> Lanjut (Simpan)
                         </button>
                     </div>
-
                 </div>
             </div>
             `;
@@ -239,12 +245,7 @@ export async function initInputHarian() {
         container.innerHTML = html;
         initLogikaInteraktif();
     }
-
-    // ==========================================
-    // LOGIKA UI (ACCORDION, TABS, JUZ-SURAT)
-    // ==========================================
     
-    // Buka-Tutup (V)
     window.toggleAccordion = (id) => {
         const acc = document.getElementById(`acc_${id}`);
         const btn = document.getElementById(`expandBtn_${id}`);
@@ -257,7 +258,6 @@ export async function initInputHarian() {
         }
     };
 
-    // Switch Mode (Tahsin / Tahfidz Sebaris)
     window.switchMode = (id, mode) => {
         const tabTahsin = document.getElementById(`tab_tahsin_${id}`);
         const tabTahfidz = document.getElementById(`tab_tahfidz_${id}`);
@@ -280,7 +280,6 @@ export async function initInputHarian() {
     }
 
     function initLogikaInteraktif() {
-        // 1. Logika Anti-Klik Absensi
         document.querySelectorAll('.trigger-absen').forEach(rad => {
             rad.addEventListener('change', (e) => {
                 const id = e.target.getAttribute('data-id');
@@ -288,11 +287,9 @@ export async function initInputHarian() {
                 const expandBtn = document.getElementById(`expandBtn_${id}`);
                 const acc = document.getElementById(`acc_${id}`);
                 
-                // Animasi Simpan Kehadiran Otomatis!
                 saveAbsenRealtime(id, val);
 
                 if (val !== 'H') {
-                    // Sembunyikan V jika tidak hadir
                     expandBtn.style.display = 'none';
                     acc.style.display = 'none';
                     expandBtn.classList.remove('active');
@@ -302,7 +299,6 @@ export async function initInputHarian() {
             });
         });
 
-        // 2. Mapel Switch (Iqro vs Al-Quran)
         document.querySelectorAll('.trigger-mapel').forEach(sel => {
             sel.addEventListener('change', (e) => {
                 const id = e.target.getAttribute('data-id');
@@ -313,7 +309,6 @@ export async function initInputHarian() {
             });
         });
 
-        // 3. Cascading Dropdown Juz -> Surat
         document.querySelectorAll('.trigger-juz').forEach(selJuz => {
             selJuz.addEventListener('change', (e) => {
                 const juzAngka = parseInt(e.target.value);
@@ -325,18 +320,12 @@ export async function initInputHarian() {
         });
     }
 
-    // ==========================================
-    // MESIN AUTO-SAVE (REAL-TIME UPSERT)
-    // ==========================================
-    
-    // Tampilkan Toast "Tersimpan"
     const showToast = (id) => {
         const t = document.getElementById(`toast_${id}`);
         t.classList.add('show');
         setTimeout(() => t.classList.remove('show'), 2000);
     };
 
-    // Fungsi Utama Upsert (Cek Jika Ada, Update. Jika Tidak, Buat Baru)
     async function upsertData(table, queryMatch, payload) {
         try {
             const existing = await api.get(table, queryMatch);
@@ -348,7 +337,6 @@ export async function initInputHarian() {
         } catch(e) { console.error("AutoSave Error:", e); }
     }
 
-    // A. Simpan Absen Saja (Otomatis saat diklik H/I/S/A)
     async function saveAbsenRealtime(id, status) {
         const tgl = elTgl.value;
         await upsertData('kehadiran', `id_santri=eq.${id}&tanggal=eq.${tgl}`, {
@@ -357,9 +345,7 @@ export async function initInputHarian() {
         showToast(id);
     }
 
-    // B. Simpan Tahsin / Tahfidz (Otomatis saat klik Lulus/Ulang)
     window.saveDataRealtime = async (id, jenisForm, btnElement) => {
-        // Efek UI Toggle Button (Lulus -> Ulang -> Lulus)
         let currStat = btnElement.getAttribute('data-status');
         let newStat = (currStat === 'Lulus' || currStat === 'Lanjut') ? 'Ulang' : (jenisForm==='tahsin'?'Lulus':'Lanjut');
         
@@ -392,11 +378,10 @@ export async function initInputHarian() {
             await upsertData('hafalan', `id_santri=eq.${id}&tanggal=eq.${tgl}`, payload);
         }
 
-        // Kembalikan Desain Tombol setelah sukses simpan
         setTimeout(() => {
             btnElement.innerHTML = `<i class="fas fa-save"></i> ${newStat} (Tersimpan)`;
             btnElement.className = newStat === 'Ulang' ? 'btn-status-save btn-status-ulang' : 'btn-status-save btn-status-lulus';
             showToast(id);
-        }, 500); // Simulasi Loading sebentar agar terasa tersimpan
+        }, 500); 
     };
-}
+        }
