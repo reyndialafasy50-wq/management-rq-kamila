@@ -374,3 +374,24 @@ body, html { background-color: var(--bg-body); color: var(--text-main); height: 
     .custom-table td small { display: block; text-align: right; margin-top: 3px; }
     .custom-table td .btn-action-sm { padding: 10px; margin-left: 5px; }
 }
+/* =========================================
+   FIX GRID JAM MULAI & SELESAI SEJAJAR
+   ========================================= */
+.time-grid { 
+    display: grid !important; 
+    grid-template-columns: 1fr 1fr !important; 
+    gap: 12px !important; 
+    width: 100% !important; 
+    margin-bottom: 20px !important; 
+}
+
+.time-col {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+}
+
+.time-col .modern-input {
+    width: 100% !important;
+    text-align: center;
+}
