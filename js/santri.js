@@ -59,7 +59,7 @@ export function renderSantri() {
 
         <!-- ================= MODALS ================= -->
 
-        <!-- Modal Tambah Kelas Baru (MODERN UI SEPERTI REFERENSI GAMBAR) -->
+        <!-- Modal Tambah Kelas Baru -->
         <div class="modal-overlay" id="modalKelas">
             <div class="modal-card" style="max-width: 420px; padding: 25px;">
                 <div class="modern-modal-header">
@@ -72,12 +72,13 @@ export function renderSantri() {
                         <input type="text" id="inputNamaKelas" class="modern-input" required placeholder="Contoh: Abu Bakar">
                     </div>
                     
+                    <!-- GRID JAM SEJAJAR PRESISI -->
                     <div class="time-grid">
-                        <div>
+                        <div class="time-col">
                             <label class="modern-label">Jam Mulai</label>
                             <input type="time" id="inputJamMulai" class="modern-input" required>
                         </div>
-                        <div>
+                        <div class="time-col">
                             <label class="modern-label">Jam Selesai</label>
                             <input type="time" id="inputJamSelesai" class="modern-input" required>
                         </div>
