@@ -510,7 +510,10 @@ export async function initSantri() {
                 await loadData(); 
 
             } catch (error) {
-                console.error(error);
+                } catch (dbError) {
+                console.error("Lewati baris ke-" + (i+1) + " karena error database:", dbError);
+                // Jangan pakai throw new Error agar proses import tidak berhenti total
+                }
                 alert("Gagal mengunggah: " + error.message);
             } finally {
                 btnImport.innerHTML = `<i class="fas fa-file-excel"></i> Dapodik`;
