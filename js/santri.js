@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * BAGIAN 8: MODUL DATA SANTRI (Fitur Dapodik Lengkap)
+ * BAGIAN 8: MODUL DATA SANTRI (Fitur Dapodik Super Anti-Gagal)
  * File: js/santri.js
  * ==================================================
  */
@@ -192,7 +192,7 @@ export function renderSantri() {
 
 // 2. Logika Utama
 export async function initSantri() {
-    loadExcelLibrary(); // Panggil library excel di latar belakang
+    loadExcelLibrary(); 
 
     const tbody = document.getElementById('tableBodySantri');
     const filterKelas = document.getElementById('filterKelas');
@@ -256,7 +256,6 @@ export async function initSantri() {
         document.getElementById('profName').textContent = s.nama_santri;
         document.getElementById('profBio').textContent = `NIS: ${s.nis || '-'} • ${s.nama_kelas || 'Tanpa Kelas'}`;
         
-        // Membuka WA otomatis jika ada nomornya
         const btnWa = document.querySelector('.profile-actions .fab.fa-whatsapp').parentElement;
         btnWa.onclick = () => {
             if(s.no_wa) window.open(`https://wa.me/${s.no_wa.replace(/[^0-9]/g, '')}`, '_blank');
@@ -399,7 +398,6 @@ export async function initSantri() {
     // LOGIKA EXPORT & IMPORT EXCEL (DAPODIK)
     // ============================================
     
-    // EXPORT EXCEL
     document.getElementById('btnExportExcel').addEventListener('click', () => {
         if (typeof window.XLSX === 'undefined') return alert("Sistem masih memuat komponen Excel. Coba lagi dalam 3 detik.");
         if (santriData.length === 0) return alert("Belum ada data santri untuk diexport!");
@@ -434,7 +432,6 @@ export async function initSantri() {
         btn.innerHTML = `<i class="fas fa-download"></i> Export`;
     });
 
-    // IMPORT EXCEL (DAPODIK) - ANTI GAGAL
     const btnImport = document.getElementById('btnImportExcel');
     const fileInput = document.getElementById('fileExcel');
 
@@ -460,30 +457,36 @@ export async function initSantri() {
                 let successCount = 0;
                 
                 for(const row of jsonData) {
+                    
+                    // --- STRATEGI SUPER ANTI-GAGAL ---
                     const cleanRow = {};
                     for(let key in row) {
                         if(row.hasOwnProperty(key)) {
-                            cleanRow[key.toString().trim().toLowerCase()] = row[key];
+                            // MENGHAPUS SEMUA SPASI, GARIS, ATAU KARAKTER ANEH DI JUDUL KOLOM
+                            const cleanKey = key.toString().replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+                            cleanRow[cleanKey] = row[key];
                         }
                     }
 
+                    // Deteksi nama kolom yang sudah bebas spasi (namalengkap)
                     const nis = cleanRow['nis'] || '';
-                    const nama = cleanRow['nama lengkap'] || cleanRow['nama santri'] || cleanRow['nama'] || '';
-                    const jkRaw = cleanRow['jenis kelamin'] || cleanRow['l/p'] || cleanRow['jk'] || '';
+                    const nama = cleanRow['namalengkap'] || cleanRow['namasantri'] || cleanRow['nama'] || '';
+                    const jkRaw = cleanRow['jeniskelamin'] || cleanRow['lp'] || cleanRow['jk'] || '';
                     const kelas = cleanRow['kelas'] || '';
                     
-                    const tempatLahir = cleanRow['tempat lahir'] || '';
-                    const tanggalLahir = cleanRow['tanggal lahir'] || '';
+                    const tempatLahir = cleanRow['tempatlahir'] || '';
+                    const tanggalLahir = cleanRow['tanggallahir'] || '';
                     const nik = cleanRow['nik'] || '';
-                    const alamat = cleanRow['alamat detail'] || cleanRow['alamat'] || '';
-                    const asalSekolah = cleanRow['asal sekolah'] || '';
-                    const namaAyah = cleanRow['nama ayah kandung'] || cleanRow['nama ayah'] || '';
-                    const statusAyah = cleanRow['status ayah'] || '';
-                    const namaIbu = cleanRow['nama ibu kandung'] || cleanRow['nama ibu'] || '';
-                    const statusIbu = cleanRow['status ibu'] || '';
-                    const noWa = cleanRow['nomor whatsapp'] || cleanRow['no hp'] || '';
-                    const wali = cleanRow['yang bertanggung jawab'] || cleanRow['wali'] || '';
+                    const alamat = cleanRow['alamatdetail'] || cleanRow['alamat'] || '';
+                    const asalSekolah = cleanRow['asalsekolah'] || '';
+                    const namaAyah = cleanRow['namaayahkandung'] || cleanRow['namaayah'] || '';
+                    const statusAyah = cleanRow['statusayah'] || '';
+                    const namaIbu = cleanRow['namaibukandung'] || cleanRow['namaibu'] || '';
+                    const statusIbu = cleanRow['statusibu'] || '';
+                    const noWa = cleanRow['nomorwhatsapp'] || cleanRow['nowa'] || cleanRow['nohp'] || '';
+                    const wali = cleanRow['yangbertanggungjawab'] || cleanRow['wali'] || '';
 
+                    // Jika 'nama' ditemukan, eksekusi penyimpanan
                     if(nama) {
                         let jkFix = 'L'; 
                         if (jkRaw.toString().toUpperCase().includes('P')) {
@@ -516,7 +519,7 @@ export async function initSantri() {
 
             } catch (error) {
                 console.error(error);
-                alert("Gagal mengunggah. Pastikan format tabel Supabase sudah sesuai dengan instruksi sebelumnya.");
+                alert("Gagal mengunggah. Pastikan format Excel sesuai.");
             } finally {
                 btnImport.innerHTML = `<i class="fas fa-file-excel"></i> Dapodik`;
                 fileInput.value = ''; 
