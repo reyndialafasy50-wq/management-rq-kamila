@@ -1,109 +1,119 @@
 /**
  * ==================================================
- * ENGINE UTAMA & ROUTER SPA
+ * BAGIAN 2: ROUTER & LAYOUT CONTROLLER (MAIN.JS)
  * File: js/main.js
  * ==================================================
  */
 
 import { renderDashboard, initDashboard } from './dashboard.js';
 import { renderSantri, initSantri } from './santri.js';
+import { renderInputHarian, initInputHarian } from './input_harian.js'; // <-- INI TAMBAHAN BARU
 
-const mainContent = document.getElementById('main-content');
-const pageTitle = document.getElementById('page-title');
+document.addEventListener('DOMContentLoaded', () => {
+    // -----------------------------------------
+    // 1. SISTEM ROUTER HALAMAN (NAVIGASI)
+    // -----------------------------------------
+    const mainContent = document.getElementById('main-content');
+    const pageTitle = document.getElementById('page-title');
+    const navLinks = document.querySelectorAll('.nav-link');
 
-// --- SISTEM ROUTING SPA ---
-function handleRoute() {
-    // Ambil hash URL saat ini, default ke #dashboard jika kosong
-    const hash = window.location.hash || '#dashboard';
+    // Fungsi untuk memuat halaman berdasarkan URL (hash)
+    const loadPage = () => {
+        const hash = window.location.hash || '#dashboard';
 
-    // 1. Ubah status menu navigasi agar menyala sesuai rute aktif
-    document.querySelectorAll('.nav-link').forEach(link => {
-        link.classList.remove('active');
-        if (link.getAttribute('href') === hash) {
-            link.classList.add('active');
+        // Update status "Aktif" di Menu Kiri
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === hash) {
+                link.classList.add('active');
+            }
+        });
+
+        // Kosongkan isi halaman sebelumnya
+        mainContent.innerHTML = '<div style="text-align:center; padding: 50px;"><i class="fas fa-spinner fa-spin fa-2x"></i></div>';
+
+        // Logika Routing (Pindah Halaman)
+        if (hash === '#dashboard') {
+            pageTitle.textContent = 'Dashboard';
+            mainContent.innerHTML = renderDashboard();
+            initDashboard();
+            
+        } else if (hash === '#santri') {
+            pageTitle.textContent = 'Data Santri & Kelas';
+            mainContent.innerHTML = renderSantri();
+            initSantri();
+            
+        } else if (hash === '#harian') { // <-- INI TAMBAHAN BARU
+            pageTitle.textContent = 'Input Harian (Absen & Hafalan)';
+            mainContent.innerHTML = renderInputHarian();
+            initInputHarian();
+            
+        } else if (hash === '#laporan') {
+            pageTitle.textContent = 'Laporan & Rapor';
+            mainContent.innerHTML = `<div class="card" style="padding:40px; text-align:center;"><h2>Fitur Laporan segera hadir!</h2></div>`;
+            
+        } else if (hash === '#setting') {
+            pageTitle.textContent = 'Pengaturan Sistem';
+            mainContent.innerHTML = `<div class="card" style="padding:40px; text-align:center;"><h2>Fitur Pengaturan segera hadir!</h2></div>`;
+            
+        } else {
+            pageTitle.textContent = 'Halaman Tidak Ditemukan';
+            mainContent.innerHTML = `<div class="card" style="padding:40px; text-align:center; color: red;"><h2>404 Not Found</h2></div>`;
         }
-    });
+    };
 
-    // 2. Judul Header Dinamis (Otomatis mengubah nama sesuai menu)
-    const cleanName = hash.replace('#', '');
-    pageTitle.textContent = cleanName === 'dashboard' ? 'Dashboard' : 
-                            cleanName === 'santri' ? 'Data Santri' : 
-                            cleanName === 'harian' ? 'Input Harian' : 
-                            cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
-
-    // 3. Suntikkan konten ke layar berdasarkan Hash (Rute)
-    if (hash === '#dashboard') {
-        mainContent.innerHTML = renderDashboard();
-        initDashboard();
-    } else if (hash === '#santri') {
-        mainContent.innerHTML = renderSantri();
-        initSantri();
-    } else {
-        // Halaman yang belum dibuat
-        mainContent.innerHTML = `
-            <div style="text-align: center; padding: 50px; color: var(--text-muted);">
-                <i class="fas fa-tools fa-3x"></i>
-                <h3 style="margin-top:15px;">Modul dalam pengembangan</h3>
-                <p style="font-size: 0.85rem; margin-top: 10px;">Fitur ini akan tersedia di pembaruan selanjutnya.</p>
-            </div>
-        `;
-    }
-
-    // 4. Tutup sidebar di HP secara otomatis setelah menu diklik
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebarOverlay');
-    if(sidebar && overlay) {
-        sidebar.classList.remove('active');
-        overlay.style.display = 'none';
-    }
-}
-
-// --- PENGATURAN UI GLOBAL ---
-function setupGlobalUI() {
-    // 1. Sidebar Toggle (Mobile)
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebarOverlay');
+    // Deteksi jika pengguna memencet tombol Back/Forward atau klik menu
+    window.addEventListener('hashchange', loadPage);
     
-    document.getElementById('btnToggleSidebar').addEventListener('click', () => {
-        sidebar.classList.add('active');
-        overlay.style.display = 'block';
-    });
-    
-    overlay.addEventListener('click', () => {
-        sidebar.classList.remove('active');
-        overlay.style.display = 'none';
-    });
+    // Muat halaman pertama kali saat web dibuka
+    loadPage();
 
-    // 2. Saklar Tema (Dark/Light Mode)
-    const btnTheme = document.getElementById('btnThemeToggle');
+    // -----------------------------------------
+    // 2. SISTEM DARK MODE / LIGHT MODE
+    // -----------------------------------------
+    const btnThemeToggle = document.getElementById('btnThemeToggle');
     const themeIcon = document.getElementById('themeIcon');
     
-    // Cek preferensi tema sebelumnya di penyimpanan lokal browser
+    // Cek memori browser, apakah sebelumnya user pakai mode gelap?
     const currentTheme = localStorage.getItem('theme') || 'light';
     if (currentTheme === 'dark') {
         document.body.setAttribute('data-theme', 'dark');
-        if(themeIcon) themeIcon.className = 'fas fa-sun';
+        themeIcon.classList.replace('fa-moon', 'fa-sun');
     }
 
-    btnTheme.addEventListener('click', () => {
-        const isDark = document.body.hasAttribute('data-theme');
-        if (isDark) {
+    btnThemeToggle.addEventListener('click', () => {
+        if (document.body.getAttribute('data-theme') === 'dark') {
             document.body.removeAttribute('data-theme');
+            themeIcon.classList.replace('fa-sun', 'fa-moon');
             localStorage.setItem('theme', 'light');
-            if(themeIcon) themeIcon.className = 'fas fa-moon';
         } else {
             document.body.setAttribute('data-theme', 'dark');
+            themeIcon.classList.replace('fa-moon', 'fa-sun');
             localStorage.setItem('theme', 'dark');
-            if(themeIcon) themeIcon.className = 'fas fa-sun';
         }
-        // Render ulang halaman agar UI / Chart ikut menyesuaikan tema
-        handleRoute();
     });
-}
 
-// --- INISIALISASI ENGINE ---
-window.addEventListener('hashchange', handleRoute);
-window.addEventListener('DOMContentLoaded', () => {
-    setupGlobalUI();
-    handleRoute(); // Jalankan rute awal saat aplikasi pertama kali dimuat
+    // -----------------------------------------
+    // 3. RESPONSIVE SIDEBAR MOBILE (TOGGLE)
+    // -----------------------------------------
+    const sidebar = document.getElementById('sidebar');
+    const btnToggleSidebar = document.getElementById('btnToggleSidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+    const toggleMenu = () => {
+        sidebar.classList.toggle('active');
+        sidebarOverlay.style.display = sidebar.classList.contains('active') ? 'block' : 'none';
+    };
+
+    btnToggleSidebar.addEventListener('click', toggleMenu);
+    sidebarOverlay.addEventListener('click', toggleMenu);
+
+    // Tutup otomatis sidebar kalau layar HP diklik (saat klik menu)
+    navLinks.forEach(link => {
+        link.addEventListener('click', () => {
+            if (window.innerWidth <= 900 && sidebar.classList.contains('active')) {
+                toggleMenu();
+            }
+        });
+    });
 });
