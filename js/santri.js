@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * BAGIAN 8: MODUL DATA SANTRI (Dapodik Brute-Force + Error Log)
+ * BAGIAN 8: MODUL DATA SANTRI (Dapodik Brute-Force + Safe Catch)
  * File: js/santri.js
  * ==================================================
  */
@@ -197,18 +197,19 @@ export async function initSantri() {
                 opsiKelas += `<option value="${k.nama_kelas}">${k.nama_kelas} (${infoHari}${k.jam_kelas})</option>`;
             });
             
-            filterKelas.innerHTML = '<option value="">Semua Kelas</option>' + opsiKelas;
-            selectKelasForm.innerHTML = opsiKelas;
-            selectMutasiKelas.innerHTML = opsiKelas;
+            if(filterKelas) filterKelas.innerHTML = '<option value="">Semua Kelas</option>' + opsiKelas;
+            if(selectKelasForm) selectKelasForm.innerHTML = opsiKelas;
+            if(selectMutasiKelas) selectMutasiKelas.innerHTML = opsiKelas;
 
             santriData = await api.get('dapodik_santri', 'select=*&order=nama_santri.asc');
             renderTable(santriData);
         } catch (error) {
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Gagal memuat data.</td></tr>`;
+            if(tbody) tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Gagal memuat data.</td></tr>`;
         }
     };
 
     const renderTable = (data) => {
+        if(!tbody) return;
         if (data.length === 0) {
             tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Tidak ada data santri ditemukan.</td></tr>`;
             return;
@@ -245,21 +246,26 @@ export async function initSantri() {
         document.getElementById('profName').textContent = s.nama_santri;
         document.getElementById('profBio').textContent = `NIS: ${s.nis || '-'} • ${s.nama_kelas || 'Tanpa Kelas'}`;
         
-        const btnWa = document.querySelector('.profile-actions .fab.fa-whatsapp').parentElement;
-        btnWa.onclick = () => {
-            if(s.no_wa) window.open(`https://wa.me/${s.no_wa.replace(/[^0-9]/g, '')}`, '_blank');
-            else alert("Nomor WhatsApp tidak tersedia untuk santri ini.");
-        };
+        const btnWa = document.querySelector('.profile-actions .fab.fa-whatsapp');
+        if(btnWa) {
+            btnWa.parentElement.onclick = () => {
+                if(s.no_wa) window.open(`https://wa.me/${s.no_wa.replace(/[^0-9]/g, '')}`, '_blank');
+                else alert("Nomor WhatsApp tidak tersedia untuk santri ini.");
+            };
+        }
 
-        document.getElementById('btnEditDariProfil').onclick = () => {
-            document.getElementById('modalProfil').classList.remove('active');
-            bukaFormEdit(s);
-        };
+        const btnEditProf = document.getElementById('btnEditDariProfil');
+        if(btnEditProf) {
+            btnEditProf.onclick = () => {
+                document.getElementById('modalProfil').classList.remove('active');
+                bukaFormEdit(s);
+            };
+        }
         document.getElementById('modalProfil').classList.add('active');
     };
 
-    filterKelas.addEventListener('change', filterData);
-    document.getElementById('searchSantri').addEventListener('input', filterData);
+    if(filterKelas) filterKelas.addEventListener('change', filterData);
+    if(document.getElementById('searchSantri')) document.getElementById('searchSantri').addEventListener('input', filterData);
     
     function filterData() {
         const keyword = document.getElementById('searchSantri').value.toLowerCase();
@@ -271,11 +277,13 @@ export async function initSantri() {
         renderTable(filtered);
     }
 
-    document.getElementById('btnTambahKelas').addEventListener('click', () => {
-        document.getElementById('formKelas').reset();
-        document.querySelectorAll('.day-chip').forEach(c => c.classList.remove('active'));
-        document.getElementById('modalKelas').classList.add('active');
-    });
+    if(document.getElementById('btnTambahKelas')) {
+        document.getElementById('btnTambahKelas').addEventListener('click', () => {
+            document.getElementById('formKelas').reset();
+            document.querySelectorAll('.day-chip').forEach(c => c.classList.remove('active'));
+            document.getElementById('modalKelas').classList.add('active');
+        });
+    }
 
     document.querySelectorAll('.day-chip').forEach(chip => {
         chip.addEventListener('click', function() {
@@ -283,33 +291,37 @@ export async function initSantri() {
         });
     });
 
-    document.getElementById('formKelas').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const selectedDays = Array.from(document.querySelectorAll('.day-chip.active')).map(chip => chip.getAttribute('data-hari'));
-        if(selectedDays.length === 0) return alert("Silakan pilih minimal 1 hari belajar!");
+    if(document.getElementById('formKelas')) {
+        document.getElementById('formKelas').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const selectedDays = Array.from(document.querySelectorAll('.day-chip.active')).map(chip => chip.getAttribute('data-hari'));
+            if(selectedDays.length === 0) return alert("Silakan pilih minimal 1 hari belajar!");
 
-        const btn = document.getElementById('btnSimpanKelas');
-        btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Menyimpan...`;
+            const btn = document.getElementById('btnSimpanKelas');
+            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Menyimpan...`;
 
-        try {
-            await api.post('kelas', { 
-                nama_kelas: document.getElementById('inputNamaKelas').value, 
-                jam_kelas: `${document.getElementById('inputJamMulai').value} - ${document.getElementById('inputJamSelesai').value}`, 
-                hari_kelas: selectedDays.join(', ')
-            });
-            document.getElementById('modalKelas').classList.remove('active');
-            await loadData();
-        } catch(error) { alert("Gagal menyimpan kelas."); } 
-        finally { btn.innerHTML = `<i class="fas fa-save"></i> Simpan Kelas`; }
-    });
+            try {
+                await api.post('kelas', { 
+                    nama_kelas: document.getElementById('inputNamaKelas').value, 
+                    jam_kelas: `${document.getElementById('inputJamMulai').value} - ${document.getElementById('inputJamSelesai').value}`, 
+                    hari_kelas: selectedDays.join(', ')
+                });
+                document.getElementById('modalKelas').classList.remove('active');
+                await loadData();
+            } catch(error) { alert("Gagal menyimpan kelas."); } 
+            finally { btn.innerHTML = `<i class="fas fa-save"></i> Simpan Kelas`; }
+        });
+    }
 
-    document.getElementById('btnTambahSantri').addEventListener('click', () => {
-        if(kelasData.length === 0) return alert("Buat Kelas terlebih dahulu sebelum menambah Santri!");
-        document.getElementById('formSantri').reset();
-        document.getElementById('santriId').value = '';
-        document.getElementById('modalTitle').textContent = 'Tambah Santri Baru';
-        document.getElementById('modalSantri').classList.add('active');
-    });
+    if(document.getElementById('btnTambahSantri')) {
+        document.getElementById('btnTambahSantri').addEventListener('click', () => {
+            if(kelasData.length === 0) return alert("Buat Kelas terlebih dahulu sebelum menambah Santri!");
+            document.getElementById('formSantri').reset();
+            document.getElementById('santriId').value = '';
+            document.getElementById('modalTitle').textContent = 'Tambah Santri Baru';
+            document.getElementById('modalSantri').classList.add('active');
+        });
+    }
 
     const bukaFormEdit = (santri) => {
         document.getElementById('santriId').value = santri.id;
@@ -326,27 +338,29 @@ export async function initSantri() {
         if(s) bukaFormEdit(s);
     };
 
-    document.getElementById('formSantri').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const btn = document.getElementById('btnSimpanSantri');
-        btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Menyimpan...`;
-        
-        const id = document.getElementById('santriId').value;
-        const payload = {
-            nis: document.getElementById('nis').value,
-            nama_santri: document.getElementById('nama').value,
-            jenis_kelamin: document.getElementById('jk').value,
-            nama_kelas: document.getElementById('kelasId').value
-        };
+    if(document.getElementById('formSantri')) {
+        document.getElementById('formSantri').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnSimpanSantri');
+            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Menyimpan...`;
+            
+            const id = document.getElementById('santriId').value;
+            const payload = {
+                nis: document.getElementById('nis').value,
+                nama_santri: document.getElementById('nama').value,
+                jenis_kelamin: document.getElementById('jk').value,
+                nama_kelas: document.getElementById('kelasId').value
+            };
 
-        try {
-            if(id) await api.update('dapodik_santri', id, payload);
-            else await api.post('dapodik_santri', payload);
-            document.getElementById('modalSantri').classList.remove('active');
-            await loadData();
-        } catch (error) { alert("Gagal menyimpan data."); } 
-        finally { btn.innerHTML = 'Simpan Data'; }
-    });
+            try {
+                if(id) await api.update('dapodik_santri', id, payload);
+                else await api.post('dapodik_santri', payload);
+                document.getElementById('modalSantri').classList.remove('active');
+                await loadData();
+            } catch (error) { alert("Gagal menyimpan data."); } 
+            finally { btn.innerHTML = 'Simpan Data'; }
+        });
+    }
 
     const handleMutasi = (e) => {
         const s = santriData.find(x => x.id === e.currentTarget.getAttribute('data-id'));
@@ -358,16 +372,18 @@ export async function initSantri() {
         }
     };
     
-    document.getElementById('btnSimpanMutasi').addEventListener('click', async (e) => {
-        const btn = e.currentTarget;
-        btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Memproses...`;
-        try {
-            await api.update('dapodik_santri', document.getElementById('mutasiId').value, { nama_kelas: document.getElementById('mutasiKelasId').value });
-            document.getElementById('modalMutasi').classList.remove('active');
-            await loadData();
-        } catch(error) { alert("Gagal pindah kelas."); }
-        finally { btn.innerHTML = `<i class="fas fa-exchange-alt"></i> Pindahkan Sekarang`; }
-    });
+    if(document.getElementById('btnSimpanMutasi')) {
+        document.getElementById('btnSimpanMutasi').addEventListener('click', async (e) => {
+            const btn = e.currentTarget;
+            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Memproses...`;
+            try {
+                await api.update('dapodik_santri', document.getElementById('mutasiId').value, { nama_kelas: document.getElementById('mutasiKelasId').value });
+                document.getElementById('modalMutasi').classList.remove('active');
+                await loadData();
+            } catch(error) { alert("Gagal pindah kelas."); }
+            finally { btn.innerHTML = `<i class="fas fa-exchange-alt"></i> Pindahkan Sekarang`; }
+        });
+    }
 
     const handleDelete = async (e) => {
         if(confirm("Yakin hapus santri ini?")) {
@@ -378,150 +394,141 @@ export async function initSantri() {
     };
 
     // ============================================
-    // LOGIKA EXPORT & IMPORT EXCEL DAPODIK (BRUTE-FORCE INDEX)
+    // LOGIKA EXPORT & IMPORT EXCEL DAPODIK 
     // ============================================
     
-    document.getElementById('btnExportExcel').addEventListener('click', () => {
-        if (typeof window.XLSX === 'undefined') return alert("Sistem masih memuat komponen Excel. Coba lagi dalam 3 detik.");
-        if (santriData.length === 0) return alert("Belum ada data santri untuk diexport!");
+    if(document.getElementById('btnExportExcel')) {
+        document.getElementById('btnExportExcel').addEventListener('click', () => {
+            if (typeof window.XLSX === 'undefined') return alert("Sistem masih memuat komponen Excel. Coba lagi dalam 3 detik.");
+            if (santriData.length === 0) return alert("Belum ada data santri untuk diexport!");
 
-        const btn = document.getElementById('btnExportExcel');
-        btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Proses...`;
+            const btn = document.getElementById('btnExportExcel');
+            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Proses...`;
 
-        const dataToExport = santriData.map((s, index) => ({
-            "NO": index + 1,
-            "NAMA SANTRI": s.nama_santri || "",
-            "NIS": s.nis || "",
-            "L/P": s.jenis_kelamin || "",
-            "TEMPAT LAHIR": s.tempat_lahir || "",
-            "TANGGAL LAHIR": s.tanggal_lahir || "",
-            "NIK": s.nik || "",
-            "ALAMAT DETAIL": s.alamat || "",
-            "ASAL SEKOLAH": s.asal_sekolah || "",
-            "NAMA AYAH KANDUNG": s.nama_ayah || "",
-            "STATUS AYAH": s.status_ayah || "",
-            "NAMA IBU KANDUNG": s.nama_ibu || "",
-            "STATUS IBU": s.status_ibu || "",
-            "NOMOR WHATSAPP": s.no_wa || "",
-            "YANG BERTANGGUNG JAWAB": s.wali || "",
-            "STATUS AKTIF": "TRUE" // Dari foto Excel Anda ada kolom TRUE di ujung
-        }));
+            const dataToExport = santriData.map((s, index) => ({
+                "NO": index + 1,
+                "NAMA SANTRI": s.nama_santri || "",
+                "NIS": s.nis || "",
+                "L/P": s.jenis_kelamin || "",
+                "TEMPAT LAHIR": s.tempat_lahir || "",
+                "TANGGAL LAHIR": s.tanggal_lahir || "",
+                "NIK": s.nik || "",
+                "ALAMAT DETAIL": s.alamat || "",
+                "ASAL SEKOLAH": s.asal_sekolah || "",
+                "NAMA AYAH KANDUNG": s.nama_ayah || "",
+                "STATUS AYAH": s.status_ayah || "",
+                "NAMA IBU KANDUNG": s.nama_ibu || "",
+                "STATUS IBU": s.status_ibu || "",
+                "NOMOR WHATSAPP": s.no_wa || "",
+                "YANG BERTANGGUNG JAWAB": s.wali || "",
+                "STATUS AKTIF": "TRUE"
+            }));
 
-        const ws = XLSX.utils.json_to_sheet(dataToExport);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Data Santri");
-        XLSX.writeFile(wb, "Dapodik_Santri_Kamila.xlsx");
-        
-        btn.innerHTML = `<i class="fas fa-download"></i> Export`;
-    });
+            const ws = XLSX.utils.json_to_sheet(dataToExport);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Data Santri");
+            XLSX.writeFile(wb, "Dapodik_Santri_Kamila.xlsx");
+            
+            btn.innerHTML = `<i class="fas fa-download"></i> Export`;
+        });
+    }
 
     const btnImport = document.getElementById('btnImportExcel');
     const fileInput = document.getElementById('fileExcel');
 
-    btnImport.addEventListener('click', () => fileInput.click()); 
+    if(btnImport && fileInput) {
+        btnImport.addEventListener('click', () => fileInput.click()); 
 
-    fileInput.addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if(!file) return;
-        if (typeof window.XLSX === 'undefined') return alert("Tunggu sebentar, sistem sedang memuat komponen pembaca Excel.");
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            if (typeof window.XLSX === 'undefined') return alert("Tunggu sebentar, sistem sedang memuat komponen pembaca Excel.");
 
-        btnImport.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Mengunggah...`;
+            btnImport.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Mengunggah...`;
 
-        const reader = new FileReader();
-        reader.onload = async (event) => {
-            try {
-                const data = new Uint8Array(event.target.result);
-                const workbook = XLSX.read(data, {type: 'array'});
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                
-                // MENGUBAH EXCEL MENJADI ARRAY 2 DIMENSI (Bukan Objek)
-                // header: 1 memastikan baris dibaca sebagai array [kolomA, kolomB, dst]
-                const jsonArray = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" }); 
-
-                let successCount = 0;
-                
-                // Mulai dari i = 1 untuk melewati baris pertama (Judul Kolom)
-                for (let i = 1; i < jsonArray.length; i++) {
-                    const row = jsonArray[i];
-
-                    // Abaikan baris jika kosong melompong
-                    if (row.length === 0 || !row.some(cell => cell !== "")) continue;
-
-                    // MENGAMBIL DATA BERDASARKAN URUTAN KOLOM (Sesuai foto Anda)
-                    const nama = row[1] || ''; // Kolom B
-                    const nis = row[2] || ''; // Kolom C
-                    const jkRaw = row[3] || ''; // Kolom D
-                    const tempatLahir = row[4] || ''; // Kolom E
-                    const tanggalLahir = row[5] || ''; // Kolom F
-                    const nik = row[6] || ''; // Kolom G
-                    const alamat = row[7] || ''; // Kolom H
-                    const asalSekolah = row[8] || ''; // Kolom I
-                    const namaAyah = row[9] || ''; // Kolom J
-                    const statusAyah = row[10] || ''; // Kolom K
-                    const namaIbu = row[11] || ''; // Kolom L
-                    const statusIbu = row[12] || ''; // Kolom M
-                    const noWa = row[13] || ''; // Kolom N
-                    const wali = row[14] || ''; // Kolom O
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                try {
+                    const data = new Uint8Array(event.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
                     
-                    // Kolom kelas tidak terlihat di foto, kita biarkan kosong
-                    const kelas = null; 
+                    const jsonArray = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" }); 
 
-                    // Jika nama tidak kosong, simpan ke database
-                    if(String(nama).trim() !== "") {
-                        let jkFix = 'L'; 
-                        if (jkRaw.toString().toUpperCase().includes('P')) {
-                            jkFix = 'P'; 
-                        }
+                    let successCount = 0;
+                    
+                    for (let i = 1; i < jsonArray.length; i++) {
+                        const row = jsonArray[i];
 
-                        // Menggunakan api.post biasa
-                        try {
-                            await api.post('dapodik_santri', {
-                                nis: String(nis).trim(),
-                                nama_santri: String(nama).trim(),
-                                jenis_kelamin: jkFix,
-                                nama_kelas: kelas,
-                                tempat_lahir: String(tempatLahir).trim(),
-                                tanggal_lahir: String(tanggalLahir).trim(),
-                                nik: String(nik).trim(),
-                                alamat: String(alamat).trim(),
-                                asal_sekolah: String(asalSekolah).trim(),
-                                nama_ayah: String(namaAyah).trim(),
-                                status_ayah: String(statusAyah).trim(),
-                                nama_ibu: String(namaIbu).trim(),
-                                status_ibu: String(statusIbu).trim(),
-                                no_wa: String(noWa).trim(),
-                                wali: String(wali).trim()
-                            });
-                            successCount++;
-                        } catch (dbError) {
-                            // Menangkap error dari database secara spesifik
-                            console.error("Gagal simpan baris ke-" + (i+1), dbError);
-                            throw new Error("Terdapat data yang ditolak oleh database pada baris ke-" + (i+1) + ". Cek console log untuk detailnya.");
+                        if (row.length === 0 || !row.some(cell => cell !== "")) continue;
+
+                        const nama = row[1] || ''; 
+                        const nis = row[2] || ''; 
+                        const jkRaw = row[3] || ''; 
+                        const tempatLahir = row[4] || ''; 
+                        const tanggalLahir = row[5] || ''; 
+                        const nik = row[6] || ''; 
+                        const alamat = row[7] || ''; 
+                        const asalSekolah = row[8] || ''; 
+                        const namaAyah = row[9] || ''; 
+                        const statusAyah = row[10] || ''; 
+                        const namaIbu = row[11] || ''; 
+                        const statusIbu = row[12] || ''; 
+                        const noWa = row[13] || ''; 
+                        const wali = row[14] || ''; 
+                        
+                        const kelas = null; 
+
+                        if(String(nama).trim() !== "") {
+                            let jkFix = 'L'; 
+                            if (jkRaw.toString().toUpperCase().includes('P')) {
+                                jkFix = 'P'; 
+                            }
+
+                            try {
+                                await api.post('dapodik_santri', {
+                                    nis: String(nis).trim(),
+                                    nama_santri: String(nama).trim(),
+                                    jenis_kelamin: jkFix,
+                                    nama_kelas: kelas,
+                                    tempat_lahir: String(tempatLahir).trim(),
+                                    tanggal_lahir: String(tanggalLahir).trim(),
+                                    nik: String(nik).trim(),
+                                    alamat: String(alamat).trim(),
+                                    asal_sekolah: String(asalSekolah).trim(),
+                                    nama_ayah: String(namaAyah).trim(),
+                                    status_ayah: String(statusAyah).trim(),
+                                    nama_ibu: String(namaIbu).trim(),
+                                    status_ibu: String(statusIbu).trim(),
+                                    no_wa: String(noWa).trim(),
+                                    wali: String(wali).trim()
+                                });
+                                successCount++;
+                            } catch (dbError) {
+                                console.error("Lewati baris ke-" + (i+1) + " karena error database:", dbError);
+                            }
                         }
                     }
-                }
-                
-                if(successCount > 0) {
-                    alert(`Upload Sukses! Berhasil mengimpor ${successCount} data santri secara lengkap.`);
-                } else {
-                    alert(`Proses selesai, namun tidak ada data valid yang ditemukan pada baris ke-2 dan seterusnya.`);
-                }
-                await loadData(); 
+                    
+                    if(successCount > 0) {
+                        alert(`Upload Sukses! Berhasil mengimpor ${successCount} data santri secara lengkap.`);
+                    } else {
+                        alert(`Proses selesai, namun tidak ada data valid yang berhasil disimpan.`);
+                    }
+                    await loadData(); 
 
-            } catch (error) {
-                } catch (dbError) {
-                console.error("Lewati baris ke-" + (i+1) + " karena error database:", dbError);
-                // Jangan pakai throw new Error agar proses import tidak berhenti total
+                } catch (error) {
+                    console.error(error);
+                    alert("Gagal mengunggah: " + error.message);
+                } finally {
+                    btnImport.innerHTML = `<i class="fas fa-file-excel"></i> Dapodik`;
+                    fileInput.value = ''; 
                 }
-                alert("Gagal mengunggah: " + error.message);
-            } finally {
-                btnImport.innerHTML = `<i class="fas fa-file-excel"></i> Dapodik`;
-                fileInput.value = ''; 
-            }
-        };
-        reader.readAsArrayBuffer(file);
-    });
+            };
+            reader.readAsArrayBuffer(file);
+        });
+    }
 
     loadData();
 }
