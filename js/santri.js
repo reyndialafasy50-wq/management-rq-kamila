@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * BAGIAN 8: MODUL DATA SANTRI (RBAC - Presisi 50:50)
+ * BAGIAN 8: MODUL DATA SANTRI (RBAC + Fitur Cari di Tarik Santri)
  * File: js/santri.js
  * ==================================================
  */
@@ -37,14 +37,14 @@ export function renderSantri() {
                 </p>
             </div>
             
-            <!-- MENU KHUSUS ADMIN (TOMBOL 50:50 PRESISI) -->
+            <!-- MENU KHUSUS ADMIN -->
             <div id="menuAdmin" style="display: none; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; margin-top: 5px;">
                 <button class="btn-secondary" id="btnTambahSantri" style="width: 100%; justify-content: center;"><i class="fas fa-user-plus"></i> Tambah Santri</button>
                 <input type="file" id="fileExcel" accept=".xlsx, .xls" style="display: none;">
                 <button class="btn-secondary" id="btnImportExcel" style="width: 100%; justify-content: center;"><i class="fas fa-file-excel"></i> Upload Dapodik</button>
             </div>
 
-            <!-- MENU KHUSUS GURU (TOMBOL 50:50 PRESISI) -->
+            <!-- MENU KHUSUS GURU -->
             <div id="menuGuru" style="display: none; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; margin-top: 5px;">
                 <button class="btn-secondary" id="btnTambahKelas" style="width: 100%; justify-content: center;"><i class="fas fa-plus"></i> Buat Kelas</button>
                 <button class="btn-secondary" id="btnTarikSantri" style="background-color: var(--primary); color: white; border: none; width: 100%; justify-content: center;"><i class="fas fa-users-cog"></i> Tarik Santri</button>
@@ -96,6 +96,13 @@ export function renderSantri() {
 
                 <div style="margin-bottom: 10px;">
                     <label class="modern-label">Daftar Santri yang belum memiliki kelas:</label>
+                    
+                    <!-- KOTAK PENCARIAN SANTRI DITAMBAHKAN DI SINI -->
+                    <div style="position: relative; margin-bottom: 10px; width: 100%;">
+                        <i class="fas fa-search" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+                        <input type="text" id="inputCariTarikSantri" placeholder="Ketik nama untuk mencari santri..." style="width: 100%; padding: 10px 15px 10px 40px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.9rem; outline: none;">
+                    </div>
+
                     <div style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px;">
                         <table class="custom-table" style="margin: 0;">
                             <thead style="position: sticky; top: 0; background: var(--surface); z-index: 1;">
@@ -188,7 +195,7 @@ export function renderSantri() {
             </div>
         </div>
 
-        <!-- Modal Profil Santri (Bisa melihat detail & Kontak WA) -->
+        <!-- Modal Profil Santri -->
         <div class="modal-overlay" id="modalProfil">
             <div class="profile-card">
                 <button class="profile-close" onclick="document.getElementById('modalProfil').classList.remove('active')"><i class="fas fa-times"></i></button>
@@ -213,7 +220,6 @@ export function renderSantri() {
 export async function initSantri() {
     loadExcelLibrary(); 
 
-    // --- MENGATUR TAMPILAN BERDASARKAN ROLE ---
     if (currentUserRole === 'admin') {
         document.getElementById('menuAdmin').style.display = 'grid';
         document.getElementById('btnExportExcel').style.display = 'inline-flex';
@@ -221,7 +227,6 @@ export async function initSantri() {
         document.getElementById('menuGuru').style.display = 'grid';
         document.getElementById('filterKelas').innerHTML = '<option value="">-- Tampilkan Kelas Anda --</option>'; 
     }
-    // ------------------------------------------
 
     const tbody = document.getElementById('tableBodySantri');
     const filterKelas = document.getElementById('filterKelas');
@@ -230,7 +235,6 @@ export async function initSantri() {
 
     const loadData = async () => {
         try {
-            // Memuat Daftar Kelas
             kelasData = await api.get('kelas', 'select=*');
             let opsiKelas = '';
             kelasData.forEach(k => { opsiKelas += `<option value="${k.nama_kelas}">${k.nama_kelas}</option>`; });
@@ -241,10 +245,8 @@ export async function initSantri() {
             if(selectKelasForm) selectKelasForm.innerHTML = '<option value="">Belum ada kelas</option>' + opsiKelas;
             if(selectTarikKelas) selectTarikKelas.innerHTML = '<option value="">-- Pilih Kelas --</option>' + opsiKelas;
 
-            // Memuat Daftar Santri
             santriDataUtama = await api.get('dapodik_santri', 'select=*&order=nama_santri.asc');
             
-            // Render Awal Tabel
             if (currentUserRole === 'admin') {
                 renderTable(santriDataUtama);
             } else {
@@ -308,15 +310,44 @@ export async function initSantri() {
                     </tr>
                 `).join('');
             }
+            
+            // Reset modal saat dibuka
             document.getElementById('checkAllTarik').checked = false;
             document.getElementById('tarikKelasTujuan').value = '';
+            if(document.getElementById('inputCariTarikSantri')) document.getElementById('inputCariTarikSantri').value = ''; // Reset kotak pencarian
+            
             document.getElementById('modalTarik').classList.add('active');
+        });
+    }
+
+    // LOGIKA PENCARIAN DI DALAM MODAL TARIK SANTRI
+    const searchInputTarik = document.getElementById('inputCariTarikSantri');
+    if (searchInputTarik) {
+        searchInputTarik.addEventListener('input', function(e) {
+            const keyword = e.target.value.toLowerCase();
+            const listTbody = document.getElementById('listTarikSantri');
+            
+            if (listTbody) {
+                const rows = listTbody.getElementsByTagName('tr'); // Ambil semua baris nama santri
+                
+                for (let i = 0; i < rows.length; i++) {
+                    const text = rows[i].textContent.toLowerCase();
+                    // Jika cocok dengan ketikan, tampilkan barisnya. Jika tidak, sembunyikan.
+                    if (text.includes(keyword)) {
+                        rows[i].style.display = ''; 
+                    } else {
+                        rows[i].style.display = 'none'; 
+                    }
+                }
+            }
         });
     }
 
     if(document.getElementById('checkAllTarik')) {
         document.getElementById('checkAllTarik').addEventListener('change', (e) => {
-            document.querySelectorAll('.chk-tarik').forEach(chk => chk.checked = e.target.checked);
+            // Hanya centang baris yang sedang TAMPIL (tidak disembunyikan oleh pencarian)
+            const visibleCheckboxes = document.querySelectorAll('#listTarikSantri tr:not([style*="display: none"]) .chk-tarik');
+            visibleCheckboxes.forEach(chk => chk.checked = e.target.checked);
         });
     }
 
@@ -369,7 +400,7 @@ export async function initSantri() {
 
 
     // ============================================
-    // PENCARIAN & FILTER
+    // PENCARIAN & FILTER TABEL UTAMA
     // ============================================
     if(filterKelas) filterKelas.addEventListener('change', filterData);
     if(document.getElementById('searchSantri')) document.getElementById('searchSantri').addEventListener('input', filterData);
