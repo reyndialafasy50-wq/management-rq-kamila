@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * BAGIAN 9: INPUT HARIAN MOBILE-FIRST (Auto-Save Real-Time)
+ * BAGIAN 9: INPUT HARIAN MOBILE-FIRST (Auto-Save Real-Time & Active Highlight)
  * File: js/input_harian.js
  * ==================================================
  */
@@ -26,8 +26,7 @@ const petaJuz = {
 export function renderInputHarian() {
     return `
         <style>
-            /* Mengembalikan desain kotak pembungkus yang rapi & tidak melayang menimpa nama */
-            .input-header-wrapper { background: var(--surface); padding: 20px; border-radius: 16px; margin-bottom: 20px; border: 1px solid var(--border); }
+            .input-header-wrapper { background: var(--surface); padding: 20px; border-radius: 16px; margin-bottom: 20px; border: 1px solid var(--border); position: sticky; top: 10px; z-index: 10; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);}
             .input-header-title { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
             .input-header-title h4 { margin: 0; font-size: 1rem; color: var(--text-main); font-weight: 700; }
             .input-header-title p { margin: 0; font-size: 0.75rem; color: var(--text-muted); }
@@ -35,13 +34,25 @@ export function renderInputHarian() {
             .input-header-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
             .input-header-controls select, .input-header-controls input { border: 1px solid var(--border); border-radius: 8px; padding: 10px 15px; font-size: 0.9rem; background: var(--bg-main); outline: none; flex: 1; min-width: 140px;}
             
-            .santri-card { background: var(--surface); border-radius: 12px; border: 1px solid var(--border); padding: 15px; margin-bottom: 12px; display: flex; flex-direction: column; transition: 0.3s;}
+            /* Animasi Kartu Santri & Mode Fokus */
+            .santri-card { background: var(--surface); border-radius: 12px; border: 1px solid var(--border); padding: 15px; margin-bottom: 12px; display: flex; flex-direction: column; transition: all 0.3s ease;}
+            
+            /* KELAS TAMBAHAN UNTUK ANIMASI FOKUS (Saat Tanda V diklik) */
+            .santri-card.active-card { 
+                border: 2px solid var(--primary); 
+                box-shadow: 0 10px 25px rgba(79, 86, 125, 0.15); 
+                transform: scale(1.02); 
+                z-index: 5; 
+                position: relative;
+                background: #ffffff;
+            }
+
             .card-header-flex { display: flex; justify-content: space-between; align-items: center; }
             .info-santri { flex: 1; }
             .nama-santri { font-weight: 600; font-size: 1rem; color: var(--text-main); margin-bottom: 2px;}
             .nis-santri { font-size: 0.75rem; color: var(--text-muted); }
             
-            /* Radio Button Custom Absen (Miniatur) */
+            /* Radio Button Custom Absen */
             .absen-group { display: flex; gap: 4px; }
             .absen-radio { display: none; }
             .absen-label { width: 30px; height: 30px; line-height: 30px; text-align: center; border-radius: 50%; font-weight: 700; cursor: pointer; transition: 0.2s; background: #E5E7EB; color: #9CA3AF; font-size: 0.85rem;}
@@ -50,31 +61,35 @@ export function renderInputHarian() {
             .absen-radio[value="S"]:checked + .absen-label { background: #F59E0B; color: white; }
             .absen-radio[value="A"]:checked + .absen-label { background: #EF4444; color: white; }
             
-            /* Expand Button (Tanda V) */
-            .expand-btn { background: none; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; padding: 5px 15px; width: 100%; text-align: center; margin-top: 10px; transition: 0.3s;}
-            .expand-btn.active { transform: rotate(180deg); color: var(--primary); }
+            /* Expand Button (Tanda V) - MENGHILANGKAN KOTAK BIRU (OUTLINE) */
+            .expand-btn { 
+                background: none; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; 
+                padding: 5px 15px; width: 100%; text-align: center; margin-top: 10px; transition: 0.3s;
+                outline: none; -webkit-tap-highlight-color: transparent; 
+            }
+            /* ANIMASI WARNA HIJAU STABILO SAAT AKTIF */
+            .expand-btn.active { transform: rotate(180deg); color: #10B981; }
             
-            /* Accordion & Tabs Mode */
             .accordion-body { display: none; padding-top: 15px; border-top: 1px dashed var(--border); margin-top: 10px; }
             .tabs-container { display: flex; gap: 10px; margin-bottom: 15px; }
-            .tab-btn { flex: 1; padding: 8px; border: 1px solid var(--border); background: var(--bg-main); border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; color: var(--text-muted); transition: 0.2s;}
+            .tab-btn { flex: 1; padding: 8px; border: 1px solid var(--border); background: var(--bg-main); border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; color: var(--text-muted); transition: 0.2s; outline: none; -webkit-tap-highlight-color: transparent;}
             .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
             
-            /* Form Compact */
             .form-grid { display: grid; gap: 10px; }
             .compact-input { padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; width: 100%; background: var(--bg-main); outline: none;}
             .flex-row-gap { display: flex; gap: 10px; align-items: center;}
             
-            .btn-status-save { width: 100%; padding: 10px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 0.9rem; margin-top: 5px; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px;}
-            .btn-status-lulus { background: #D1FAE5; color: #065F46; }
-            .btn-status-ulang { background: #FEE2E2; color: #991B1B; }
+            /* Dua Tombol Aksi Kiri Kanan (Pengganti Dropdown 2x Klik) */
+            .btn-action-group { display: flex; gap: 10px; margin-top: 5px; }
+            .btn-status-save { flex: 1; padding: 10px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 0.9rem; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 5px; outline: none; -webkit-tap-highlight-color: transparent;}
+            .btn-status-lulus { background: #D1FAE5; color: #065F46; border: 1px solid #34D399; }
+            .btn-status-ulang { background: #FEE2E2; color: #991B1B; border: 1px solid #F87171; }
+            .btn-status-save:active { transform: scale(0.95); }
 
-            /* Notifikasi Auto-Save */
             .toast-save { font-size: 0.7rem; color: #10B981; font-weight: 600; opacity: 0; transition: 0.3s; margin-left: 5px; display: inline-flex; align-items: center; gap: 3px;}
             .toast-save.show { opacity: 1; }
         </style>
 
-        <!-- KOTAK PEMBUNGKUS HEADER DIKEMBALIKAN -->
         <div class="input-header-wrapper">
             <div class="input-header-title">
                 <i class="fas fa-clipboard-check text-primary" style="font-size: 1.2rem;"></i>
@@ -137,7 +152,7 @@ export async function initInputHarian() {
                 renderKartuSantri(santriList);
             }
         } catch (error) {
-            container.innerHTML = `<div style="text-align:center; color:red; padding:20px;">Gagal menarik data database.</div>`;
+            container.innerHTML = `<div style="text-align:center; color:red; padding:20px;">Gagal menarik data.</div>`;
         } finally {
             loader.style.display = 'none';
             container.style.opacity = '1';
@@ -196,7 +211,7 @@ export async function initInputHarian() {
                         
                         <div id="t_buku_area_${s.id}" class="flex-row-gap" style="display: ${mem.mapel !== "Al Qur'an" ? 'flex' : 'none'};">
                             <input type="number" id="t_jilid_${s.id}" class="compact-input" placeholder="Jilid" value="${mem.jilid}">
-                            <input type="number" id="t_hal_${s.id}" class="compact-input" placeholder="Halaman" value="${mem.hal}">
+                            <input type="number" id="t_hal_${s.id}" class="compact-input" placeholder="Hal" value="${mem.hal}">
                         </div>
 
                         <div id="t_quran_area_${s.id}" class="form-grid" style="display: ${mem.mapel === "Al Qur'an" ? 'grid' : 'none'};">
@@ -207,15 +222,24 @@ export async function initInputHarian() {
                                 <select id="t_q_surat_${s.id}" class="compact-input"></select>
                             </div>
                             <div class="flex-row-gap">
-                                <input type="number" id="t_q_a_awal_${s.id}" class="compact-input" placeholder="Ayt Awal">
+                                <input type="number" id="t_q_a_awal_${s.id}" class="compact-input" placeholder="Ayat Awal">
                                 <span>-</span>
-                                <input type="number" id="t_q_a_akhir_${s.id}" class="compact-input" placeholder="Ayt Akhir">
+                                <input type="number" id="t_q_a_akhir_${s.id}" class="compact-input" placeholder="Ayat Akhir">
                             </div>
                         </div>
 
-                        <button class="btn-status-save btn-status-lulus" id="btn_save_tahsin_${s.id}" data-status="Lulus" onclick="saveDataRealtime('${s.id}', 'tahsin', this)">
-                            <i class="fas fa-save"></i> Lulus (Simpan)
-                        </button>
+                        <!-- TAMBAHAN BARU: Catatan Tahsin -->
+                        <input type="text" id="t_catatan_${s.id}" class="compact-input" placeholder="Catatan tahsin (Opsional)...">
+
+                        <!-- DUA TOMBOL 1-KLIK (Lanjut Kiri, Ulang Kanan) -->
+                        <div class="btn-action-group">
+                            <button class="btn-status-save btn-status-lulus" onclick="saveDataRealtime('${s.id}', 'tahsin', 'Lulus/Lanjut', this)">
+                                <i class="fas fa-check"></i> Lanjut
+                            </button>
+                            <button class="btn-status-save btn-status-ulang" onclick="saveDataRealtime('${s.id}', 'tahsin', 'Ulang', this)">
+                                <i class="fas fa-undo"></i> Ulang
+                            </button>
+                        </div>
                     </div>
 
                     <!-- FORM TAHFIDZ -->
@@ -227,15 +251,21 @@ export async function initInputHarian() {
                             <select id="h_surat_${s.id}" class="compact-input"></select>
                         </div>
                         <div class="flex-row-gap">
-                            <input type="number" id="h_a_awal_${s.id}" class="compact-input" placeholder="Ayt Awal" value="${mem.ayatA}">
+                            <input type="number" id="h_a_awal_${s.id}" class="compact-input" placeholder="Ayat Awal" value="${mem.ayatA}">
                             <span>-</span>
-                            <input type="number" id="h_a_akhir_${s.id}" class="compact-input" placeholder="Ayt Akhir" value="${mem.ayatB}">
+                            <input type="number" id="h_a_akhir_${s.id}" class="compact-input" placeholder="Ayat Akhir" value="${mem.ayatB}">
                         </div>
-                        <input type="text" id="h_catatan_${s.id}" class="compact-input" placeholder="Catatan opsional...">
+                        <input type="text" id="h_catatan_${s.id}" class="compact-input" placeholder="Catatan tahfidz (Opsional)...">
                         
-                        <button class="btn-status-save btn-status-lulus" id="btn_save_tahfidz_${s.id}" data-status="Lanjut" onclick="saveDataRealtime('${s.id}', 'tahfidz', this)">
-                            <i class="fas fa-save"></i> Lanjut (Simpan)
-                        </button>
+                        <!-- DUA TOMBOL 1-KLIK (Lanjut Kiri, Ulang Kanan) -->
+                        <div class="btn-action-group">
+                            <button class="btn-status-save btn-status-lulus" onclick="saveDataRealtime('${s.id}', 'tahfidz', 'Lanjut', this)">
+                                <i class="fas fa-check"></i> Lanjut
+                            </button>
+                            <button class="btn-status-save btn-status-ulang" onclick="saveDataRealtime('${s.id}', 'tahfidz', 'Ulang', this)">
+                                <i class="fas fa-undo"></i> Ulang
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -246,15 +276,20 @@ export async function initInputHarian() {
         initLogikaInteraktif();
     }
     
+    // FUNGSI ANIMASI FOKUS DAN BUKA-TUTUP (V)
     window.toggleAccordion = (id) => {
         const acc = document.getElementById(`acc_${id}`);
         const btn = document.getElementById(`expandBtn_${id}`);
+        const card = document.getElementById(`card_${id}`);
+
         if(acc.style.display === 'block') {
             acc.style.display = 'none';
             btn.classList.remove('active');
+            card.classList.remove('active-card'); // Hilangkan efek fokus
         } else {
             acc.style.display = 'block';
             btn.classList.add('active');
+            card.classList.add('active-card'); // Tampilkan efek fokus (Zoom + Border)
         }
     };
 
@@ -286,6 +321,7 @@ export async function initInputHarian() {
                 const val = e.target.value;
                 const expandBtn = document.getElementById(`expandBtn_${id}`);
                 const acc = document.getElementById(`acc_${id}`);
+                const card = document.getElementById(`card_${id}`);
                 
                 saveAbsenRealtime(id, val);
 
@@ -293,6 +329,7 @@ export async function initInputHarian() {
                     expandBtn.style.display = 'none';
                     acc.style.display = 'none';
                     expandBtn.classList.remove('active');
+                    if(card) card.classList.remove('active-card'); // Pastikan fokus hilang jika tidak hadir
                 } else {
                     expandBtn.style.display = 'block';
                 }
@@ -345,19 +382,19 @@ export async function initInputHarian() {
         showToast(id);
     }
 
-    window.saveDataRealtime = async (id, jenisForm, btnElement) => {
-        let currStat = btnElement.getAttribute('data-status');
-        let newStat = (currStat === 'Lulus' || currStat === 'Lanjut') ? 'Ulang' : (jenisForm==='tahsin'?'Lulus':'Lanjut');
-        
-        btnElement.setAttribute('data-status', newStat);
+    // MODIFIKASI: Tombol 1-Klik Lulus/Lanjut/Ulang
+    window.saveDataRealtime = async (id, jenisForm, targetStatus, btnElement) => {
+        const originalText = btnElement.innerHTML;
         btnElement.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Menyimpan...`;
 
         const tgl = elTgl.value;
-        let payload = { id_santri: id, tanggal: tgl, status: newStat };
+        let payload = { id_santri: id, tanggal: tgl, status: targetStatus };
 
         if (jenisForm === 'tahsin') {
             const mapel = document.getElementById(`t_mapel_${id}`).value;
             payload.program = mapel;
+            payload.catatan = document.getElementById(`t_catatan_${id}`).value; // Menyimpan Catatan Tahsin
+            
             if(mapel === "Al Qur'an") {
                 payload.juz = document.getElementById(`t_q_juz_${id}`).value;
                 payload.surat = document.getElementById(`t_q_surat_${id}`).value;
@@ -379,9 +416,10 @@ export async function initInputHarian() {
         }
 
         setTimeout(() => {
-            btnElement.innerHTML = `<i class="fas fa-save"></i> ${newStat} (Tersimpan)`;
-            btnElement.className = newStat === 'Ulang' ? 'btn-status-save btn-status-ulang' : 'btn-status-save btn-status-lulus';
+            btnElement.innerHTML = `<i class="fas fa-check"></i> Disimpan`;
             showToast(id);
+            // Kembalikan teks asli setelah 1 detik
+            setTimeout(() => { btnElement.innerHTML = originalText; }, 1000);
         }, 500); 
     };
-        }
+    }
