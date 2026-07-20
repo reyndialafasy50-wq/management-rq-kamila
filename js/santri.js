@@ -10,7 +10,7 @@ import { api } from './api.js';
 // SIMULASI LOGIN (GANTI DI SINI UNTUK TESTING)
 // Ketik 'admin' atau 'guru'
 // ==========================================
-const currentUserRole = 'admin'; 
+const currentUserRole = 'guru'; 
 // ==========================================
 
 let santriDataUtama = [];
