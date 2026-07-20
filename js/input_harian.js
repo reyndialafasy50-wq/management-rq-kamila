@@ -1,17 +1,16 @@
 /**
  * ==================================================
- * BAGIAN 9: MODUL INPUT HARIAN SUPER (One-Stop Input)
+ * BAGIAN 9: INPUT HARIAN MOBILE-FIRST (Auto-Save Real-Time)
  * File: js/input_harian.js
  * ==================================================
  */
 import { api } from './api.js';
 
-// ==========================================
-// SIMULASI ROLE (Ganti untuk testing: 'admin' / 'guru')
 const currentUserRole = 'guru'; 
-// ==========================================
 
-// DATABASE MAPPING JUZ KE SURAT (Presisi 100%)
+// ==========================================
+// KAMUS DATA AL-QUR'AN (Presisi 100%)
+// ==========================================
 const namaSurat = [
     "", "Al-Fatihah", "Al-Baqarah", "Ali 'Imran", "An-Nisa'", "Al-Ma'idah", "Al-An'am", "Al-A'raf", "Al-Anfal", "At-Taubah", "Yunus", "Hud", "Yusuf", "Ar-Ra'd", "Ibrahim", "Al-Hijr", "An-Nahl", "Al-Isra'", "Al-Kahf", "Maryam", "Taha", "Al-Anbiya'", "Al-Hajj", "Al-Mu'minun", "An-Nur", "Al-Furqan", "Asy-Syu'ara'", "An-Naml", "Al-Qasas", "Al-'Ankabut", "Ar-Rum", "Luqman", "As-Sajdah", "Al-Ahzab", "Saba'", "Fatir", "Yasin", "As-Saffat", "Sad", "Az-Zumar", "Ghafir", "Fussilat", "Asy-Syura", "Az-Zukhruf", "Ad-Dukhan", "Al-Jasiyah", "Al-Ahqaf", "Muhammad", "Al-Fath", "Al-Hujurat", "Qaf", "Az-Zariyat", "At-Tur", "An-Najm", "Al-Qamar", "Ar-Rahman", "Al-Waqi'ah", "Al-Hadid", "Al-Mujadilah", "Al-Hasyr", "Al-Mumtahanah", "As-Saff", "Al-Jumu'ah", "Al-Munafiqun", "At-Tagabun", "At-Talaq", "At-Tahrim", "Al-Mulk", "Al-Qalam", "Al-Haqqah", "Al-Ma'arij", "Nuh", "Al-Jinn", "Al-Muzzammil", "Al-Muddassir", "Al-Qiyamah", "Al-Insan", "Al-Mursalat", "An-Naba'", "An-Nazi'at", "'Abasa", "At-Takwir", "Al-Infitar", "Al-Mutaffifin", "Al-Insyiqaq", "Al-Buruj", "At-Tariq", "Al-A'la", "Al-Gasyiyah", "Al-Fajr", "Al-Balad", "Asy-Syams", "Al-Lail", "Ad-Duha", "Asy-Syarh", "At-Tin", "Al-'Alaq", "Al-Qadr", "Al-Bayyinah", "Az-Zalzalah", "Al-'Adiyat", "Al-Qari'ah", "At-Takasur", "Al-'Asr", "Al-Humazah", "Al-Fil", "Quraisy", "Al-Ma'un", "Al-Kausar", "Al-Kafirun", "An-Nasr", "Al-Lahab", "Al-Ikhlas", "Al-Falaq", "An-Nas"
 ];
@@ -21,418 +20,383 @@ const petaJuz = {
     11: [9,10,11], 12: [11,12], 13: [12,13,14], 14: [15,16], 15: [17,18], 16: [18,19,20], 17: [21,22], 18: [23,24,25], 19: [25,26,27], 20: [27,28,29],
     21: [29,30,31,32,33], 22: [33,34,35,36], 23: [36,37,38,39], 24: [39,40,41], 25: [41,42,43,44,45],
     26: [46,47,48,49,50,51], 27: [51,52,53,54,55,56,57], 28: [58,59,60,61,62,63,64,65,66], 29: [67,68,69,70,71,72,73,74,75,76,77],
-    30: Array.from({length: 37}, (_, i) => i + 78) // 78 sampai 114
+    30: Array.from({length: 37}, (_, i) => i + 78)
 };
 
 export function renderInputHarian() {
     return `
         <style>
-            .input-table-container { overflow-x: auto; background: var(--surface); border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px;}
-            .table-input { width: 100%; min-width: 1200px; border-collapse: collapse; font-size: 0.85rem; }
-            .table-input th { background: var(--hover-bg); padding: 12px; text-align: left; font-weight: 600; color: var(--text-main); border-bottom: 2px solid var(--border); }
-            .table-input td { padding: 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
-            .table-input tr:hover { background: #fdfdfd; }
+            .input-header { background: var(--surface); padding: 15px 20px; border-radius: 12px; border: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 20px; position: sticky; top: 70px; z-index: 10; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);}
+            .input-header select, .input-header input { border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 0.9rem; background: var(--bg-main); outline: none; flex: 1; min-width: 140px;}
             
-            /* Radio Button Custom untuk Absen */
+            .santri-card { background: var(--surface); border-radius: 12px; border: 1px solid var(--border); padding: 15px; margin-bottom: 12px; display: flex; flex-direction: column; transition: 0.3s;}
+            .card-header-flex { display: flex; justify-content: space-between; align-items: center; }
+            .info-santri { flex: 1; }
+            .nama-santri { font-weight: 600; font-size: 1rem; color: var(--text-main); margin-bottom: 2px;}
+            .nis-santri { font-size: 0.75rem; color: var(--text-muted); }
+            
+            /* Radio Button Custom Absen (Miniatur) */
+            .absen-group { display: flex; gap: 4px; }
             .absen-radio { display: none; }
-            .absen-label { display: inline-block; width: 32px; height: 32px; line-height: 32px; text-align: center; border-radius: 50%; font-weight: bold; cursor: pointer; transition: 0.2s; background: #eee; color: #999; margin-right: 5px; }
-            .absen-radio[value="H"]:checked + .absen-label { background: #10B981; color: white; box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4); } /* Hadir = Hijau */
-            .absen-radio[value="I"]:checked + .absen-label { background: #3B82F6; color: white; box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4); } /* Izin = Biru */
-            .absen-radio[value="S"]:checked + .absen-label { background: #F59E0B; color: white; box-shadow: 0 2px 6px rgba(245, 158, 11, 0.4); } /* Sakit = Kuning */
-            .absen-radio[value="A"]:checked + .absen-label { background: #EF4444; color: white; box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4); } /* Alfa = Merah */
+            .absen-label { width: 30px; height: 30px; line-height: 30px; text-align: center; border-radius: 50%; font-weight: 700; cursor: pointer; transition: 0.2s; background: #E5E7EB; color: #9CA3AF; font-size: 0.85rem;}
+            .absen-radio[value="H"]:checked + .absen-label { background: #10B981; color: white; }
+            .absen-radio[value="I"]:checked + .absen-label { background: #3B82F6; color: white; }
+            .absen-radio[value="S"]:checked + .absen-label { background: #F59E0B; color: white; }
+            .absen-radio[value="A"]:checked + .absen-label { background: #EF4444; color: white; }
             
-            /* Input Compact */
-            .compact-input { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.8rem; width: 100%; outline: none; transition: 0.2s; }
-            .compact-input:focus { border-color: var(--primary); }
-            .input-group { display: flex; gap: 5px; margin-top: 5px; }
-            .w-50 { width: 50px; } .w-70 { width: 70px; } .w-100 { width: 100px; }
+            /* Expand Button (Tanda V) */
+            .expand-btn { background: none; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; padding: 5px 15px; width: 100%; text-align: center; margin-top: 10px; transition: 0.3s;}
+            .expand-btn.active { transform: rotate(180deg); color: var(--primary); }
             
-            .row-disabled { opacity: 0.4; pointer-events: none; background: #f9f9f9 !important; }
+            /* Accordion & Tabs Mode */
+            .accordion-body { display: none; padding-top: 15px; border-top: 1px dashed var(--border); margin-top: 10px; }
+            .tabs-container { display: flex; gap: 10px; margin-bottom: 15px; }
+            .tab-btn { flex: 1; padding: 8px; border: 1px solid var(--border); background: var(--bg-main); border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; color: var(--text-muted); transition: 0.2s;}
+            .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
             
-            /* Toggle Lulus/Lanjut */
-            .toggle-status { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.75rem; width: 100%; margin-top: 5px;}
-            .btn-lulus { background: #D1FAE5; color: #065F46; }
-            .btn-ulang { background: #FEE2E2; color: #991B1B; }
+            /* Form Compact */
+            .form-grid { display: grid; gap: 10px; }
+            .compact-input { padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; width: 100%; background: var(--bg-main); outline: none;}
+            .flex-row-gap { display: flex; gap: 10px; align-items: center;}
+            
+            .btn-status-save { width: 100%; padding: 10px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 0.9rem; margin-top: 5px; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px;}
+            .btn-status-lulus { background: #D1FAE5; color: #065F46; }
+            .btn-status-ulang { background: #FEE2E2; color: #991B1B; }
+
+            /* Notifikasi Auto-Save */
+            .toast-save { font-size: 0.7rem; color: #10B981; font-weight: 600; opacity: 0; transition: 0.3s; margin-left: 5px; display: inline-flex; align-items: center; gap: 3px;}
+            .toast-save.show { opacity: 1; }
         </style>
 
-        <div style="background: var(--surface); padding: 20px; border-radius: 16px; margin-bottom: 20px; border: 1px solid var(--border);">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-                <div>
-                    <h4 style="margin: 0; font-size: 1.1rem; color: var(--text-main);"><i class="fas fa-clipboard-check text-primary"></i> Input Harian Cerdas</h4>
-                    <p style="margin: 3px 0 0; font-size: 0.8rem; color: var(--text-muted);">Satu form untuk absen, tahsin, dan tahfidz secara otomatis.</p>
-                </div>
-                <div style="display: flex; gap: 10px; align-items: center;">
-                    <input type="date" id="inputTanggal" class="modern-input" style="padding: 8px 12px; border-radius: 8px;">
-                    <select id="selectKelasInput" class="modern-input" style="padding: 8px 12px; border-radius: 8px; min-width: 150px;">
-                        <option value="">Pilih Kelas...</option>
-                    </select>
-                    <button class="btn-primary" id="btnMulaiMengajar"><i class="fas fa-play"></i> Mulai</button>
-                </div>
-            </div>
+        <div class="input-header">
+            <input type="date" id="tglInputHarian">
+            <select id="kelasInputHarian">
+                <option value="">Memuat Kelas...</option>
+            </select>
+            <div id="loadingIndicator" style="display:none; color: var(--primary); font-size: 1.2rem;"><i class="fas fa-circle-notch fa-spin"></i></div>
         </div>
 
-        <div id="areaInput" style="display: none;">
-            <div class="input-table-container">
-                <table class="table-input">
-                    <thead>
-                        <tr>
-                            <th style="width: 200px;">Data Santri</th>
-                            <th style="width: 160px; text-align: center;">Kehadiran</th>
-                            <th style="width: 300px;">Tahsin / Qiroati</th>
-                            <th style="width: 300px;">Hafalan / Tahfidz</th>
-                            <th>Catatan Khusus</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tbodyInputHarian">
-                        <!-- Data akan di-render di sini oleh JavaScript -->
-                    </tbody>
-                </table>
+        <div id="listSantriContainer" style="padding-bottom: 40px;">
+            <div style="text-align:center; padding: 40px; color: var(--text-muted);">
+                <i class="fas fa-users" style="font-size:3rem; margin-bottom:15px; opacity:0.5;"></i>
+                <p>Memuat daftar santri...</p>
             </div>
-
-            <button id="btnSimpanJurnal" class="btn-primary" style="width: 100%; justify-content: center; padding: 15px; font-size: 1rem; border-radius: 12px; margin-bottom: 30px;">
-                <i class="fas fa-save" style="font-size: 1.2rem;"></i> SIMPAN JURNAL HARI INI
-            </button>
         </div>
     `;
 }
 
 export async function initInputHarian() {
-    // 1. SET TANGGAL HARI INI OTOMATIS
-    document.getElementById('inputTanggal').valueAsDate = new Date();
+    const elTgl = document.getElementById('tglInputHarian');
+    const elKelas = document.getElementById('kelasInputHarian');
+    const container = document.getElementById('listSantriContainer');
+    const loader = document.getElementById('loadingIndicator');
 
-    // 2. LOAD DAFTAR KELAS
-    const selectKelas = document.getElementById('selectKelasInput');
+    // 1. Inisialisasi Tanggal Hari Ini
+    elTgl.valueAsDate = new Date();
+
+    // 2. Load Daftar Kelas & Otomatis Load Santri
     try {
         const kelasData = await api.get('kelas', 'select=*');
-        selectKelas.innerHTML = '<option value="">Pilih Kelas...</option>';
-        kelasData.forEach(k => {
-            selectKelas.innerHTML += `<option value="${k.nama_kelas}">${k.nama_kelas}</option>`;
-        });
-        
-        // Auto-select kelas pertama jika role Guru (Simulasi)
-        if(currentUserRole === 'guru' && kelasData.length > 0) {
-            selectKelas.value = kelasData[0].nama_kelas; 
+        if(kelasData.length > 0) {
+            elKelas.innerHTML = kelasData.map(k => `<option value="${k.nama_kelas}">${k.nama_kelas}</option>`).join('');
+            // Langsung panggil data santri (Tanpa tombol mulai)
+            fetchDanRenderSantri();
+        } else {
+            elKelas.innerHTML = '<option value="">Belum ada kelas dibuat</option>';
+            container.innerHTML = '<p style="text-align:center;">Silakan buat kelas terlebih dahulu di menu Data Santri.</p>';
         }
-    } catch(err) { console.error("Gagal load kelas"); }
+    } catch(err) { console.error(err); }
 
-    // 3. MULAI MENGAJAR (LOAD SANTRI)
-    document.getElementById('btnMulaiMengajar').addEventListener('click', async () => {
-        const namaKelas = selectKelas.value;
-        const tanggal = document.getElementById('inputTanggal').value;
-        if(!namaKelas || !tanggal) return alert("Pilih kelas dan tanggal terlebih dahulu!");
+    // 3. Listener Perubahan (Bisa bolak-balik antar kelas langsung ganti)
+    elKelas.addEventListener('change', fetchDanRenderSantri);
+    elTgl.addEventListener('change', fetchDanRenderSantri);
 
-        const btn = document.getElementById('btnMulaiMengajar');
-        btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Loading...`;
+    async function fetchDanRenderSantri() {
+        if(!elKelas.value || !elTgl.value) return;
+        loader.style.display = 'block';
+        container.style.opacity = '0.5';
 
         try {
-            // Ambil santri di kelas tersebut
-            const santriData = await api.get('dapodik_santri', `select=*&nama_kelas=eq.${encodeURIComponent(namaKelas)}&order=nama_santri.asc`);
+            const santriList = await api.get('dapodik_santri', `select=*&nama_kelas=eq.${encodeURIComponent(elKelas.value)}&order=nama_santri.asc`);
             
-            if(santriData.length === 0) {
-                alert("Tidak ada santri di kelas ini.");
-                document.getElementById('areaInput').style.display = 'none';
-                return;
+            if(santriList.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding:40px; color:var(--text-muted);">Tidak ada santri di kelas ini.</div>`;
+            } else {
+                renderKartuSantri(santriList);
             }
-
-            renderTabelInput(santriData);
-            document.getElementById('areaInput').style.display = 'block';
-
-        } catch(error) {
-            alert("Gagal memuat data santri.");
+        } catch (error) {
+            container.innerHTML = `<div style="text-align:center; color:red; padding:20px;">Gagal menarik data database.</div>`;
         } finally {
-            btn.innerHTML = `<i class="fas fa-play"></i> Mulai`;
+            loader.style.display = 'none';
+            container.style.opacity = '1';
         }
-    });
+    }
 
-    // 4. RENDER TABEL (Dinamis & Pintar)
-    function renderTabelInput(santriList) {
-        const tbody = document.getElementById('tbodyInputHarian');
+    function renderKartuSantri(santriList) {
         let html = '';
-
+        
         santriList.forEach(s => {
-            // ==========================================
-            // SIMULASI AUTO-PREDICT (INGATAN SISTEM)
-            // Di sistem asli, ini nge-fetch data dari Supabase hari sebelumnya.
-            // Kita simulasikan data kemarin untuk menunjukkan logicnya berjalan.
-            // ==========================================
-            const memory = {
-                tahsinMapel: "Iqro", // Atau 'Ummi', 'Al Qur\'an'
-                tahsinJilid: 3,
-                tahsinHal: 15 + 1, // Auto-lanjut 1 halaman dari kemarin
-                tahfidzJuz: 30,
-                tahfidzSurat: 78, // An-Naba
-                tahfidzAyatAwal: 1,
-                tahfidzAyatAkhir: 10
+            // === SIMULASI AUTO-PREDICT DARI KEMARIN ===
+            const mem = {
+                mapel: "Iqro", jilid: 3, hal: 15,
+                juz: 30, surat: 78, ayatA: 1, ayatB: 10
             };
 
-            const fotoUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(s.nama_santri)}&background=F0DCD7&color=4F567D`;
-
             html += `
-            <tr id="row_${s.id}">
-                <!-- INFO SANTRI -->
-                <td>
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <img src="${fotoUrl}" style="width:36px; height:36px; border-radius:50%;">
-                        <div>
-                            <div style="font-weight:bold; font-size:0.9rem;">${s.nama_santri}</div>
-                            <div style="font-size:0.75rem; color:var(--text-muted);">NIS: ${s.nis || '-'}</div>
-                        </div>
+            <div class="santri-card" id="card_${s.id}">
+                <div class="card-header-flex">
+                    <div class="info-santri">
+                        <div class="nama-santri">${s.nama_santri} <span class="toast-save" id="toast_${s.id}"><i class="fas fa-check-circle"></i> Tersimpan</span></div>
+                        <div class="nis-santri">${s.nis || 'Tanpa NIS'}</div>
                     </div>
-                </td>
-
-                <!-- KEHADIRAN (Default Hadir) -->
-                <td style="text-align:center;">
-                    <div style="display:inline-flex;">
-                        <input type="radio" name="absen_${s.id}" id="h_${s.id}" value="H" class="absen-radio absen-trigger" data-id="${s.id}" checked>
-                        <label for="h_${s.id}" class="absen-label" title="Hadir">H</label>
-                        
-                        <input type="radio" name="absen_${s.id}" id="i_${s.id}" value="I" class="absen-radio absen-trigger" data-id="${s.id}">
-                        <label for="i_${s.id}" class="absen-label" title="Izin">I</label>
-                        
-                        <input type="radio" name="absen_${s.id}" id="s_${s.id}" value="S" class="absen-radio absen-trigger" data-id="${s.id}">
-                        <label for="s_${s.id}" class="absen-label" title="Sakit">S</label>
-                        
-                        <input type="radio" name="absen_${s.id}" id="a_${s.id}" value="A" class="absen-radio absen-trigger" data-id="${s.id}">
-                        <label for="a_${s.id}" class="absen-label" title="Alfa">A</label>
-                    </div>
-                </td>
-
-                <!-- TAHSIN (Dinamis) -->
-                <td id="tahsin_col_${s.id}">
-                    <select class="compact-input tahsin-mapel-trigger" id="tahsin_mapel_${s.id}" data-id="${s.id}">
-                        <option value="Iqro" ${memory.tahsinMapel==='Iqro'?'selected':''}>Iqro</option>
-                        <option value="Ummi" ${memory.tahsinMapel==='Ummi'?'selected':''}>Ummi</option>
-                        <option value="Al Qur'an" ${memory.tahsinMapel==='Al Qur\'an'?'selected':''}>Al Qur'an</option>
-                    </select>
                     
-                    <!-- Area Iqro/Ummi -->
-                    <div id="tahsin_buku_area_${s.id}" class="input-group" style="display: ${memory.tahsinMapel !== 'Al Qur\'an' ? 'flex' : 'none'};">
-                        <input type="number" id="t_jilid_${s.id}" class="compact-input w-50" placeholder="Jilid" value="${memory.tahsinJilid}" title="Jilid">
-                        <input type="number" id="t_hal_${s.id}" class="compact-input w-50" placeholder="Hal" value="${memory.tahsinHal}" title="Halaman">
-                        <button class="toggle-status btn-lulus" id="btn_tahsin_stat_${s.id}" onclick="toggleStatus(this)" data-status="Lulus" style="margin-top:0;">Lulus</button>
+                    <div class="absen-group">
+                        <input type="radio" name="abs_${s.id}" id="h_${s.id}" value="H" class="absen-radio trigger-absen" data-id="${s.id}" checked>
+                        <label for="h_${s.id}" class="absen-label">H</label>
+                        
+                        <input type="radio" name="abs_${s.id}" id="i_${s.id}" value="I" class="absen-radio trigger-absen" data-id="${s.id}">
+                        <label for="i_${s.id}" class="absen-label">I</label>
+                        
+                        <input type="radio" name="abs_${s.id}" id="s_${s.id}" value="S" class="absen-radio trigger-absen" data-id="${s.id}">
+                        <label for="s_${s.id}" class="absen-label">S</label>
+                        
+                        <input type="radio" name="abs_${s.id}" id="a_${s.id}" value="A" class="absen-radio trigger-absen" data-id="${s.id}">
+                        <label for="a_${s.id}" class="absen-label">A</label>
+                    </div>
+                </div>
+
+                <!-- Tanda V (Hanya muncul jika Hadir) -->
+                <button class="expand-btn" id="expandBtn_${s.id}" onclick="toggleAccordion('${s.id}')">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+
+                <!-- AREA ACCORDION (Switch Mode Sebaris) -->
+                <div class="accordion-body" id="acc_${s.id}">
+                    <div class="tabs-container">
+                        <button class="tab-btn active" id="tab_tahsin_${s.id}" onclick="switchMode('${s.id}', 'tahsin')">Tahsin</button>
+                        <button class="tab-btn" id="tab_tahfidz_${s.id}" onclick="switchMode('${s.id}', 'tahfidz')">Tahfidz</button>
                     </div>
 
-                    <!-- Area Al Qur'an -->
-                    <div id="tahsin_quran_area_${s.id}" style="display: ${memory.tahsinMapel === 'Al Qur\'an' ? 'block' : 'none'};">
-                        <div class="input-group">
-                            <select id="t_q_juz_${s.id}" class="compact-input w-70 trigger-juz" data-target="t_q_surat_${s.id}">
-                                ${generateJuzOptions(1)}
-                            </select>
-                            <select id="t_q_surat_${s.id}" class="compact-input">
-                                <!-- Diisi JS -->
-                            </select>
-                        </div>
-                        <div class="input-group">
-                            <input type="number" id="t_q_ayatawal_${s.id}" class="compact-input w-50" placeholder="Ayat"> s/d
-                            <input type="number" id="t_q_ayatakhir_${s.id}" class="compact-input w-50" placeholder="Ayat">
-                            <button class="toggle-status btn-lulus" id="btn_t_q_stat_${s.id}" onclick="toggleStatus(this)" data-status="Lanjut" style="margin-top:0;">Lanjut</button>
-                        </div>
-                    </div>
-                </td>
-
-                <!-- TAHFIDZ -->
-                <td id="tahfidz_col_${s.id}">
-                    <div class="input-group">
-                        <select id="h_juz_${s.id}" class="compact-input w-70 trigger-juz" data-target="h_surat_${s.id}">
-                            ${generateJuzOptions(memory.tahfidzJuz)}
+                    <!-- FORM TAHSIN -->
+                    <div id="form_tahsin_${s.id}" class="form-grid">
+                        <select class="compact-input trigger-mapel" id="t_mapel_${s.id}" data-id="${s.id}">
+                            <option value="Iqro" ${mem.mapel==='Iqro'?'selected':''}>Iqro</option>
+                            <option value="Ummi" ${mem.mapel==='Ummi'?'selected':''}>Ummi</option>
+                            <option value="Al Qur'an" ${mem.mapel==="Al Qur'an"?'selected':''}>Al Qur'an</option>
                         </select>
-                        <select id="h_surat_${s.id}" class="compact-input">
-                             <!-- Diisi JS -->
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <input type="number" id="h_ayatawal_${s.id}" class="compact-input w-50" placeholder="Awal" value="${memory.tahfidzAyatAwal}"> s/d
-                        <input type="number" id="h_ayatakhir_${s.id}" class="compact-input w-50" placeholder="Akhir" value="${memory.tahfidzAyatAkhir}">
-                        <button class="toggle-status btn-lulus" id="btn_h_stat_${s.id}" onclick="toggleStatus(this)" data-status="Lanjut" style="margin-top:0;">Lanjut</button>
-                    </div>
-                </td>
+                        
+                        <div id="t_buku_area_${s.id}" class="flex-row-gap" style="display: ${mem.mapel !== "Al Qur'an" ? 'flex' : 'none'};">
+                            <input type="number" id="t_jilid_${s.id}" class="compact-input" placeholder="Jilid" value="${mem.jilid}">
+                            <input type="number" id="t_hal_${s.id}" class="compact-input" placeholder="Halaman" value="${mem.hal}">
+                        </div>
 
-                <!-- CATATAN -->
-                <td>
-                    <textarea id="catatan_${s.id}" class="compact-input" style="height:60px; resize:none;" placeholder="Tulis catatan opsional..."></textarea>
-                </td>
-            </tr>
+                        <div id="t_quran_area_${s.id}" class="form-grid" style="display: ${mem.mapel === "Al Qur'an" ? 'grid' : 'none'};">
+                            <div class="flex-row-gap">
+                                <select id="t_q_juz_${s.id}" class="compact-input trigger-juz" data-target="t_q_surat_${s.id}" style="width:100px;">
+                                    ${generateJuzOptions(1)}
+                                </select>
+                                <select id="t_q_surat_${s.id}" class="compact-input"></select>
+                            </div>
+                            <div class="flex-row-gap">
+                                <input type="number" id="t_q_a_awal_${s.id}" class="compact-input" placeholder="Ayt Awal">
+                                <span>-</span>
+                                <input type="number" id="t_q_a_akhir_${s.id}" class="compact-input" placeholder="Ayt Akhir">
+                            </div>
+                        </div>
+
+                        <!-- Tombol Ini Sekaligus Menyimpan ke Database! -->
+                        <button class="btn-status-save btn-status-lulus" id="btn_save_tahsin_${s.id}" data-status="Lulus" onclick="saveDataRealtime('${s.id}', 'tahsin', this)">
+                            <i class="fas fa-save"></i> Lulus (Simpan)
+                        </button>
+                    </div>
+
+                    <!-- FORM TAHFIDZ (Awalnya Sembunyi) -->
+                    <div id="form_tahfidz_${s.id}" class="form-grid" style="display:none;">
+                        <div class="flex-row-gap">
+                            <select id="h_juz_${s.id}" class="compact-input trigger-juz" data-target="h_surat_${s.id}" style="width:100px;">
+                                ${generateJuzOptions(mem.juz)}
+                            </select>
+                            <select id="h_surat_${s.id}" class="compact-input"></select>
+                        </div>
+                        <div class="flex-row-gap">
+                            <input type="number" id="h_a_awal_${s.id}" class="compact-input" placeholder="Ayt Awal" value="${mem.ayatA}">
+                            <span>-</span>
+                            <input type="number" id="h_a_akhir_${s.id}" class="compact-input" placeholder="Ayt Akhir" value="${mem.ayatB}">
+                        </div>
+                        <input type="text" id="h_catatan_${s.id}" class="compact-input" placeholder="Catatan opsional...">
+                        
+                        <!-- Tombol Ini Sekaligus Menyimpan ke Database! -->
+                        <button class="btn-status-save btn-status-lulus" id="btn_save_tahfidz_${s.id}" data-status="Lanjut" onclick="saveDataRealtime('${s.id}', 'tahfidz', this)">
+                            <i class="fas fa-save"></i> Lanjut (Simpan)
+                        </button>
+                    </div>
+
+                </div>
+            </div>
             `;
         });
 
-        tbody.innerHTML = html;
-
-        // Inisialisasi logika dinamis setelah HTML tertanam
-        initLogikaDinamis();
+        container.innerHTML = html;
+        initLogikaInteraktif();
     }
 
-    // Fungsi Pembantu Toggle Status (Lulus/Ulang)
-    window.toggleStatus = (btn) => {
-        if(btn.getAttribute('data-status') === 'Lulus' || btn.getAttribute('data-status') === 'Lanjut') {
-            btn.setAttribute('data-status', 'Ulang');
-            btn.textContent = 'Ulang';
-            btn.className = 'toggle-status btn-ulang';
+    // ==========================================
+    // LOGIKA UI (ACCORDION, TABS, JUZ-SURAT)
+    // ==========================================
+    
+    // Buka-Tutup (V)
+    window.toggleAccordion = (id) => {
+        const acc = document.getElementById(`acc_${id}`);
+        const btn = document.getElementById(`expandBtn_${id}`);
+        if(acc.style.display === 'block') {
+            acc.style.display = 'none';
+            btn.classList.remove('active');
         } else {
-            // Kembali ke Lulus/Lanjut tergantung ID tombolnya (jika id ada kata 'tahsin_stat' berarti iqro, dsb)
-            const isQuran = btn.id.includes('t_q') || btn.id.includes('h_stat');
-            const targetText = isQuran ? 'Lanjut' : 'Lulus';
-            btn.setAttribute('data-status', targetText);
-            btn.textContent = targetText;
-            btn.className = 'toggle-status btn-lulus';
+            acc.style.display = 'block';
+            btn.classList.add('active');
         }
     };
 
-    function generateJuzOptions(selectedJuz) {
-        let opt = '';
-        for(let i=1; i<=30; i++) {
-            opt += `<option value="${i}" ${i === selectedJuz ? 'selected' : ''}>Juz ${i}</option>`;
+    // Switch Mode (Tahsin / Tahfidz Sebaris)
+    window.switchMode = (id, mode) => {
+        const tabTahsin = document.getElementById(`tab_tahsin_${id}`);
+        const tabTahfidz = document.getElementById(`tab_tahfidz_${id}`);
+        const formTahsin = document.getElementById(`form_tahsin_${id}`);
+        const formTahfidz = document.getElementById(`form_tahfidz_${id}`);
+
+        if(mode === 'tahsin') {
+            tabTahsin.classList.add('active'); tabTahfidz.classList.remove('active');
+            formTahsin.style.display = 'grid'; formTahfidz.style.display = 'none';
+        } else {
+            tabTahfidz.classList.add('active'); tabTahsin.classList.remove('active');
+            formTahfidz.style.display = 'grid'; formTahsin.style.display = 'none';
         }
+    };
+
+    function generateJuzOptions(selected) {
+        let opt = '';
+        for(let i=1; i<=30; i++) opt += `<option value="${i}" ${i === selected ? 'selected' : ''}>Juz ${i}</option>`;
         return opt;
     }
 
-    // KEKUATAN UTAMA: LOGIKA DINAMIS & CASCADING DROPDOWN
-    function initLogikaDinamis() {
-        // 1. Anti-Klik Absensi
-        document.querySelectorAll('.absen-trigger').forEach(radio => {
-            radio.addEventListener('change', (e) => {
+    function initLogikaInteraktif() {
+        // 1. Logika Anti-Klik Absensi
+        document.querySelectorAll('.trigger-absen').forEach(rad => {
+            rad.addEventListener('change', (e) => {
                 const id = e.target.getAttribute('data-id');
                 const val = e.target.value;
-                const colTahsin = document.getElementById(`tahsin_col_${id}`);
-                const colTahfidz = document.getElementById(`tahfidz_col_${id}`);
-                const colCatatan = document.getElementById(`catatan_${id}`);
+                const expandBtn = document.getElementById(`expandBtn_${id}`);
+                const acc = document.getElementById(`acc_${id}`);
+                
+                // Animasi Simpan Kehadiran Otomatis!
+                saveAbsenRealtime(id, val);
 
                 if (val !== 'H') {
-                    // Jika Tidak Hadir, disable/redupkan kolom
-                    colTahsin.classList.add('row-disabled');
-                    colTahfidz.classList.add('row-disabled');
-                    colCatatan.placeholder = `Catatan (${val === 'S' ? 'Sakit' : val === 'I' ? 'Izin' : 'Alfa'})`;
+                    // Sembunyikan V jika tidak hadir
+                    expandBtn.style.display = 'none';
+                    acc.style.display = 'none';
+                    expandBtn.classList.remove('active');
                 } else {
-                    // Jika Hadir, aktifkan kembali
-                    colTahsin.classList.remove('row-disabled');
-                    colTahfidz.classList.remove('row-disabled');
-                    colCatatan.placeholder = "Tulis catatan opsional...";
+                    expandBtn.style.display = 'block';
                 }
             });
         });
 
-        // 2. Mapel Tahsin Berubah Tampilan (Iqro vs Al-Quran)
-        document.querySelectorAll('.tahsin-mapel-trigger').forEach(select => {
-            select.addEventListener('change', (e) => {
+        // 2. Mapel Switch (Iqro vs Al-Quran)
+        document.querySelectorAll('.trigger-mapel').forEach(sel => {
+            sel.addEventListener('change', (e) => {
                 const id = e.target.getAttribute('data-id');
                 const val = e.target.value;
-                const areaBuku = document.getElementById(`tahsin_buku_area_${id}`);
-                const areaQuran = document.getElementById(`tahsin_quran_area_${id}`);
-                
-                if (val === "Al Qur'an") {
-                    areaBuku.style.display = 'none';
-                    areaQuran.style.display = 'block';
-                    // Trigger dropdown surat pertama kali
-                    document.getElementById(`t_q_juz_${id}`).dispatchEvent(new Event('change'));
-                } else {
-                    areaBuku.style.display = 'flex';
-                    areaQuran.style.display = 'none';
-                }
+                document.getElementById(`t_buku_area_${id}`).style.display = (val !== "Al Qur'an") ? 'flex' : 'none';
+                document.getElementById(`t_quran_area_${id}`).style.display = (val === "Al Qur'an") ? 'grid' : 'none';
+                if(val === "Al Qur'an") document.getElementById(`t_q_juz_${id}`).dispatchEvent(new Event('change'));
             });
         });
 
-        // 3. CASCADING DROPDOWN (Juz -> Surat)
-        document.querySelectorAll('.trigger-juz').forEach(selectJuz => {
-            selectJuz.addEventListener('change', (e) => {
+        // 3. Cascading Dropdown Juz -> Surat
+        document.querySelectorAll('.trigger-juz').forEach(selJuz => {
+            selJuz.addEventListener('change', (e) => {
                 const juzAngka = parseInt(e.target.value);
-                const idDropdownSuratTarget = e.target.getAttribute('data-target');
-                const selectSurat = document.getElementById(idDropdownSuratTarget);
-                
-                // Ambil daftar surat dari pemetaan
+                const tgt = document.getElementById(e.target.getAttribute('data-target'));
                 const daftarSuratId = petaJuz[juzAngka] || [];
-                
-                selectSurat.innerHTML = '';
-                daftarSuratId.forEach(idSurat => {
-                    selectSurat.innerHTML += `<option value="${namaSurat[idSurat]}">${idSurat}. ${namaSurat[idSurat]}</option>`;
-                });
+                tgt.innerHTML = daftarSuratId.map(idS => `<option value="${namaSurat[idS]}">${idS}. ${namaSurat[idS]}</option>`).join('');
             });
-            // Eksekusi untuk isi dropdown awal saat di-render
-            selectJuz.dispatchEvent(new Event('change')); 
+            selJuz.dispatchEvent(new Event('change'));
         });
     }
 
-    // ============================================
-    // MESIN PENYIMPAN (Pecah Data Otomatis)
-    // ============================================
-    document.getElementById('btnSimpanJurnal').addEventListener('click', async () => {
-        if(!confirm("Simpan jurnal harian untuk kelas ini?")) return;
-        
-        const btn = document.getElementById('btnSimpanJurnal');
-        btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> MENYIMPAN KE DATABASE...`;
-        btn.disabled = true;
+    // ==========================================
+    // MESIN AUTO-SAVE (REAL-TIME UPSERT)
+    // ==========================================
+    
+    // Tampilkan Toast "Tersimpan"
+    const showToast = (id) => {
+        const t = document.getElementById(`toast_${id}`);
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 2000);
+    };
 
-        const tgl = document.getElementById('inputTanggal').value;
-        const barisData = document.querySelectorAll('#tbodyInputHarian tr');
-        let success = 0;
-
+    // Fungsi Utama Upsert (Cek Jika Ada, Update. Jika Tidak, Buat Baru)
+    async function upsertData(table, queryMatch, payload) {
         try {
-            // Kita proses tiap baris secara massal
-            const promises = Array.from(barisData).map(async (row) => {
-                const idSantri = row.id.replace('row_', '');
-                
-                // Ambil Nilai Absensi
-                let absenVal = 'H';
-                if(row.querySelector(`input[name="absen_${idSantri}"][value="I"]`).checked) absenVal = 'I';
-                if(row.querySelector(`input[name="absen_${idSantri}"][value="S"]`).checked) absenVal = 'S';
-                if(row.querySelector(`input[name="absen_${idSantri}"][value="A"]`).checked) absenVal = 'A';
+            const existing = await api.get(table, queryMatch);
+            if(existing && existing.length > 0) {
+                await api.update(table, existing[0].id, payload);
+            } else {
+                await api.post(table, payload);
+            }
+        } catch(e) { console.error("AutoSave Error:", e); }
+    }
 
-                const catatan = document.getElementById(`catatan_${idSantri}`).value;
+    // A. Simpan Absen Saja (Otomatis saat diklik H/I/S/A)
+    async function saveAbsenRealtime(id, status) {
+        const tgl = elTgl.value;
+        await upsertData('kehadiran', `id_santri=eq.${id}&tanggal=eq.${tgl}`, {
+            id_santri: id, tanggal: tgl, status_kehadiran: status
+        });
+        showToast(id);
+    }
 
-                // 1. Simpan ke tabel KEHADIRAN (Sesuai janji: Pecah data)
-                await api.post('kehadiran', {
-                    id_santri: idSantri,
-                    tanggal: tgl,
-                    status_kehadiran: absenVal,
-                    keterangan: catatan
-                }).catch(e => console.log("Skip/Error Kehadiran")); // Hindari stop total jika error 1 anak
+    // B. Simpan Tahsin / Tahfidz (Otomatis saat klik Lulus/Ulang)
+    window.saveDataRealtime = async (id, jenisForm, btnElement) => {
+        // Efek UI Toggle Button (Lulus -> Ulang -> Lulus)
+        let currStat = btnElement.getAttribute('data-status');
+        let newStat = (currStat === 'Lulus' || currStat === 'Lanjut') ? 'Ulang' : (jenisForm==='tahsin'?'Lulus':'Lanjut');
+        
+        btnElement.setAttribute('data-status', newStat);
+        btnElement.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Menyimpan...`;
 
-                // Jika Hadir, baru simpan Tahsin & Tahfidz
-                if (absenVal === 'H') {
-                    // --- TAHSIN ---
-                    const mapelTahsin = document.getElementById(`tahsin_mapel_${idSantri}`).value;
-                    let payloadTahsin = { id_santri: idSantri, tanggal: tgl, program: mapelTahsin };
-                    
-                    if (mapelTahsin === "Al Qur'an") {
-                        payloadTahsin.juz = document.getElementById(`t_q_juz_${idSantri}`).value;
-                        payloadTahsin.surat = document.getElementById(`t_q_surat_${idSantri}`).value;
-                        payloadTahsin.ayat_awal = document.getElementById(`t_q_ayatawal_${idSantri}`).value;
-                        payloadTahsin.ayat_akhir = document.getElementById(`t_q_ayatakhir_${idSantri}`).value;
-                        payloadTahsin.status = document.getElementById(`btn_t_q_stat_${idSantri}`).getAttribute('data-status');
-                    } else {
-                        payloadTahsin.jilid = document.getElementById(`t_jilid_${idSantri}`).value;
-                        payloadTahsin.halaman = document.getElementById(`t_hal_${idSantri}`).value;
-                        payloadTahsin.status = document.getElementById(`btn_tahsin_stat_${idSantri}`).getAttribute('data-status');
-                    }
-                    await api.post('tahsin', payloadTahsin).catch(e => {});
+        const tgl = elTgl.value;
+        let payload = { id_santri: id, tanggal: tgl, status: newStat };
 
-                    // --- TAHFIDZ ---
-                    const payloadTahfidz = {
-                        id_santri: idSantri,
-                        tanggal: tgl,
-                        juz: document.getElementById(`h_juz_${idSantri}`).value,
-                        surat: document.getElementById(`h_surat_${idSantri}`).value,
-                        ayat_awal: document.getElementById(`h_ayatawal_${idSantri}`).value,
-                        ayat_akhir: document.getElementById(`h_ayatakhir_${idSantri}`).value,
-                        status: document.getElementById(`btn_h_stat_${idSantri}`).getAttribute('data-status'),
-                        catatan: catatan
-                    };
-                    await api.post('hafalan', payloadTahfidz).catch(e => {});
-                }
-                
-                success++;
-            });
-
-            // Eksekusi semua secara paralel agar super cepat (Tidak menunggu satu-satu)
-            await Promise.all(promises);
-
-            alert(`Alhamdulillah! Jurnal Harian berhasil disimpan (${success} Santri diproses).`);
-            document.getElementById('areaInput').style.display = 'none'; // Tutup layar setelah sukses
-            
-        } catch(error) {
-            alert("Terjadi kesalahan saat menyimpan data.");
-            console.error(error);
-        } finally {
-            btn.innerHTML = `<i class="fas fa-save"></i> SIMPAN JURNAL HARI INI`;
-            btn.disabled = false;
+        if (jenisForm === 'tahsin') {
+            const mapel = document.getElementById(`t_mapel_${id}`).value;
+            payload.program = mapel;
+            if(mapel === "Al Qur'an") {
+                payload.juz = document.getElementById(`t_q_juz_${id}`).value;
+                payload.surat = document.getElementById(`t_q_surat_${id}`).value;
+                payload.ayat_awal = document.getElementById(`t_q_a_awal_${id}`).value;
+                payload.ayat_akhir = document.getElementById(`t_q_a_akhir_${id}`).value;
+            } else {
+                payload.jilid = document.getElementById(`t_jilid_${id}`).value;
+                payload.halaman = document.getElementById(`t_hal_${id}`).value;
+            }
+            await upsertData('tahsin', `id_santri=eq.${id}&tanggal=eq.${tgl}`, payload);
+        
+        } else if (jenisForm === 'tahfidz') {
+            payload.juz = document.getElementById(`h_juz_${id}`).value;
+            payload.surat = document.getElementById(`h_surat_${id}`).value;
+            payload.ayat_awal = document.getElementById(`h_a_awal_${id}`).value;
+            payload.ayat_akhir = document.getElementById(`h_a_akhir_${id}`).value;
+            payload.catatan = document.getElementById(`h_catatan_${id}`).value;
+            await upsertData('hafalan', `id_santri=eq.${id}&tanggal=eq.${tgl}`, payload);
         }
-    });
+
+        // Kembalikan Desain Tombol setelah sukses simpan
+        setTimeout(() => {
+            btnElement.innerHTML = `<i class="fas fa-save"></i> ${newStat} (Tersimpan)`;
+            btnElement.className = newStat === 'Ulang' ? 'btn-status-save btn-status-ulang' : 'btn-status-save btn-status-lulus';
+            showToast(id);
+        }, 500); // Simulasi Loading sebentar agar terasa tersimpan
+    };
 }
