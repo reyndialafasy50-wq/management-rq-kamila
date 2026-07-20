@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * BAGIAN 8: MODUL DATA SANTRI (RBAC - Admin vs Guru)
+ * BAGIAN 8: MODUL DATA SANTRI (RBAC - Presisi 50:50)
  * File: js/santri.js
  * ==================================================
  */
@@ -32,22 +32,22 @@ export function renderSantri() {
         <div style="background: var(--surface); padding: 20px; border-radius: 16px; margin-bottom: 20px; border: 1px solid var(--border);">
             <div>
                 <h4 style="margin: 0; font-size: 1rem; color: var(--text-main);"><i class="fas fa-chalkboard-teacher text-info"></i> Manajemen Santri & Kelas</h4>
-                <p style="margin: 3px 0 0; font-size: 0.75rem; color: var(--text-muted); padding-bottom: 15px;">
+                <p style="margin: 3px 0 0; font-size: 0.75rem; color: var(--text-muted); padding-bottom: 10px;">
                     Role saat ini: <strong style="color:var(--primary); text-transform:uppercase;">${currentUserRole}</strong>
                 </p>
             </div>
             
-            <!-- MENU KHUSUS ADMIN -->
-            <div class="action-grid-3" id="menuAdmin" style="display: none;">
-                <button class="btn-secondary" id="btnTambahSantri"><i class="fas fa-user-plus"></i> Tambah Santri</button>
+            <!-- MENU KHUSUS ADMIN (TOMBOL 50:50 PRESISI) -->
+            <div id="menuAdmin" style="display: none; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; margin-top: 5px;">
+                <button class="btn-secondary" id="btnTambahSantri" style="width: 100%; justify-content: center;"><i class="fas fa-user-plus"></i> Tambah Santri</button>
                 <input type="file" id="fileExcel" accept=".xlsx, .xls" style="display: none;">
-                <button class="btn-secondary" id="btnImportExcel"><i class="fas fa-file-excel"></i> Upload Dapodik</button>
+                <button class="btn-secondary" id="btnImportExcel" style="width: 100%; justify-content: center;"><i class="fas fa-file-excel"></i> Upload Dapodik</button>
             </div>
 
-            <!-- MENU KHUSUS GURU -->
-            <div class="action-grid-3" id="menuGuru" style="display: none;">
-                <button class="btn-secondary" id="btnTambahKelas"><i class="fas fa-plus"></i> Buat Kelas</button>
-                <button class="btn-secondary" id="btnTarikSantri" style="background-color: var(--primary); color: white; border: none;"><i class="fas fa-users-cog"></i> Tarik Santri</button>
+            <!-- MENU KHUSUS GURU (TOMBOL 50:50 PRESISI) -->
+            <div id="menuGuru" style="display: none; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; margin-top: 5px;">
+                <button class="btn-secondary" id="btnTambahKelas" style="width: 100%; justify-content: center;"><i class="fas fa-plus"></i> Buat Kelas</button>
+                <button class="btn-secondary" id="btnTarikSantri" style="background-color: var(--primary); color: white; border: none; width: 100%; justify-content: center;"><i class="fas fa-users-cog"></i> Tarik Santri</button>
             </div>
         </div>
 
@@ -219,7 +219,6 @@ export async function initSantri() {
         document.getElementById('btnExportExcel').style.display = 'inline-flex';
     } else if (currentUserRole === 'guru') {
         document.getElementById('menuGuru').style.display = 'grid';
-        // Guru disuruh memilih kelasnya di filter tabel agar hanya melihat muridnya
         document.getElementById('filterKelas').innerHTML = '<option value="">-- Tampilkan Kelas Anda --</option>'; 
     }
     // ------------------------------------------
@@ -247,9 +246,9 @@ export async function initSantri() {
             
             // Render Awal Tabel
             if (currentUserRole === 'admin') {
-                renderTable(santriDataUtama); // Admin langsung lihat semua
+                renderTable(santriDataUtama);
             } else {
-                renderTable([]); // Guru melihat tabel kosong sampai dia memfilter kelasnya
+                renderTable([]);
             }
         } catch (error) {
             if(tbody) tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Gagal memuat database.</td></tr>`;
@@ -294,9 +293,7 @@ export async function initSantri() {
     // ============================================
     if(document.getElementById('btnTarikSantri')) {
         document.getElementById('btnTarikSantri').addEventListener('click', () => {
-            // Saring santri yang belum punya kelas
             const belumAdaKelas = santriDataUtama.filter(s => !s.nama_kelas || s.nama_kelas.trim() === '');
-            
             const listTbody = document.getElementById('listTarikSantri');
             if (belumAdaKelas.length === 0) {
                 listTbody.innerHTML = `<tr><td colspan="2" style="text-align:center;">Semua santri di database sudah memiliki kelas.</td></tr>`;
@@ -311,7 +308,6 @@ export async function initSantri() {
                     </tr>
                 `).join('');
             }
-            
             document.getElementById('checkAllTarik').checked = false;
             document.getElementById('tarikKelasTujuan').value = '';
             document.getElementById('modalTarik').classList.add('active');
@@ -336,7 +332,6 @@ export async function initSantri() {
             btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Sedang Menarik Data...`;
 
             try {
-                // Proses penyimpanan massal (Multiple Update)
                 const promises = Array.from(checked).map(chk => 
                     api.update('dapodik_santri', chk.value, { nama_kelas: kelasTujuan })
                 );
@@ -345,7 +340,6 @@ export async function initSantri() {
                 document.getElementById('modalTarik').classList.remove('active');
                 alert(`Sukses! ${checked.length} santri berhasil ditarik masuk ke kelas ${kelasTujuan}.`);
                 
-                // Ubah filter langsung ke kelas yang baru saja diisi agar guru bisa melihat hasilnya
                 filterKelas.value = kelasTujuan;
                 await loadData();
                 filterData(); 
@@ -361,12 +355,12 @@ export async function initSantri() {
     // LOGIKA KELUARKAN SANTRI DARI KELAS (GURU)
     // ============================================
     const handleKeluarkan = async (e) => {
-        if(confirm("Yakin ingin mengeluarkan santri ini dari kelas Anda? (Data santri tidak akan dihapus dari sistem, hanya status kelasnya saja yang hilang).")) {
+        if(confirm("Yakin ingin mengeluarkan santri ini dari kelas Anda? (Data santri tidak dihapus, hanya status kelasnya saja yang direset).")) {
             e.currentTarget.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
             try {
                 await api.update('dapodik_santri', e.currentTarget.getAttribute('data-id'), { nama_kelas: null });
                 await loadData();
-                filterData(); // Pertahankan tampilan kelas saat ini
+                filterData(); 
             } catch (err) {
                 alert("Gagal mengeluarkan santri.");
             }
@@ -383,31 +377,26 @@ export async function initSantri() {
     function filterData() {
         const keyword = document.getElementById('searchSantri').value.toLowerCase();
         const kelas = filterKelas.value;
-        
         let filtered = [];
         
         if (currentUserRole === 'guru') {
-            // Guru wajib memilih kelas untuk melihat data
             if(kelas === "") {
-                renderTable([]); // Kosongkan tabel jika tidak ada kelas yang dipilih
+                renderTable([]);
                 return;
             }
             filtered = santriDataUtama.filter(s => s.nama_kelas === kelas);
         } else {
-            // Admin bisa melihat semua atau difilter
             filtered = santriDataUtama.filter(s => (kelas === "" || s.nama_kelas === kelas));
         }
 
-        // Terapkan pencarian kata kunci
         if (keyword) {
             filtered = filtered.filter(s => s.nama_santri.toLowerCase().includes(keyword) || (s.nis && s.nis.toLowerCase().includes(keyword)));
         }
-
         renderTable(filtered);
     }
 
     // ============================================
-    // FITUR STANDAR (BUAT KELAS, EDIT PROFIL, DAPODIK)
+    // FITUR STANDAR
     // ============================================
     window.bukaProfil = (id) => {
         const s = santriDataUtama.find(x => x.id === id);
@@ -432,13 +421,12 @@ export async function initSantri() {
                 bukaFormEdit(s);
             };
         } else {
-            btnEditProf.style.display = 'none'; // Guru tidak boleh edit profil utama
+            btnEditProf.style.display = 'none';
         }
 
         document.getElementById('modalProfil').classList.add('active');
     };
 
-    // Logika Buat Kelas
     if(document.getElementById('btnTambahKelas')) {
         document.getElementById('btnTambahKelas').addEventListener('click', () => {
             document.getElementById('formKelas').reset();
@@ -473,7 +461,6 @@ export async function initSantri() {
         });
     }
 
-    // Logika Tambah/Edit Santri Manual (Khusus Admin)
     if(document.getElementById('btnTambahSantri')) {
         document.getElementById('btnTambahSantri').addEventListener('click', () => {
             document.getElementById('formSantri').reset();
@@ -521,9 +508,6 @@ export async function initSantri() {
         });
     }
 
-    // ============================================
-    // DAPODIK UPLOAD & EXPORT (KHUSUS ADMIN)
-    // ============================================
     const btnImport = document.getElementById('btnImportExcel');
     const fileInput = document.getElementById('fileExcel');
 
@@ -548,7 +532,6 @@ export async function initSantri() {
                         const row = jsonArray[i];
                         if (row.length === 0 || !row.some(cell => cell !== "")) continue;
                         
-                        // Menyesuaikan dengan format kolom di Excel Dapodik yang sebelumnya disepakati
                         const nama = row[1] || ''; 
                         const nis = row[2] || ''; 
                         const jkRaw = row[3] || ''; 
@@ -573,7 +556,7 @@ export async function initSantri() {
                                     tempat_lahir: String(tempatLahir).trim(), tanggal_lahir: String(tanggalLahir).trim(), nik: String(nik).trim(),
                                     alamat: String(alamat).trim(), asal_sekolah: String(asalSekolah).trim(), nama_ayah: String(namaAyah).trim(),
                                     status_ayah: String(statusAyah).trim(), nama_ibu: String(namaIbu).trim(), status_ibu: String(statusIbu).trim(),
-                                    no_wa: String(noWa).trim(), wali: String(wali).trim(), nama_kelas: null // Default belum ada kelas
+                                    no_wa: String(noWa).trim(), wali: String(wali).trim(), nama_kelas: null 
                                 });
                                 successCount++;
                             } catch (dbError) { console.error("Lewati baris:", dbError); }
@@ -595,7 +578,6 @@ export async function initSantri() {
             const btn = document.getElementById('btnExportExcel');
             btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i>...`;
             
-            // Format Export Standar
             const ws = XLSX.utils.json_to_sheet(santriDataUtama.map((s, index) => ({
                 "NO": index + 1, "NAMA SANTRI": s.nama_santri || "", "NIS": s.nis || "", "L/P": s.jenis_kelamin || "",
                 "KELAS TERDAFTAR": s.nama_kelas || "Belum ada", "NOMOR WA": s.no_wa || ""
