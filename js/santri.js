@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * BAGIAN 8: MODUL DATA SANTRI (Form Kelas Modern UI)
+ * BAGIAN 8: MODUL DATA SANTRI (Form Modern + Fitur Excel)
  * File: js/santri.js
  * ==================================================
  */
@@ -9,10 +9,21 @@ import { api } from './api.js';
 let santriData = [];
 let kelasData = [];
 
+// FUNGSI PINTAR: Memuat library Excel otomatis tanpa sentuh HTML
+async function loadExcelLibrary() {
+    return new Promise((resolve, reject) => {
+        if (typeof window.XLSX !== 'undefined') return resolve();
+        const script = document.createElement('script');
+        script.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+    });
+}
+
 // 1. Ekspor Struktur HTML UI
 export function renderSantri() {
     return `
-        <!-- Area Pengaturan & Aksi -->
         <div style="background: var(--surface); padding: 20px; border-radius: 16px; margin-bottom: 20px; border: 1px solid var(--border);">
             <div>
                 <h4 style="margin: 0; font-size: 1rem; color: var(--text-main);"><i class="fas fa-chalkboard-teacher text-info"></i> Manajemen Santri & Kelas</h4>
@@ -27,7 +38,6 @@ export function renderSantri() {
             </div>
         </div>
 
-        <!-- Toolbar Pencarian & Filter -->
         <div class="toolbar-flex">
             <div class="search-box">
                 <i class="fas fa-search"></i>
@@ -39,7 +49,6 @@ export function renderSantri() {
             <button class="btn-secondary btn-export" id="btnExportExcel"><i class="fas fa-download"></i> Export</button>
         </div>
 
-        <!-- Tabel Data -->
         <div class="custom-table-container">
             <table class="custom-table">
                 <thead>
@@ -58,7 +67,7 @@ export function renderSantri() {
         </div>
 
         <!-- ================= MODALS ================= -->
-
+        
         <!-- Modal Tambah Kelas Baru -->
         <div class="modal-overlay" id="modalKelas">
             <div class="modal-card" style="max-width: 420px; padding: 25px;">
@@ -72,7 +81,6 @@ export function renderSantri() {
                         <input type="text" id="inputNamaKelas" class="modern-input" required placeholder="Contoh: Abu Bakar">
                     </div>
                     
-                    <!-- GRID JAM SEJAJAR PRESISI -->
                     <div class="time-grid">
                         <div class="time-col">
                             <label class="modern-label">Jam Mulai</label>
@@ -181,6 +189,9 @@ export function renderSantri() {
 
 // 2. Logika Utama
 export async function initSantri() {
+    // Memuat Library Excel di belakang layar
+    loadExcelLibrary();
+
     const tbody = document.getElementById('tableBodySantri');
     const filterKelas = document.getElementById('filterKelas');
     const selectKelasForm = document.getElementById('kelasId');
@@ -190,7 +201,6 @@ export async function initSantri() {
         try {
             kelasData = await api.get('kelas', 'select=*');
             let opsiKelas = '';
-            // Teks dropdown menampilkan Hari & Jam agar lebih informatif
             kelasData.forEach(k => {
                 const infoHari = k.hari_kelas ? `${k.hari_kelas} | ` : '';
                 opsiKelas += `<option value="${k.nama_kelas}">${k.nama_kelas} (${infoHari}${k.jam_kelas})</option>`;
@@ -264,16 +274,14 @@ export async function initSantri() {
     }
 
     // ============================================
-    // LOGIKA PEMBUATAN KELAS MODERN (REVISI)
+    // LOGIKA KELAS
     // ============================================
     document.getElementById('btnTambahKelas').addEventListener('click', () => {
         document.getElementById('formKelas').reset();
-        // Reset warna chips
         document.querySelectorAll('.day-chip').forEach(c => c.classList.remove('active'));
         document.getElementById('modalKelas').classList.add('active');
     });
 
-    // Interaksi klik pada pil hari
     document.querySelectorAll('.day-chip').forEach(chip => {
         chip.addEventListener('click', function() {
             this.classList.toggle('active');
@@ -282,38 +290,22 @@ export async function initSantri() {
 
     document.getElementById('formKelas').addEventListener('submit', async (e) => {
         e.preventDefault();
-        
-        // Ambil array hari yang sedang memiliki class 'active'
-        const selectedDays = Array.from(document.querySelectorAll('.day-chip.active'))
-                                  .map(chip => chip.getAttribute('data-hari'));
-                                  
-        if(selectedDays.length === 0) {
-            alert("Silakan pilih minimal 1 hari belajar!");
-            return;
-        }
+        const selectedDays = Array.from(document.querySelectorAll('.day-chip.active')).map(c => c.getAttribute('data-hari'));
+        if(selectedDays.length === 0) return alert("Silakan pilih minimal 1 hari belajar!");
 
         const btn = document.getElementById('btnSimpanKelas');
         btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Menyimpan...`;
 
-        const namaK = document.getElementById('inputNamaKelas').value;
-        const jamMulai = document.getElementById('inputJamMulai').value;
-        const jamSelesai = document.getElementById('inputJamSelesai').value;
-        const jamK = `${jamMulai} - ${jamSelesai}`;
-        const hariK = selectedDays.join(', '); // Hasilnya jadi: "SEN, RAB, JUM"
-
         try {
             await api.post('kelas', { 
-                nama_kelas: namaK, 
-                jam_kelas: jamK, 
-                hari_kelas: hariK // Mengirim ke kolom baru di Supabase
+                nama_kelas: document.getElementById('inputNamaKelas').value, 
+                jam_kelas: `${document.getElementById('inputJamMulai').value} - ${document.getElementById('inputJamSelesai').value}`, 
+                hari_kelas: selectedDays.join(', ')
             });
             document.getElementById('modalKelas').classList.remove('active');
             await loadData();
-        } catch(error) {
-            alert("Gagal menyimpan kelas. Pastikan kolom 'hari_kelas' sudah Anda buat di Supabase!");
-        } finally {
-            btn.innerHTML = `<i class="fas fa-save"></i> Simpan Kelas`;
-        }
+        } catch(error) { alert("Gagal menyimpan kelas."); } 
+        finally { btn.innerHTML = `<i class="fas fa-save"></i> Simpan Kelas`; }
     });
 
     // ============================================
@@ -338,8 +330,7 @@ export async function initSantri() {
     };
     
     const handleEdit = (e) => {
-        const id = e.currentTarget.getAttribute('data-id');
-        const s = santriData.find(x => x.id === id);
+        const s = santriData.find(x => x.id === e.currentTarget.getAttribute('data-id'));
         if(s) bukaFormEdit(s);
     };
 
@@ -359,7 +350,6 @@ export async function initSantri() {
         try {
             if(id) await api.update('dapodik_santri', id, payload);
             else await api.post('dapodik_santri', payload);
-            
             document.getElementById('modalSantri').classList.remove('active');
             await loadData();
         } catch (error) { alert("Gagal menyimpan data."); } 
@@ -367,8 +357,7 @@ export async function initSantri() {
     });
 
     const handleMutasi = (e) => {
-        const id = e.currentTarget.getAttribute('data-id');
-        const s = santriData.find(x => x.id === id);
+        const s = santriData.find(x => x.id === e.currentTarget.getAttribute('data-id'));
         if(s) {
             document.getElementById('mutasiId').value = s.id;
             document.getElementById('mutasiNama').textContent = s.nama_santri;
@@ -378,13 +367,10 @@ export async function initSantri() {
     };
     
     document.getElementById('btnSimpanMutasi').addEventListener('click', async (e) => {
-        const id = document.getElementById('mutasiId').value;
-        const kelasBaru = document.getElementById('mutasiKelasId').value;
         const btn = e.currentTarget;
-        
         btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Memproses...`;
         try {
-            await api.update('dapodik_santri', id, { nama_kelas: kelasBaru });
+            await api.update('dapodik_santri', document.getElementById('mutasiId').value, { nama_kelas: document.getElementById('mutasiKelasId').value });
             document.getElementById('modalMutasi').classList.remove('active');
             await loadData();
         } catch(error) { alert("Gagal pindah kelas."); }
@@ -393,12 +379,97 @@ export async function initSantri() {
 
     const handleDelete = async (e) => {
         if(confirm("Yakin hapus santri ini?")) {
-            const id = e.currentTarget.getAttribute('data-id');
             e.currentTarget.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
-            await api.delete('dapodik_santri', id);
+            await api.delete('dapodik_santri', e.currentTarget.getAttribute('data-id'));
             await loadData();
         }
     };
+
+    // ============================================
+    // LOGIKA EXPORT & IMPORT EXCEL (DAPODIK)
+    // ============================================
+
+    // 1. EXPORT DATA (Download ke Excel)
+    document.getElementById('btnExportExcel').addEventListener('click', () => {
+        if (typeof window.XLSX === 'undefined') return alert("Sistem masih memuat komponen Excel. Coba lagi dalam 3 detik.");
+        if (santriData.length === 0) return alert("Belum ada data santri untuk diexport!");
+
+        const btn = document.getElementById('btnExportExcel');
+        btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Proses...`;
+
+        // Siapkan format kolom untuk Excel
+        const dataToExport = santriData.map((s, index) => ({
+            "NO": index + 1,
+            "NIS": s.nis,
+            "NAMA SANTRI": s.nama_santri,
+            "L/P": s.jenis_kelamin,
+            "KELAS": s.nama_kelas || '-'
+        }));
+
+        // Proses pembuatan file
+        const ws = XLSX.utils.json_to_sheet(dataToExport);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Data Santri");
+        XLSX.writeFile(wb, "Dapodik_Santri_Kamila.xlsx");
+        
+        btn.innerHTML = `<i class="fas fa-download"></i> Export`;
+    });
+
+    // 2. IMPORT DATA (Upload Excel Dapodik)
+    const btnImport = document.getElementById('btnImportExcel');
+    const fileInput = document.getElementById('fileExcel');
+
+    btnImport.addEventListener('click', () => fileInput.click()); // Pemicu file upload
+
+    fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if(!file) return;
+        if (typeof window.XLSX === 'undefined') return alert("Tunggu sebentar, sistem sedang memuat komponen pembaca Excel.");
+
+        btnImport.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Mengunggah...`;
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            try {
+                const data = new Uint8Array(event.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+                let successCount = 0;
+                
+                // Menyimpan data per baris ke Supabase
+                for(const row of jsonData) {
+                    // Deteksi nama kolom cerdas (mengatasi perbedaan ketikan spasi/huruf besar)
+                    const nis = row['NIS'] || row['nis'] || '';
+                    const nama = row['NAMA SANTRI'] || row['NAMA'] || row['nama_santri'] || '';
+                    const jk = row['L/P'] || row['JK'] || row['jenis_kelamin'] || '';
+                    const kelas = row['KELAS'] || row['nama_kelas'] || '';
+
+                    if(nama) {
+                        await api.post('dapodik_santri', {
+                            nis: String(nis),
+                            nama_santri: nama,
+                            jenis_kelamin: (jk.toString().toUpperCase() === 'P') ? 'P' : 'L',
+                            nama_kelas: kelas
+                        });
+                        successCount++;
+                    }
+                }
+                
+                alert(`Upload Sukses! Berhasil mengimpor ${successCount} data santri.`);
+                await loadData(); // Muat ulang tabel
+
+            } catch (error) {
+                alert("Gagal membaca file Excel. Pastikan format kolomnya adalah: NIS | NAMA SANTRI | L/P | KELAS.");
+            } finally {
+                btnImport.innerHTML = `<i class="fas fa-file-excel"></i> Dapodik`;
+                fileInput.value = ''; // Reset input agar bisa upload file yang sama lagi
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    });
 
     loadData();
 }
