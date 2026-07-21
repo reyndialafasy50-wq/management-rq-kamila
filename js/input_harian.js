@@ -366,6 +366,7 @@ export async function initInputHarian() {
         setTimeout(() => t.classList.remove('show'), 2000);
     };
 
+    // FUNGSI INI SUDAH DISUNTIK DENGAN "DETEKTIF ERROR"
     async function upsertData(table, queryMatch, payload) {
         try {
             const existing = await api.get(table, queryMatch);
@@ -374,10 +375,14 @@ export async function initInputHarian() {
             } else {
                 await api.post(table, payload);
             }
-        } catch(e) { console.error("AutoSave Error:", e); }
+        } catch(e) { 
+            // ALAT PELACAK: Menampilkan pop-up error langsung ke layar HP
+            alert(`🚨 GAGAL MENYIMPAN KE [${table}]\nAlasan: ${e.message || JSON.stringify(e)}`);
+            console.error("AutoSave Error:", e); 
+        }
     }
 
-    // 1. FUNGSI SIMPAN ABSENSI (Fix Kolom & Value Baku)
+    // 1. FUNGSI SIMPAN ABSENSI
     async function saveAbsenRealtime(id, status_huruf) {
         const tglUI = elTgl.value;
         
@@ -406,7 +411,7 @@ export async function initInputHarian() {
 
         if (jenisForm === 'tahsin') {
             const mapel = document.getElementById(`t_mapel_${id}`).value;
-            // Payload Tahsin disesuaikan dengan kolom tabel tahsin
+            // Payload Tahsin
             let payload = { 
                 santri_id: id, 
                 tgl: tglUI, 
@@ -432,16 +437,14 @@ export async function initInputHarian() {
             const ayatAkhir = document.getElementById(`h_a_akhir_${id}`).value;
             const catatanVal = document.getElementById(`h_catatan_${id}`).value;
 
-            // Payload Tahfidz/Hafalan disesuaikan dengan kolom di tabel hafalan
+            // Payload Tahfidz/Hafalan
             let payload = {
                 santri_id: id,
                 tgl: tglUI,
                 surah_baru: suratVal,
-                // Menggabungkan ayat awal dan akhir beserta status ke dalam ayat_baru
                 ayat_baru: `${ayatAwal} - ${ayatAkhir} (${targetStatus})`
             };
 
-            // Jika ustadz mengisi catatan, masukkan ke kolom murajaah_surah agar datanya tidak hilang
             if(catatanVal) {
                 payload.murajaah_surah = catatanVal;
             }
@@ -455,4 +458,4 @@ export async function initInputHarian() {
             setTimeout(() => { btnElement.innerHTML = originalText; }, 1000);
         }, 500); 
     };
-                    }
+}
