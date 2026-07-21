@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * BAGIAN 7: MODUL DASHBOARD (REAL-TIME & JADWAL PINTAR)
+ * BAGIAN 7: MODUL DASHBOARD (UI PUTIH EPIK & JADWAL VERTIKAL)
  * File: js/dashboard.js
  * ==================================================
  */
@@ -18,24 +18,28 @@ export function renderDashboard() {
 
         <!-- Info Card -->
         <div class="info-grid">
-            <div class="info-card" style="display:flex; flex-direction:column;">
-                <p class="info-label">Tanggal & Waktu</p>
-                <p class="info-value" id="currentDateDisplay">Memuat...</p>
-                <p class="info-sub" id="realtimeClock" style="margin-bottom: 15px;">00:00:00</p>
+            
+            <!-- KARTU 1: TANGGAL & JADWAL (GRADASI EPIK TERANG) -->
+            <div class="info-card" style="display:flex; flex-direction:column; background: linear-gradient(135deg, var(--surface) 40%, rgba(117, 181, 176, 0.15) 100%); border: 1px solid rgba(117, 181, 176, 0.3); box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
+                <!-- Label Diperkecil -->
+                <p style="font-size: 0.65rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;"><i class="far fa-calendar-alt"></i> Tanggal & Waktu</p>
                 
-                <!-- FITUR BARU: JADWAL PINTAR (GABUNG OPSI A) -->
-                <div style="border-top: 1px dashed var(--border); padding-top: 12px; margin-top: auto;">
-                    <p style="font-size: 0.65rem; font-weight: 800; color: var(--text-muted); margin-bottom: 8px; letter-spacing: 1px;"><i class="fas fa-calendar-check text-primary"></i> JADWAL SELANJUTNYA</p>
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <div style="font-size: 0.9rem; font-weight: 800; color: var(--text-main); line-height: 1.2; text-transform: uppercase;" id="schClassName">Memuat...</div>
-                            <div style="font-size: 0.75rem; font-weight: 700; color: var(--primary);" id="schTime">--:--</div>
-                        </div>
-                        <div id="schBadge" style="font-size: 0.7rem; font-weight: 700; padding: 4px 10px; border-radius: 8px; background: #E5E7EB; color: #4B5563;">-</div>
+                <!-- Tanggal & Jam (Ukuran Disamakan & Diperkecil) -->
+                <p id="currentDateDisplay" style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 2px;">Memuat...</p>
+                <p id="realtimeClock" style="font-size: 1.05rem; font-weight: 800; color: var(--text-main); margin-bottom: 15px; letter-spacing: 0.5px;">00:00:00</p>
+                
+                <!-- JADWAL SELANJUTNYA (FORMAT VERTIKAL 3 BARIS) -->
+                <div style="border-top: 1px dashed var(--border); padding-top: 12px; margin-top: auto;" id="jadwalArea">
+                    <!-- Label Diperkecil -->
+                    <p style="font-size: 0.65rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;"><i class="fas fa-calendar-check text-primary"></i> Jadwal Selanjutnya</p>
+                    
+                    <div id="jadwalContent">
+                        <span style="font-size:0.8rem; color:var(--text-muted);"><i class="fas fa-spinner fa-spin"></i> Memindai jadwal...</span>
                     </div>
                 </div>
             </div>
 
+            <!-- KARTU 2: TARGET KBM -->
             <div class="info-card target-card" style="display:flex; flex-direction:column;">
                 <p class="info-label">Target KBM</p>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -55,10 +59,9 @@ export function renderDashboard() {
             <button class="filter-btn" id="btn-bulan">Bulan Ini</button>
         </div>
 
-        <!-- Chart Container Presisi Tengah -->
+        <!-- Chart Container -->
         <div class="dashboard-chart-card">
             
-            <!-- Tooltip Tersembunyi -->
             <div id="namesTooltip" style="display:none;">
                 <div class="tooltip-header">
                     <span class="tooltip-title"><div class="legend-dot" id="ttDot"></div> <span id="ttLabel">Daftar</span></span>
@@ -67,7 +70,6 @@ export function renderDashboard() {
                 <div class="tooltip-list" id="ttNames">Memuat data...</div>
             </div>
 
-            <!-- Canvas Chart -->
             <div class="chart-container-box">
                 <canvas id="concentricChart"></canvas>
                 <div class="chart-center-text">
@@ -131,12 +133,13 @@ export async function initDashboard() {
     function updateClock() {
         const now = new Date();
         elDate.textContent = now.toLocaleDateString('id-ID', { weekday: 'long', day: '2-digit', month: 'short', year: 'numeric' });
-        elClock.textContent = now.toLocaleTimeString('id-ID', { hour12: false });
+        // Format jam HH:MM:SS
+        elClock.textContent = now.toLocaleTimeString('id-ID', { hour12: false }).replace(/:/g, '.'); 
     }
     setInterval(updateClock, 1000);
     updateClock();
 
-    // 2. SETUP CHART.JS MURNI (Desain Cincin Asli)
+    // 2. SETUP CHART.JS MURNI
     const ctx = document.getElementById('concentricChart');
     if(!ctx) return;
 
@@ -150,7 +153,6 @@ export async function initDashboard() {
     const cKoral = style.getPropertyValue('--clr-koral').trim() || '#F39B96';
     const cDongker = style.getPropertyValue('--clr-dongker').trim() || '#4F567D';
 
-    // Inisialisasi awal dengan angka 0
     const chartConfig = {
         type: 'doughnut',
         data: {
@@ -172,7 +174,6 @@ export async function initDashboard() {
     if (myChart) myChart.destroy();
     myChart = new Chart(ctx.getContext('2d'), chartConfig);
 
-    // Filter Interaktif (Hanya UI)
     document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -185,49 +186,85 @@ export async function initDashboard() {
         document.getElementById('btnCloseTooltip').addEventListener('click', () => tooltip.style.display = 'none');
     }
 
-    // 3. TARIK DATA DARI SUPABASE & MENGHIDUPKAN DASHBOARD
+    // 3. TARIK DATA DARI SUPABASE
     async function hydrateDashboard() {
         try {
-            const today = new Date().toISOString().split('T')[0];
+            // Fix Zona Waktu (Gunakan Tgl Lokal)
+            const d = new Date();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const todayStr = `${year}-${month}-${day}`;
             
-            // Lakukan 5 kueri secara bersamaan agar cepat!
             const [santriList, kehadiranList, tahsinList, hafalanList, kelasList] = await Promise.all([
                 api.get('dapodik_santri', 'select=id,nama_kelas,nama_santri'),
-                api.get('kehadiran', `select=santri_id,status_hadir&tgl=eq.${today}`),
-                api.get('tahsin', `select=santri_id,program,status&tgl=eq.${today}`),
-                api.get('hafalan', `select=santri_id,ayat_baru&tgl=eq.${today}`),
+                api.get('kehadiran', `select=santri_id,status_hadir&tgl=eq.${todayStr}`),
+                api.get('tahsin', `select=santri_id,program,status&tgl=eq.${todayStr}`),
+                api.get('hafalan', `select=santri_id,ayat_baru&tgl=eq.${todayStr}`),
                 api.get('kelas', 'select=*')
             ]);
 
-            // --- A. LOGIKA JADWAL PINTAR ---
+            // --- A. LOGIKA JADWAL PINTAR (Format Vertikal 3 Baris) ---
+            const jadwalContent = document.getElementById('jadwalContent');
             if(kelasList.length > 0) {
-                const currentMins = new Date().getHours() * 60 + new Date().getMinutes();
-                let upClass = null, statText = 'Selesai', bgC = '#F3F4F6', textC = '#9CA3AF';
+                const currentMins = d.getHours() * 60 + d.getMinutes();
+                let kelasAktif = null;
+                let kelasMendatang = null;
 
-                for(let k of kelasList) {
-                    if(k.jam_kelas && k.jam_kelas.includes('-')) {
+                kelasList.forEach(k => {
+                    if (k.jam_kelas && k.jam_kelas.includes('-')) {
                         const [sStr, eStr] = k.jam_kelas.split('-');
                         const [hS, mS] = sStr.trim().split(':').map(Number);
                         const [hE, mE] = eStr.trim().split(':').map(Number);
                         
-                        const startM = (hS * 60) + (mS || 0);
-                        const endM = (hE * 60) + (mE || 0);
+                        const startMins = (hS * 60) + (mS || 0);
+                        const endMins = (hE * 60) + (mE || 0);
 
-                        if (currentMins < startM) {
-                            upClass = k; statText = 'MENUNGGU'; bgC = '#D1FAE5'; textC = '#065F46'; break; 
-                        } else if (currentMins >= startM && currentMins <= endM) {
-                            upClass = k; statText = 'BERJALAN'; bgC = '#FEE2E2'; textC = '#991B1B'; break;
+                        if (currentMins >= startMins && currentMins <= endMins) {
+                            kelasAktif = k;
+                        } else if (currentMins < startMins) {
+                            if (!kelasMendatang || startMins < kelasMendatang.startMins) {
+                                kelasMendatang = { ...k, startMins };
+                            }
                         }
                     }
-                }
+                });
 
-                if(upClass) {
-                    document.getElementById('schClassName').textContent = upClass.nama_kelas;
-                    document.getElementById('schTime').textContent = upClass.jam_kelas;
-                    const badge = document.getElementById('schBadge');
-                    badge.textContent = statText; badge.style.background = bgC; badge.style.color = textC;
+                // Cetak UI Format Vertikal Anti-Terpotong
+                if (kelasAktif) {
+                    jadwalContent.innerHTML = `
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <div style="align-self: flex-start;">
+                                <span style="background: #FEE2E2; color: #991B1B; padding: 4px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    <i class="fas fa-circle" style="font-size:0.4rem; animation: pulse 2s infinite;"></i> SEDANG BERJALAN
+                                </span>
+                            </div>
+                            <div style="font-size: 1.05rem; font-weight: 800; color: var(--text-main); line-height: 1.3; word-wrap: break-word; white-space: normal;">
+                                ${kelasAktif.nama_kelas}
+                            </div>
+                            <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted);">
+                                <i class="far fa-clock" style="color: var(--primary);"></i> ${kelasAktif.jam_kelas}
+                            </div>
+                        </div>
+                    `;
+                } else if (kelasMendatang) {
+                    jadwalContent.innerHTML = `
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <div style="align-self: flex-start;">
+                                <span style="background: #D1FAE5; color: #065F46; padding: 4px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    <i class="far fa-hourglass"></i> MENUNGGU
+                                </span>
+                            </div>
+                            <div style="font-size: 1.05rem; font-weight: 800; color: var(--text-main); line-height: 1.3; word-wrap: break-word; white-space: normal;">
+                                ${kelasMendatang.nama_kelas}
+                            </div>
+                            <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted);">
+                                <i class="far fa-clock" style="color: var(--primary);"></i> ${kelasMendatang.jam_kelas}
+                            </div>
+                        </div>
+                    `;
                 } else {
-                    document.getElementById('schClassName').textContent = "Bebas Tugas";
+                    jadwalContent.innerHTML = `<span style="font-size:0.85rem; color:var(--text-muted); font-weight:600;"><i class="fas fa-check-circle" style="color:var(--clr-toska);"></i> Semua kelas selesai.</span>`;
                 }
             }
 
@@ -237,25 +274,25 @@ export async function initDashboard() {
 
             let hadir = 0, izinSakit = 0, alfa = 0, ulang = 0;
             
-            // Hitung Kehadiran
-            kehadiranList.forEach(k => {
-                if(k.status_hadir === 'Hadir') hadir++;
-                else if(k.status_hadir === 'Izin' || k.status_hadir === 'Sakit') izinSakit++;
-                else if(k.status_hadir === 'Alpa') alfa++;
-            });
+            // Hitung Kehadiran (Aman dari null)
+            if(kehadiranList && kehadiranList.length > 0) {
+                kehadiranList.forEach(k => {
+                    if(k.status_hadir === 'Hadir') hadir++;
+                    else if(k.status_hadir === 'Izin' || k.status_hadir === 'Sakit') izinSakit++;
+                    else if(k.status_hadir === 'Alpa') alfa++;
+                });
+            }
 
-            // Hitung Santri Ulang (Tahsin & Tahfidz)
-            tahsinList.forEach(t => { if(t.status === 'Ulang') ulang++; });
-            hafalanList.forEach(h => { if(h.ayat_baru && h.ayat_baru.includes('Ulang')) ulang++; });
+            // Hitung Santri Ulang (Aman dari null)
+            if(tahsinList) tahsinList.forEach(t => { if(t.status === 'Ulang') ulang++; });
+            if(hafalanList) hafalanList.forEach(h => { if(h.ayat_baru && h.ayat_baru.includes('Ulang')) ulang++; });
 
-            // Suntik angka ke label text HTML
             document.getElementById('valHadir').textContent = hadir;
             document.getElementById('valIzinSkt').textContent = izinSakit;
             document.getElementById('valAlfa').textContent = alfa;
             document.getElementById('valUlang').textContent = ulang;
 
-            // Suntik data ke Cincin Chart (Rasio 100%)
-            const total = totalSantri === 0 ? 1 : totalSantri; // Cegah error dibagi 0
+            const total = totalSantri === 0 ? 1 : totalSantri; 
             myChart.data.datasets[0].data = [hadir, Math.max(0, total - hadir)];
             myChart.data.datasets[1].data = [izinSakit, Math.max(0, total - izinSakit)];
             myChart.data.datasets[2].data = [alfa, Math.max(0, total - alfa)];
@@ -264,10 +301,10 @@ export async function initDashboard() {
 
             // --- C. LOGIKA TABEL RIWAYAT TERKINI ---
             let logHTML = '';
-            const allLogs = [...tahsinList, ...hafalanList].reverse().slice(0, 5); 
+            const allLogs = [...(tahsinList || []), ...(hafalanList || [])].reverse().slice(0, 5); 
             
             if(allLogs.length === 0) {
-                logHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:20px;">Belum ada santri yang disetor hari ini.</td></tr>';
+                logHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:30px;">Belum ada aktivitas hari ini.</td></tr>';
             } else {
                 allLogs.forEach(log => {
                     const s = santriList.find(x => x.id === log.santri_id);
@@ -300,4 +337,4 @@ export async function initDashboard() {
     }
 
     hydrateDashboard();
-                                                                                     }
+                                                     }
