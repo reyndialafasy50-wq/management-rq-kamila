@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * BAGIAN 7: MODUL DASHBOARD (UI PUTIH EPIK & JADWAL VERTIKAL)
+ * BAGIAN 7: MODUL DASHBOARD (UI GRADASI REVERSE & ANTI-JITTER)
  * File: js/dashboard.js
  * ==================================================
  */
@@ -19,27 +19,26 @@ export function renderDashboard() {
         <!-- Info Card -->
         <div class="info-grid">
             
-            <!-- KARTU 1: TANGGAL & JADWAL (GRADASI EPIK TERANG) -->
-            <div class="info-card" style="display:flex; flex-direction:column; background: linear-gradient(135deg, var(--surface) 40%, rgba(117, 181, 176, 0.15) 100%); border: 1px solid rgba(117, 181, 176, 0.3); box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
+            <!-- KARTU 1: TANGGAL & JADWAL (GRADASI REVERSE DARI KANAN) -->
+            <div class="info-card" style="display:flex; flex-direction:column; background: linear-gradient(135deg, #75B5B0 0%, #4F567D 100%); color: #ffffff; border: none; box-shadow: 0 6px 15px rgba(79, 86, 125, 0.2);">
                 <!-- Label Diperkecil -->
-                <p style="font-size: 0.65rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;"><i class="far fa-calendar-alt"></i> Tanggal & Waktu</p>
+                <p style="font-size: 0.65rem; font-weight: 800; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;"><i class="far fa-calendar-alt"></i> Tanggal & Waktu</p>
                 
-                <!-- Tanggal & Jam (Ukuran Disamakan & Diperkecil) -->
-                <p id="currentDateDisplay" style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 2px;">Memuat...</p>
-                <p id="realtimeClock" style="font-size: 1.05rem; font-weight: 800; color: var(--text-main); margin-bottom: 15px; letter-spacing: 0.5px;">00:00:00</p>
+                <!-- Tanggal Diperkecil & Jam Diperbesar (Anti Goyang) -->
+                <p id="currentDateDisplay" style="font-size: 0.85rem; font-weight: 600; color: rgba(255,255,255,0.95); margin-bottom: 2px;">Memuat...</p>
+                <p id="realtimeClock" style="font-size: 1.35rem; font-weight: 800; color: #ffffff; margin-bottom: 15px; letter-spacing: 1px; font-variant-numeric: tabular-nums;">00.00.00</p>
                 
-                <!-- JADWAL SELANJUTNYA (FORMAT VERTIKAL 3 BARIS) -->
-                <div style="border-top: 1px dashed var(--border); padding-top: 12px; margin-top: auto;" id="jadwalArea">
-                    <!-- Label Diperkecil -->
-                    <p style="font-size: 0.65rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;"><i class="fas fa-calendar-check text-primary"></i> Jadwal Selanjutnya</p>
+                <!-- JADWAL SELANJUTNYA (VERTIKAL) -->
+                <div style="border-top: 1px dashed rgba(255,255,255,0.3); padding-top: 12px; margin-top: auto;" id="jadwalArea">
+                    <p style="font-size: 0.65rem; font-weight: 800; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;"><i class="fas fa-calendar-check" style="color: #A7F3D0;"></i> Jadwal Selanjutnya</p>
                     
                     <div id="jadwalContent">
-                        <span style="font-size:0.8rem; color:var(--text-muted);"><i class="fas fa-spinner fa-spin"></i> Memindai jadwal...</span>
+                        <span style="font-size:0.8rem; color:rgba(255,255,255,0.8);"><i class="fas fa-spinner fa-spin"></i> Memindai jadwal...</span>
                     </div>
                 </div>
             </div>
 
-            <!-- KARTU 2: TARGET KBM -->
+            <!-- KARTU 2: TARGET KBM (Bawaan) -->
             <div class="info-card target-card" style="display:flex; flex-direction:column;">
                 <p class="info-label">Target KBM</p>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -133,7 +132,7 @@ export async function initDashboard() {
     function updateClock() {
         const now = new Date();
         elDate.textContent = now.toLocaleDateString('id-ID', { weekday: 'long', day: '2-digit', month: 'short', year: 'numeric' });
-        // Format jam HH:MM:SS
+        // Format jam HH.MM.SS (titik sebagai pemisah)
         elClock.textContent = now.toLocaleTimeString('id-ID', { hour12: false }).replace(/:/g, '.'); 
     }
     setInterval(updateClock, 1000);
@@ -189,7 +188,7 @@ export async function initDashboard() {
     // 3. TARIK DATA DARI SUPABASE
     async function hydrateDashboard() {
         try {
-            // Fix Zona Waktu (Gunakan Tgl Lokal)
+            // Tgl Lokal
             const d = new Date();
             const year = d.getFullYear();
             const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -204,7 +203,7 @@ export async function initDashboard() {
                 api.get('kelas', 'select=*')
             ]);
 
-            // --- A. LOGIKA JADWAL PINTAR (Format Vertikal 3 Baris) ---
+            // --- A. LOGIKA JADWAL PINTAR ---
             const jadwalContent = document.getElementById('jadwalContent');
             if(kelasList.length > 0) {
                 const currentMins = d.getHours() * 60 + d.getMinutes();
@@ -230,20 +229,20 @@ export async function initDashboard() {
                     }
                 });
 
-                // Cetak UI Format Vertikal Anti-Terpotong
+                // Cetak UI Jadwal: Teks Berwarna Putih dengan Badge Rapih
                 if (kelasAktif) {
                     jadwalContent.innerHTML = `
                         <div style="display: flex; flex-direction: column; gap: 6px;">
                             <div style="align-self: flex-start;">
-                                <span style="background: #FEE2E2; color: #991B1B; padding: 4px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
-                                    <i class="fas fa-circle" style="font-size:0.4rem; animation: pulse 2s infinite;"></i> SEDANG BERJALAN
+                                <span style="background: rgba(254, 226, 226, 0.9); color: #991B1B; padding: 4px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    <i class="fas fa-circle" style="font-size:0.4rem; animation: pulse 2s infinite;"></i> BERJALAN
                                 </span>
                             </div>
-                            <div style="font-size: 1.05rem; font-weight: 800; color: var(--text-main); line-height: 1.3; word-wrap: break-word; white-space: normal;">
+                            <div style="font-size: 1.05rem; font-weight: 800; color: #ffffff; line-height: 1.3; word-wrap: break-word; white-space: normal;">
                                 ${kelasAktif.nama_kelas}
                             </div>
-                            <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted);">
-                                <i class="far fa-clock" style="color: var(--primary);"></i> ${kelasAktif.jam_kelas}
+                            <div style="font-size: 0.85rem; font-weight: 700; color: rgba(255,255,255,0.85);">
+                                <i class="far fa-clock" style="color: #A7F3D0;"></i> ${kelasAktif.jam_kelas}
                             </div>
                         </div>
                     `;
@@ -251,20 +250,20 @@ export async function initDashboard() {
                     jadwalContent.innerHTML = `
                         <div style="display: flex; flex-direction: column; gap: 6px;">
                             <div style="align-self: flex-start;">
-                                <span style="background: #D1FAE5; color: #065F46; padding: 4px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
+                                <span style="background: rgba(209, 250, 229, 0.9); color: #065F46; padding: 4px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
                                     <i class="far fa-hourglass"></i> MENUNGGU
                                 </span>
                             </div>
-                            <div style="font-size: 1.05rem; font-weight: 800; color: var(--text-main); line-height: 1.3; word-wrap: break-word; white-space: normal;">
+                            <div style="font-size: 1.05rem; font-weight: 800; color: #ffffff; line-height: 1.3; word-wrap: break-word; white-space: normal;">
                                 ${kelasMendatang.nama_kelas}
                             </div>
-                            <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted);">
-                                <i class="far fa-clock" style="color: var(--primary);"></i> ${kelasMendatang.jam_kelas}
+                            <div style="font-size: 0.85rem; font-weight: 700; color: rgba(255,255,255,0.85);">
+                                <i class="far fa-clock" style="color: #A7F3D0;"></i> ${kelasMendatang.jam_kelas}
                             </div>
                         </div>
                     `;
                 } else {
-                    jadwalContent.innerHTML = `<span style="font-size:0.85rem; color:var(--text-muted); font-weight:600;"><i class="fas fa-check-circle" style="color:var(--clr-toska);"></i> Semua kelas selesai.</span>`;
+                    jadwalContent.innerHTML = `<span style="font-size:0.85rem; color:rgba(255,255,255,0.8); font-weight:600;"><i class="fas fa-check-circle" style="color:#A7F3D0;"></i> Semua kelas selesai.</span>`;
                 }
             }
 
@@ -274,7 +273,6 @@ export async function initDashboard() {
 
             let hadir = 0, izinSakit = 0, alfa = 0, ulang = 0;
             
-            // Hitung Kehadiran (Aman dari null)
             if(kehadiranList && kehadiranList.length > 0) {
                 kehadiranList.forEach(k => {
                     if(k.status_hadir === 'Hadir') hadir++;
@@ -283,7 +281,6 @@ export async function initDashboard() {
                 });
             }
 
-            // Hitung Santri Ulang (Aman dari null)
             if(tahsinList) tahsinList.forEach(t => { if(t.status === 'Ulang') ulang++; });
             if(hafalanList) hafalanList.forEach(h => { if(h.ayat_baru && h.ayat_baru.includes('Ulang')) ulang++; });
 
@@ -337,4 +334,4 @@ export async function initDashboard() {
     }
 
     hydrateDashboard();
-                                                     }
+}
