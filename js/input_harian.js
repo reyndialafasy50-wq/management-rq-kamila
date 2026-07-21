@@ -332,18 +332,29 @@ export async function initInputHarian() {
                 const acc = document.getElementById(`acc_${id}`);
                 const card = document.getElementById(`card_${id}`);
                 
-                saveAbsenRealtime(id, val);
+                // FUNGSI ABSENSI YANG SUDAH DISESUAIKAN DENGAN SUPABASE
+    async function saveAbsenRealtime(id, status_huruf) {
+        const tglUI = elTgl.value;
+        
+        // 1. Menerjemahkan kode huruf UI (H, I, S, A) menjadi kata baku Database
+        let statusBaku = 'Hadir';
+        if (status_huruf === 'I') statusBaku = 'Izin';
+        if (status_huruf === 'S') statusBaku = 'Sakit';
+        if (status_huruf === 'A') statusBaku = 'Alpa'; // Mengikuti ejaan database Ustadz
 
-                if (val !== 'H') {
-                    expandBtn.style.display = 'none';
-                    acc.style.display = 'none';
-                    expandBtn.classList.remove('active');
-                    if(card) card.classList.remove('active-card'); 
-                } else {
-                    expandBtn.style.display = 'block';
-                }
-            });
-        });
+        // 2. Mengubah nama kolom query penyocokan (santri_id & tgl)
+        const queryMatch = `santri_id=eq.${id}&tgl=eq.${tglUI}`;
+
+        // 3. Mengirimkan (Payload) dengan nama kolom yang 100% cocok
+        const payloadData = {
+            santri_id: id, 
+            tgl: tglUI, 
+            status_hadir: statusBaku
+        };
+
+        await upsertData('kehadiran', queryMatch, payloadData);
+        showToast(id);
+    }
 
         document.querySelectorAll('.trigger-mapel').forEach(sel => {
             sel.addEventListener('change', (e) => {
