@@ -27,7 +27,6 @@ const petaJuz = {
 export function renderInputHarian() {
     return `
         <style>
-            /* HEADER STICKY (Z-Index tinggi agar tidak tertembus) */
             .input-header-wrapper { background: var(--surface); padding: 20px; border-radius: 16px; margin-bottom: 20px; border: 1px solid var(--border); position: sticky; top: 10px; z-index: 50; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: 0.3s;}
             .input-header-title { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
             .input-header-title h4 { margin: 0; font-size: 1rem; color: var(--text-main); font-weight: 700; }
@@ -36,10 +35,8 @@ export function renderInputHarian() {
             .input-header-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
             .input-header-controls select, .input-header-controls input { border: 1px solid var(--border); border-radius: 8px; padding: 10px 15px; font-size: 0.9rem; background: var(--bg-main); outline: none; flex: 1; min-width: 140px; color: var(--text-main);}
             
-            /* KARTU SANTRI & MODE FOKUS ADAPTIF */
             .santri-card { background: var(--surface); border-radius: 12px; border: 1px solid var(--border); padding: 15px; margin-bottom: 12px; display: flex; flex-direction: column; transition: all 0.3s ease;}
             
-            /* Background menggunakan var(--surface) agar elegan di Mode Terang maupun Gelap */
             .santri-card.active-card { 
                 border: 2px solid var(--primary); 
                 box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); 
@@ -54,7 +51,6 @@ export function renderInputHarian() {
             .nama-santri { font-weight: 600; font-size: 1rem; color: var(--text-main); margin-bottom: 2px;}
             .nis-santri { font-size: 0.75rem; color: var(--text-muted); }
             
-            /* Radio Button Custom Absen */
             .absen-group { display: flex; gap: 4px; }
             .absen-radio { display: none; }
             .absen-label { width: 30px; height: 30px; line-height: 30px; text-align: center; border-radius: 50%; font-weight: 700; cursor: pointer; transition: 0.2s; background: #E5E7EB; color: #9CA3AF; font-size: 0.85rem;}
@@ -63,7 +59,6 @@ export function renderInputHarian() {
             .absen-radio[value="S"]:checked + .absen-label { background: #F59E0B; color: white; }
             .absen-radio[value="A"]:checked + .absen-label { background: #EF4444; color: white; }
             
-            /* Expand Button (Tanda V) */
             .expand-btn { background: none; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; padding: 5px 15px; width: 100%; text-align: center; margin-top: 10px; transition: 0.3s; outline: none; -webkit-tap-highlight-color: transparent; }
             .expand-btn.active { transform: rotate(180deg); color: #10B981; }
             
@@ -76,7 +71,6 @@ export function renderInputHarian() {
             .compact-input { padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; width: 100%; background: var(--bg-main); color: var(--text-main); outline: none;}
             .flex-row-gap { display: flex; gap: 10px; align-items: center;}
             
-            /* Dua Tombol Aksi Kiri Kanan */
             .btn-action-group { display: flex; gap: 10px; margin-top: 5px; }
             .btn-status-save { flex: 1; padding: 10px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 0.9rem; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 5px; outline: none; -webkit-tap-highlight-color: transparent;}
             .btn-status-lulus { background: #D1FAE5; color: #065F46; border: 1px solid #34D399; }
@@ -250,10 +244,10 @@ export async function initInputHarian() {
                             <span>-</span>
                             <input type="number" id="h_a_akhir_${s.id}" class="compact-input" placeholder="Ayat Akhir" value="${mem.ayatB}">
                         </div>
-                        <input type="text" id="h_catatan_${s.id}" class="compact-input" placeholder="Catatan tahfidz (Opsional)...">
+                        <input type="text" id="h_catatan_${s.id}" class="compact-input" placeholder="Catatan murajaah (Opsional)...">
                         
                         <div class="btn-action-group">
-                            <button class="btn-status-save btn-status-lulus" onclick="saveDataRealtime('${s.id}', 'tahfidz', 'Lanjut', this)">
+                            <button class="btn-status-save btn-status-lulus" onclick="saveDataRealtime('${s.id}', 'tahfidz', 'Lulus', this)">
                                 <i class="fas fa-check"></i> Lanjut
                             </button>
                             <button class="btn-status-save btn-status-ulang" onclick="saveDataRealtime('${s.id}', 'tahfidz', 'Ulang', this)">
@@ -288,15 +282,14 @@ export async function initInputHarian() {
             btn.classList.add('active');
             card.classList.add('active-card');
             
-            // Jeda 150ms agar animasi buka CSS selesai sebelum menghitung posisi
             setTimeout(() => {
-                const headerHeight = header.offsetHeight + 15; // Menghitung tinggi header statis + jarak aman
-                const cardPosition = card.getBoundingClientRect().top; // Posisi kartu relatif terhadap layar
-                const offsetPosition = cardPosition + window.pageYOffset - headerHeight; // Titik scroll persis di bawah header
+                const headerHeight = header.offsetHeight + 15;
+                const cardPosition = card.getBoundingClientRect().top;
+                const offsetPosition = cardPosition + window.pageYOffset - headerHeight;
 
                 window.scrollTo({
                     top: offsetPosition,
-                    behavior: 'smooth' // Gulir mulus
+                    behavior: 'smooth'
                 });
             }, 150);
         }
@@ -332,29 +325,19 @@ export async function initInputHarian() {
                 const acc = document.getElementById(`acc_${id}`);
                 const card = document.getElementById(`card_${id}`);
                 
-                // FUNGSI ABSENSI YANG SUDAH DISESUAIKAN DENGAN SUPABASE
-    async function saveAbsenRealtime(id, status_huruf) {
-        const tglUI = elTgl.value;
-        
-        // 1. Menerjemahkan kode huruf UI (H, I, S, A) menjadi kata baku Database
-        let statusBaku = 'Hadir';
-        if (status_huruf === 'I') statusBaku = 'Izin';
-        if (status_huruf === 'S') statusBaku = 'Sakit';
-        if (status_huruf === 'A') statusBaku = 'Alpa'; // Mengikuti ejaan database Ustadz
+                // Trigger absensi
+                saveAbsenRealtime(id, val);
 
-        // 2. Mengubah nama kolom query penyocokan (santri_id & tgl)
-        const queryMatch = `santri_id=eq.${id}&tgl=eq.${tglUI}`;
-
-        // 3. Mengirimkan (Payload) dengan nama kolom yang 100% cocok
-        const payloadData = {
-            santri_id: id, 
-            tgl: tglUI, 
-            status_hadir: statusBaku
-        };
-
-        await upsertData('kehadiran', queryMatch, payloadData);
-        showToast(id);
-    }
+                if (val !== 'H') {
+                    expandBtn.style.display = 'none';
+                    acc.style.display = 'none';
+                    expandBtn.classList.remove('active');
+                    if(card) card.classList.remove('active-card'); 
+                } else {
+                    expandBtn.style.display = 'block';
+                }
+            });
+        });
 
         document.querySelectorAll('.trigger-mapel').forEach(sel => {
             sel.addEventListener('change', (e) => {
@@ -394,25 +377,43 @@ export async function initInputHarian() {
         } catch(e) { console.error("AutoSave Error:", e); }
     }
 
-    async function saveAbsenRealtime(id, status) {
-        const tgl = elTgl.value;
-        await upsertData('kehadiran', `id_santri=eq.${id}&tanggal=eq.${tgl}`, {
-            id_santri: id, tanggal: tgl, status_kehadiran: status
-        });
+    // 1. FUNGSI SIMPAN ABSENSI (Fix Kolom & Value Baku)
+    async function saveAbsenRealtime(id, status_huruf) {
+        const tglUI = elTgl.value;
+        
+        let statusBaku = 'Hadir';
+        if (status_huruf === 'I') statusBaku = 'Izin';
+        if (status_huruf === 'S') statusBaku = 'Sakit';
+        if (status_huruf === 'A') statusBaku = 'Alpa'; 
+
+        const queryMatch = `santri_id=eq.${id}&tgl=eq.${tglUI}`;
+        const payloadData = {
+            santri_id: id, 
+            tgl: tglUI, 
+            status_hadir: statusBaku
+        };
+
+        await upsertData('kehadiran', queryMatch, payloadData);
         showToast(id);
     }
 
+    // 2. FUNGSI SIMPAN HAFALAN & TAHSIN
     window.saveDataRealtime = async (id, jenisForm, targetStatus, btnElement) => {
         const originalText = btnElement.innerHTML;
         btnElement.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Menyimpan...`;
 
-        const tgl = elTgl.value;
-        let payload = { id_santri: id, tanggal: tgl, status: targetStatus };
+        const tglUI = elTgl.value;
 
         if (jenisForm === 'tahsin') {
             const mapel = document.getElementById(`t_mapel_${id}`).value;
-            payload.program = mapel;
-            payload.catatan = document.getElementById(`t_catatan_${id}`).value; 
+            // Payload Tahsin disesuaikan dengan kolom tabel tahsin
+            let payload = { 
+                santri_id: id, 
+                tgl: tglUI, 
+                status: targetStatus,
+                program: mapel,
+                catatan: document.getElementById(`t_catatan_${id}`).value 
+            };
             
             if(mapel === "Al Qur'an") {
                 payload.juz = document.getElementById(`t_q_juz_${id}`).value;
@@ -423,15 +424,29 @@ export async function initInputHarian() {
                 payload.jilid = document.getElementById(`t_jilid_${id}`).value;
                 payload.halaman = document.getElementById(`t_hal_${id}`).value;
             }
-            await upsertData('tahsin', `id_santri=eq.${id}&tanggal=eq.${tgl}`, payload);
+            await upsertData('tahsin', `santri_id=eq.${id}&tgl=eq.${tglUI}`, payload);
         
         } else if (jenisForm === 'tahfidz') {
-            payload.juz = document.getElementById(`h_juz_${id}`).value;
-            payload.surat = document.getElementById(`h_surat_${id}`).value;
-            payload.ayat_awal = document.getElementById(`h_a_awal_${id}`).value;
-            payload.ayat_akhir = document.getElementById(`h_a_akhir_${id}`).value;
-            payload.catatan = document.getElementById(`h_catatan_${id}`).value;
-            await upsertData('hafalan', `id_santri=eq.${id}&tanggal=eq.${tgl}`, payload);
+            const suratVal = document.getElementById(`h_surat_${id}`).value;
+            const ayatAwal = document.getElementById(`h_a_awal_${id}`).value;
+            const ayatAkhir = document.getElementById(`h_a_akhir_${id}`).value;
+            const catatanVal = document.getElementById(`h_catatan_${id}`).value;
+
+            // Payload Tahfidz/Hafalan disesuaikan dengan kolom di tabel hafalan
+            let payload = {
+                santri_id: id,
+                tgl: tglUI,
+                surah_baru: suratVal,
+                // Menggabungkan ayat awal dan akhir beserta status ke dalam ayat_baru
+                ayat_baru: `${ayatAwal} - ${ayatAkhir} (${targetStatus})`
+            };
+
+            // Jika ustadz mengisi catatan, masukkan ke kolom murajaah_surah agar datanya tidak hilang
+            if(catatanVal) {
+                payload.murajaah_surah = catatanVal;
+            }
+
+            await upsertData('hafalan', `santri_id=eq.${id}&tgl=eq.${tglUI}`, payload);
         }
 
         setTimeout(() => {
@@ -440,4 +455,4 @@ export async function initInputHarian() {
             setTimeout(() => { btnElement.innerHTML = originalText; }, 1000);
         }, 500); 
     };
-                                                                     }
+                    }
