@@ -1,82 +1,83 @@
 /**
  * ==================================================
- * BAGIAN 7: MODUL DASHBOARD (TIMELINE RIWAYAT & SMART FILTER)
+ * BAGIAN 7: MODUL DASHBOARD (SMART FILTER, TOOLTIP & LONCENG ALPA)
  * File: js/dashboard.js
  * ==================================================
  */
 import { api } from './api.js';
 
 let myChart;
+let rawHarianList = []; 
+let rawSantriList = [];
+let namaKelasAktif = null;
 
 export function renderDashboard() {
     return `
         <style>
             /* STYLING TIMELINE RIWAYAT AKTIVITAS */
-            .timeline-container {
-                position: relative;
-                padding-left: 20px;
-                margin-top: 15px;
-            }
-            .timeline-container::before {
-                content: '';
-                position: absolute;
-                top: 10px;
-                bottom: 10px;
-                left: 6px;
-                width: 2px;
-                background: var(--border);
-            }
-            .timeline-item {
-                position: relative;
-                margin-bottom: 20px;
-                padding-left: 15px;
-            }
-            .timeline-dot {
-                position: absolute;
-                left: -20px;
-                top: 4px;
-                width: 12px;
-                height: 12px;
-                border-radius: 50%;
-                background: var(--primary);
-                border: 2px solid var(--surface);
-                box-shadow: 0 0 0 2px var(--border);
-            }
-            .timeline-time {
-                font-size: 0.7rem;
-                font-weight: 700;
-                color: var(--text-muted);
-                background: var(--bg-main);
-                padding: 2px 8px;
-                border-radius: 10px;
-                display: inline-block;
-                margin-bottom: 4px;
-            }
-            .timeline-title {
-                font-size: 0.95rem;
-                font-weight: 700;
-                color: var(--text-main);
-                text-transform: uppercase;
-                margin: 0 0 2px 0;
-            }
-            .timeline-desc {
-                font-size: 0.85rem;
-                color: var(--text-muted);
-                margin: 0 0 4px 0;
-            }
-            .badge-status {
-                font-size: 0.7rem;
-                font-weight: 800;
-                padding: 2px 8px;
-                border-radius: 6px;
-                display: inline-block;
-            }
+            .timeline-container { position: relative; padding-left: 20px; margin-top: 15px; }
+            .timeline-container::before { content: ''; position: absolute; top: 10px; bottom: 10px; left: 6px; width: 2px; background: var(--border); }
+            .timeline-item { position: relative; margin-bottom: 20px; padding-left: 15px; }
+            .timeline-dot { position: absolute; left: -20px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--primary); border: 2px solid var(--surface); box-shadow: 0 0 0 2px var(--border); }
+            .timeline-time { font-size: 0.7rem; font-weight: 700; color: var(--text-muted); background: var(--bg-main); padding: 2px 8px; border-radius: 10px; display: inline-block; margin-bottom: 4px; }
+            .timeline-title { font-size: 0.95rem; font-weight: 700; color: var(--text-main); text-transform: uppercase; margin: 0 0 2px 0; }
+            .timeline-desc { font-size: 0.85rem; color: var(--text-muted); margin: 0 0 4px 0; }
+            .badge-status { font-size: 0.7rem; font-weight: 800; padding: 2px 8px; border-radius: 6px; display: inline-block; }
             .badge-lulus { background: #D1FAE5; color: #065F46; }
             .badge-ulang { background: #FEE2E2; color: #991B1B; }
             .badge-absen { background: #E0E7FF; color: #3730A3; }
+            
+            /* STYLING TOOLTIP PINTAR */
+            #namesTooltip {
+                position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);
+                border: 1px solid var(--border); border-radius: 16px;
+                padding: 15px; z-index: 100; width: 85%; box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+                display: none; flex-direction: column;
+            }
+            [data-theme="dark"] #namesTooltip { background: rgba(30,33,48,0.95); }
+            .tooltip-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 10px;}
+            .tooltip-title { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 1rem;}
+            .tooltip-list { max-height: 200px; overflow-y: auto; font-size: 0.85rem; color: var(--text-main); }
+            .tooltip-list div { padding: 8px 0; border-bottom: 1px dashed var(--border); display: flex; justify-content: space-between;}
+            .tooltip-close { background: #FEE2E2; color: #991B1B; border: none; width: 28px; height: 28px; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.2s;}
+            .tooltip-close:active { transform: scale(0.9); }
+            .legend-item { cursor: pointer; transition: 0.2s; padding: 5px; border-radius: 8px; }
+            .legend-item:active { background: var(--bg-main); transform: scale(0.95); }
+
+            /* ANIMASI LONCENG ALPA */
+            @keyframes shakeLonceng {
+                0% { transform: rotate(0deg); }
+                25% { transform: rotate(15deg); }
+                50% { transform: rotate(0deg); }
+                75% { transform: rotate(-15deg); }
+                100% { transform: rotate(0deg); }
+            }
+            .bell-warn-8 { color: #F59E0B !important; animation: shakeLonceng 0.5s infinite; } /* Oren */
+            .bell-warn-9 { color: #EA580C !important; animation: shakeLonceng 0.3s infinite; } /* Oren Tua */
+            .bell-warn-10 { color: #DC2626 !important; animation: shakeLonceng 0.15s infinite; filter: drop-shadow(0 0 8px rgba(220, 38, 38, 0.9)); }
+
+            /* POP-UP PERINGATAN LONCENG */
+            #modalLonceng {
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
+                display: none; justify-content: center; align-items: center; z-index: 9999;
+            }
+            .modal-lonceng-content {
+                background: var(--surface); width: 85%; max-width: 350px;
+                border-radius: 20px; padding: 25px; text-align: center;
+                box-shadow: 0 15px 50px rgba(0,0,0,0.3); position: relative;
+            }
+            .icon-alert-red { font-size: 3rem; color: #DC2626; filter: drop-shadow(0 4px 6px rgba(220,38,38,0.4)); margin-bottom: 15px; }
+            .btn-tutup-modal {
+                background: var(--bg-main); border: 1px solid var(--border);
+                padding: 10px 20px; border-radius: 10px; font-weight: 700;
+                color: var(--text-main); margin-top: 20px; width: 100%; cursor: pointer;
+            }
+            .list-santri-alpa { max-height: 150px; overflow-y: auto; text-align: left; margin-top: 15px; font-size: 0.85rem; border-top: 1px dashed var(--border); padding-top: 10px;}
+            .list-santri-alpa div { margin-bottom: 8px; display: flex; justify-content: space-between; font-weight: 600; color: var(--text-main);}
         </style>
 
-        <!-- Sapaan -->
         <div class="greeting-area">
             <h3 id="welcomeGreeting">Ahlan wa Sahlan, Ustadz!</h3>
             <p>"Setiap huruf Al-Qur'an yang diajarkan adalah pahala jariyah yang mengalir tanpa henti."</p>
@@ -109,12 +110,22 @@ export function renderDashboard() {
         </div>
 
         <div class="time-filters">
-            <button class="filter-btn active" id="btn-hari">Hari Ini</button>
-            <button class="filter-btn" id="btn-pekan">Pekan Ini</button>
-            <button class="filter-btn" id="btn-bulan">Bulan Ini</button>
+            <button class="filter-btn active" id="btn-hari" data-filter="hari">Hari Ini</button>
+            <button class="filter-btn" id="btn-pekan" data-filter="pekan">Pekan Ini</button>
+            <button class="filter-btn" id="btn-bulan" data-filter="bulan">Bulan Ini</button>
         </div>
 
-        <div class="dashboard-chart-card">
+        <div class="dashboard-chart-card" style="position: relative;">
+            
+            <!-- WADAH TOOLTIP -->
+            <div id="namesTooltip">
+                <div class="tooltip-header">
+                    <span class="tooltip-title"><div class="legend-dot" id="ttDot"></div> <span id="ttLabel">Daftar</span></span>
+                    <button class="tooltip-close" id="btnCloseTooltip"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="tooltip-list" id="ttNames">Memuat data...</div>
+            </div>
+
             <div class="chart-container-box">
                 <canvas id="concentricChart"></canvas>
                 <div class="chart-center-text">
@@ -124,19 +135,32 @@ export function renderDashboard() {
             </div>
 
             <div class="legend-grid">
-                <div class="legend-item"><div class="legend-dot" style="background: var(--clr-toska);"></div><span class="legend-title">Hadir</span><span class="legend-val" id="valHadir">0</span></div>
-                <div class="legend-item"><div class="legend-dot" style="background: var(--clr-biru);"></div><span class="legend-title">Izin/Skt</span><span class="legend-val" id="valIzinSkt">0</span></div>
-                <div class="legend-item"><div class="legend-dot" style="background: var(--clr-koral);"></div><span class="legend-title">Alfa</span><span class="legend-val" id="valAlfa">0</span></div>
-                <div class="legend-item"><div class="legend-dot" style="background: var(--clr-dongker);"></div><span class="legend-title">Ulang</span><span class="legend-val" id="valUlang">0</span></div>
+                <div class="legend-item" data-type="Hadir" data-color="#75B5B0"><div class="legend-dot" style="background: var(--clr-toska);"></div><span class="legend-title">Hadir</span><span class="legend-val" id="valHadir">0</span></div>
+                <div class="legend-item" data-type="Izin/Skt" data-color="#8999B8"><div class="legend-dot" style="background: var(--clr-biru);"></div><span class="legend-title">Izin/Skt</span><span class="legend-val" id="valIzinSkt">0</span></div>
+                <div class="legend-item" data-type="Alfa" data-color="#F39B96"><div class="legend-dot" style="background: var(--clr-koral);"></div><span class="legend-title">Alfa</span><span class="legend-val" id="valAlfa">0</span></div>
+                <div class="legend-item" data-type="Ulang" data-color="#4F567D"><div class="legend-dot" style="background: var(--clr-dongker);"></div><span class="legend-title">Ulang</span><span class="legend-val" id="valUlang">0</span></div>
             </div>
         </div>
 
-        <!-- RIWAYAT AKTIVITAS HARI INI (DESAIN TIMELINE) -->
         <div style="margin-bottom: 30px; background: var(--surface); padding: 20px; border-radius: 16px; border: 1px solid var(--border);">
-            <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 15px;"><i class="fas fa-history" style="color: var(--primary); margin-right: 8px;"></i> Riwayat Aktivitas Hari Ini</h4>
-            
+            <h4 id="titleRiwayat" style="font-size: 1rem; font-weight: 700; margin-bottom: 15px;"><i class="fas fa-history" style="color: var(--primary); margin-right: 8px;"></i> Riwayat Aktivitas Hari Ini</h4>
             <div id="timelineWrapper">
-                <p style="text-align:center; color:var(--text-muted); padding:20px;">Memuat riwayat...</p>
+                <p style="text-align:center; color:var(--text-muted); padding:20px;"><i class="fas fa-circle-notch fa-spin"></i> Memuat data...</p>
+            </div>
+        </div>
+
+        <!-- MODAL LONCENG ALPA -->
+        <div id="modalLonceng">
+            <div class="modal-lonceng-content">
+                <i class="fas fa-exclamation-triangle icon-alert-red"></i>
+                <h3 style="margin:0 0 10px 0; color:var(--text-main); font-size:1.1rem;">Evaluasi Kehadiran!</h3>
+                <p style="font-size:0.85rem; color:var(--text-muted); margin:0;">Ananda berikut telah mencapai batas kritis Alpa di bulan ini. Mohon ditindaklanjuti.</p>
+                
+                <div class="list-santri-alpa" id="isiDaftarAlpa">
+                    <!-- Akan diisi otomatis oleh JS -->
+                </div>
+
+                <button class="btn-tutup-modal" onclick="document.getElementById('modalLonceng').style.display='none'">Tutup & Paham</button>
             </div>
         </div>
     `;
@@ -165,38 +189,147 @@ export async function initDashboard() {
         data: {
             labels: ['Hadir', 'Izin', 'Alfa', 'Ulang'],
             datasets: [
-                { data: [0, 100], backgroundColor: ['#75B5B0', trackColor], borderWidth: 4, borderColor: gapColor, borderRadius: 20 },
-                { data: [0, 100], backgroundColor: ['#8999B8', trackColor], borderWidth: 4, borderColor: gapColor, borderRadius: 20 },
-                { data: [0, 100], backgroundColor: ['#F39B96', trackColor], borderWidth: 4, borderColor: gapColor, borderRadius: 20 },
-                { data: [0, 100], backgroundColor: ['#4F567D', trackColor], borderWidth: 4, borderColor: gapColor, borderRadius: 20 } 
+                { data: [0, 1], backgroundColor: ['#75B5B0', trackColor], borderWidth: 4, borderColor: gapColor, borderRadius: 20 },
+                { data: [0, 1], backgroundColor: ['#8999B8', trackColor], borderWidth: 4, borderColor: gapColor, borderRadius: 20 },
+                { data: [0, 1], backgroundColor: ['#F39B96', trackColor], borderWidth: 4, borderColor: gapColor, borderRadius: 20 },
+                { data: [0, 1], backgroundColor: ['#4F567D', trackColor], borderWidth: 4, borderColor: gapColor, borderRadius: 20 } 
             ]
         },
         options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { display: false }, tooltip: { enabled: false } }, animation: { animateScale: true, animateRotate: true } }
     };
-    
     if (myChart) myChart.destroy();
     myChart = new Chart(ctx.getContext('2d'), chartConfig);
 
+    // Format Tanggal
+    const formatDate = (date) => {
+        const d = new Date(date);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    };
+
+    const today = new Date();
+    const todayStr = formatDate(today);
+    
+    const dayOfWeek = today.getDay();
+    const startOfWeekDate = new Date(today);
+    startOfWeekDate.setDate(today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1));
+    const startOfWeekStr = formatDate(startOfWeekDate);
+
+    const startOfMonthDate = new Date(today.getFullYear(), today.getMonth(), 1);
+    const startOfMonthStr = formatDate(startOfMonthDate);
+
+    let tooltipDataObj = { 'Hadir': {}, 'Izin/Skt': {}, 'Alfa': {}, 'Ulang': {} };
+
+    function renderFilteredData(filterType) {
+        let startDateFilter = todayStr;
+        let titleSuffix = "Hari Ini";
+
+        if (filterType === 'pekan') { startDateFilter = startOfWeekStr; titleSuffix = "Pekan Ini"; }
+        else if (filterType === 'bulan') { startDateFilter = startOfMonthStr; titleSuffix = "Bulan Ini"; }
+
+        document.getElementById('titleRiwayat').innerHTML = `<i class="fas fa-history" style="color: var(--primary); margin-right: 8px;"></i> Riwayat Aktivitas ${titleSuffix}`;
+
+        const filteredLog = rawHarianList.filter(log => log.tanggal >= startDateFilter && log.tanggal <= todayStr);
+
+        tooltipDataObj = { 'Hadir': {}, 'Izin/Skt': {}, 'Alfa': {}, 'Ulang': {} };
+        let hadir = 0, izinSakit = 0, alfa = 0, ulang = 0;
+        
+        let chartSantriList = rawSantriList;
+        if (namaKelasAktif) chartSantriList = rawSantriList.filter(s => s.nama_kelas === namaKelasAktif);
+        const totalSantriKelas = chartSantriList.length;
+
+        filteredLog.forEach(log => {
+            if (namaKelasAktif && log.nama_kelas !== namaKelasAktif) return; 
+
+            const nama = log.nama_santri || 'Tanpa Nama';
+
+            if(log.status_hadir === 'Hadir') { hadir++; tooltipDataObj['Hadir'][nama] = (tooltipDataObj['Hadir'][nama] || 0) + 1; }
+            else if(log.status_hadir === 'Izin' || log.status_hadir === 'Sakit') { izinSakit++; tooltipDataObj['Izin/Skt'][nama] = (tooltipDataObj['Izin/Skt'][nama] || 0) + 1; }
+            else if(log.status_hadir === 'Alpa') { alfa++; tooltipDataObj['Alfa'][nama] = (tooltipDataObj['Alfa'][nama] || 0) + 1; }
+            if(log.tahsin_status === 'Ulang' || log.tahfidz_status === 'Ulang') { ulang++; tooltipDataObj['Ulang'][nama] = (tooltipDataObj['Ulang'][nama] || 0) + 1; }
+        });
+
+        document.getElementById('chartClassNameText').textContent = namaKelasAktif ? `KELAS ${namaKelasAktif.toUpperCase()}` : 'SEMUA KELAS';
+        document.getElementById('chartTotalText').textContent = totalSantriKelas || 0;
+        document.getElementById('valHadir').textContent = hadir;
+        document.getElementById('valIzinSkt').textContent = izinSakit;
+        document.getElementById('valAlfa').textContent = alfa;
+        document.getElementById('valUlang').textContent = ulang;
+
+        const multiplier = filterType === 'pekan' ? 5 : (filterType === 'bulan' ? 20 : 1);
+        const targetTotal = (totalSantriKelas === 0 ? 1 : totalSantriKelas) * multiplier;
+        
+        myChart.data.datasets[0].data = [hadir, Math.max(0, targetTotal - hadir)];
+        myChart.data.datasets[1].data = [izinSakit, Math.max(0, targetTotal - izinSakit)];
+        myChart.data.datasets[2].data = [alfa, Math.max(0, targetTotal - alfa)];
+        myChart.data.datasets[3].data = [ulang, Math.max(0, targetTotal - ulang)];
+        myChart.update();
+
+        const timelineWrapper = document.getElementById('timelineWrapper');
+        let timelineHTML = '';
+        let listEvents = [];
+        let kelasAbsenSet = new Set(); 
+
+        filteredLog.forEach(row => {
+            let timeStr = '12.00';
+            if (row.created_at) {
+                const dt = new Date(row.created_at);
+                timeStr = `${String(dt.getHours()).padStart(2,'0')}.${String(dt.getMinutes()).padStart(2,'0')}`;
+            }
+            
+            const uniqKey = `${row.tanggal}_${row.nama_kelas}`; 
+
+            if (row.status_hadir && row.nama_kelas && !kelasAbsenSet.has(uniqKey)) {
+                kelasAbsenSet.add(uniqKey);
+                let titleAbs = `KELAS ${row.nama_kelas.toUpperCase()}`;
+                if(filterType !== 'hari') titleAbs += ` <span style="font-size:0.6rem; color:#999;">(${row.tanggal.split('-').reverse().join('/')})</span>`;
+                
+                listEvents.push({ time: timeStr, title: titleAbs, desc: 'Terabsensi', statusText: 'SELESAI', badgeClass: 'badge-absen', dotColor: '#8999B8' });
+            }
+
+            if (row.tahsin_status) {
+                let descTahsin = '';
+                if (row.tahsin_program === "Al Qur'an") descTahsin = `Al Qur'an Juz ${row.tahsin_juz || 1} (${row.tahsin_surat || ''} ${row.tahsin_ayat_dari || 1}-${row.tahsin_ayat_sampai || 10})`;
+                else descTahsin = `${row.tahsin_program || 'Iqro'} ${row.tahsin_jilid || 1} hal. ${row.tahsin_halaman || 1}`;
+                
+                listEvents.push({ time: timeStr, title: row.nama_santri || 'Tanpa Nama', desc: descTahsin, statusText: row.tahsin_status, badgeClass: row.tahsin_status === 'Ulang' ? 'badge-ulang' : 'badge-lulus', dotColor: row.tahsin_status === 'Ulang' ? '#F39B96' : '#75B5B0' });
+            }
+
+            if (row.tahfidz_status) {
+                const descTahfidz = `Al Qur'an Juz ${row.tahfidz_juz || 30} ${row.tahfidz_surat || ''} ${row.tahfidz_ayat_dari || 1}-${row.tahfidz_ayat_sampai || 10}`;
+                listEvents.push({ time: timeStr, title: row.nama_santri || 'Tanpa Nama', desc: descTahfidz, statusText: row.tahfidz_status, badgeClass: row.tahfidz_status === 'Ulang' ? 'badge-ulang' : 'badge-lulus', dotColor: row.tahfidz_status === 'Ulang' ? '#F39B96' : '#10B981' });
+            }
+        });
+
+        const eventsReversed = listEvents.reverse().slice(0, 15); 
+
+        if (eventsReversed.length === 0) {
+            timelineWrapper.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:20px;">Belum ada aktivitas.</div>`;
+        } else {
+            timelineHTML = '<div class="timeline-container">';
+            eventsReversed.forEach(ev => {
+                timelineHTML += `<div class="timeline-item"><div class="timeline-dot" style="background: ${ev.dotColor};"></div><span class="timeline-time">${ev.time} WIB</span><h5 class="timeline-title">${ev.title}</h5><p class="timeline-desc">${ev.desc}</p><span class="badge-status ${ev.badgeClass}">${ev.statusText}</span></div>`;
+            });
+            timelineHTML += '</div>';
+            timelineWrapper.innerHTML = timelineHTML;
+        }
+    }
+
     async function hydrateDashboard() {
         try {
-            const d = new Date();
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            const todayStr = `${year}-${month}-${day}`;
-            
             const [santriList, harianList, kelasList] = await Promise.all([
                 api.get('dapodik_santri', 'select=id,nama_kelas,nama_santri'),
-                api.get('input_harian', `select=*&tanggal=eq.${todayStr}&order=created_at.asc`),
+                api.get('input_harian', `select=*&tanggal=gte.${startOfMonthStr}&order=created_at.asc`),
                 api.get('kelas', 'select=*')
             ]);
 
-            // --- A. DETEKSI KELAS AKTIF ---
-            let kelasAktif = null;
-            let kelasMendatang = null;
+            rawHarianList = harianList || [];
+            rawSantriList = santriList || [];
 
             if(kelasList.length > 0) {
-                const currentMins = d.getHours() * 60 + d.getMinutes();
+                const currentMins = today.getHours() * 60 + today.getMinutes();
+                let kelasAktif = null;
+                let kelasMendatang = null;
+
                 kelasList.forEach(k => {
                     if (k.jam_kelas && k.jam_kelas.includes('-')) {
                         const [sStr, eStr] = k.jam_kelas.split('-');
@@ -214,146 +347,111 @@ export async function initDashboard() {
 
                 const jadwalContent = document.getElementById('jadwalContent');
                 if (kelasAktif) {
+                    namaKelasAktif = kelasAktif.nama_kelas;
                     jadwalContent.innerHTML = `<div style="display: flex; flex-direction: column; gap: 6px;"><div style="align-self: flex-start;"><span style="background: rgba(254, 226, 226, 0.9); color: #991B1B; padding: 4px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 800;">BERJALAN</span></div><div style="font-size: 1.05rem; font-weight: 800; color: #ffffff;">${kelasAktif.nama_kelas}</div></div>`;
                 } else if (kelasMendatang) {
+                    namaKelasAktif = kelasMendatang.nama_kelas;
                     jadwalContent.innerHTML = `<div style="display: flex; flex-direction: column; gap: 6px;"><div style="align-self: flex-start;"><span style="background: rgba(209, 250, 229, 0.9); color: #065F46; padding: 4px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 800;">MENUNGGU</span></div><div style="font-size: 1.05rem; font-weight: 800; color: #ffffff;">${kelasMendatang.nama_kelas}</div></div>`;
                 } else {
                     jadwalContent.innerHTML = `<span style="font-size:0.85rem; color:rgba(255,255,255,0.8); font-weight:600;">Semua kelas selesai.</span>`;
                 }
             }
 
-            // --- B. HITUNG GRAFIK DONAT ---
-            let namaKelasChart = kelasAktif ? kelasAktif.nama_kelas : (kelasMendatang ? kelasMendatang.nama_kelas : null);
-            let chartSantriList = santriList;
-            if (namaKelasChart) chartSantriList = santriList.filter(s => s.nama_kelas === namaKelasChart);
-            
-            const totalSantriKelas = chartSantriList.length;
-            document.getElementById('chartClassNameText').textContent = namaKelasChart ? `KELAS ${namaKelasChart.toUpperCase()}` : 'SEMUA KELAS';
-            document.getElementById('chartTotalText').textContent = totalSantriKelas || 0;
-
-            let hadir = 0, izinSakit = 0, alfa = 0, ulang = 0;
-            
-            if(harianList && harianList.length > 0) {
-                harianList.forEach(log => {
-                    if (namaKelasChart && log.nama_kelas !== namaKelasChart) return;
-
-                    if(log.status_hadir === 'Hadir') hadir++;
-                    else if(log.status_hadir === 'Izin' || log.status_hadir === 'Sakit') izinSakit++;
-                    else if(log.status_hadir === 'Alpa') alfa++;
-
-                    if(log.tahsin_status === 'Ulang' || log.tahfidz_status === 'Ulang') ulang++;
-                });
-            }
-
-            document.getElementById('valHadir').textContent = hadir;
-            document.getElementById('valIzinSkt').textContent = izinSakit;
-            document.getElementById('valAlfa').textContent = alfa;
-            document.getElementById('valUlang').textContent = ulang;
-
-            const total = totalSantriKelas === 0 ? 1 : totalSantriKelas; 
-            myChart.data.datasets[0].data = [hadir, Math.max(0, total - hadir)];
-            myChart.data.datasets[1].data = [izinSakit, Math.max(0, total - izinSakit)];
-            myChart.data.datasets[2].data = [alfa, Math.max(0, total - alfa)];
-            myChart.data.datasets[3].data = [ulang, Math.max(0, total - ulang)];
-            myChart.update();
-
-            // --- C. LOGIKA TIMELINE RIWAYAT AKTIVITAS ---
-            const timelineWrapper = document.getElementById('timelineWrapper');
-            let timelineHTML = '';
-            let listEvents = [];
-            let kelasAbsenSet = new Set();
-
-            if (harianList && harianList.length > 0) {
-                harianList.forEach(row => {
-                    // Ambil Waktu Jam.Menit WIB
-                    let timeStr = '12.00';
-                    if (row.created_at) {
-                        const dt = new Date(row.created_at);
-                        timeStr = `${String(dt.getHours()).padStart(2,'0')}.${String(dt.getMinutes()).padStart(2,'0')}`;
-                    }
-
-                    // 1. EVENT KEHADIRAN (DIKELOMPOKKAN PER KELAS)
-                    if (row.status_hadir && row.nama_kelas && !kelasAbsenSet.has(row.nama_kelas)) {
-                        kelasAbsenSet.add(row.nama_kelas);
-                        listEvents.push({
-                            time: timeStr,
-                            title: `KELAS ${row.nama_kelas.toUpperCase()}`,
-                            desc: 'Terabsensi',
-                            type: 'absen',
-                            statusText: 'SELESAI',
-                            badgeClass: 'badge-absen',
-                            dotColor: '#8999B8'
-                        });
-                    }
-
-                    // 2. EVENT TAHSIN
-                    if (row.tahsin_status) {
-                        let descTahsin = '';
-                        if (row.tahsin_program === "Al Qur'an") {
-                            const surah = row.tahsin_surat || 'Al-Baqarah';
-                            const aAwal = row.tahsin_ayat_dari || '1';
-                            const aAkhir = row.tahsin_ayat_sampai || '10';
-                            descTahsin = `Al Qur'an Juz ${row.tahsin_juz || 1} (${surah} ${aAwal}-${aAkhir})`;
-                        } else {
-                            descTahsin = `${row.tahsin_program || 'Iqro'} ${row.tahsin_jilid || 1} hal. ${row.tahsin_halaman || 1}`;
-                        }
-
-                        listEvents.push({
-                            time: timeStr,
-                            title: row.nama_santri || 'Tanpa Nama',
-                            desc: descTahsin,
-                            type: 'tahsin',
-                            statusText: row.tahsin_status,
-                            badgeClass: row.tahsin_status === 'Ulang' ? 'badge-ulang' : 'badge-lulus',
-                            dotColor: row.tahsin_status === 'Ulang' ? '#F39B96' : '#75B5B0'
-                        });
-                    }
-
-                    // 3. EVENT TAHFIDZ
-                    if (row.tahfidz_status) {
-                        const surah = row.tahfidz_surat || 'An-Naba\'';
-                        const aAwal = row.tahfidz_ayat_dari || '1';
-                        const aAkhir = row.tahfidz_ayat_sampai || '10';
-                        const descTahfidz = `Al Qur'an Juz ${row.tahfidz_juz || 30} ${surah} ${aAwal}-${aAkhir}`;
-
-                        listEvents.push({
-                            time: timeStr,
-                            title: row.nama_santri || 'Tanpa Nama',
-                            desc: descTahfidz,
-                            type: 'tahfidz',
-                            statusText: row.tahfidz_status,
-                            badgeClass: row.tahfidz_status === 'Ulang' ? 'badge-ulang' : 'badge-lulus',
-                            dotColor: row.tahfidz_status === 'Ulang' ? '#F39B96' : '#10B981'
-                        });
+            // ==========================================
+            // LOGIKA LONCENG PERINGATAN ALPA (8x, 9x, 10x)
+            // ==========================================
+            const bellIcon = document.getElementById('bellNotif');
+            if (bellIcon) {
+                let rekapAlpa = {};
+                rawHarianList.forEach(log => {
+                    if (log.status_hadir === 'Alpa') {
+                        rekapAlpa[log.nama_santri] = (rekapAlpa[log.nama_santri] || 0) + 1;
                     }
                 });
+
+                let maxAlpaBulanIni = 0;
+                let daftarBermasalah = [];
+
+                for (const [nama, totalAlpa] of Object.entries(rekapAlpa)) {
+                    if (totalAlpa >= 8) {
+                        daftarBermasalah.push({ nama, totalAlpa });
+                        if (totalAlpa > maxAlpaBulanIni) maxAlpaBulanIni = totalAlpa;
+                    }
+                }
+
+                // Reset Class Lonceng
+                bellIcon.classList.remove('bell-warn-8', 'bell-warn-9', 'bell-warn-10');
+                bellIcon.onclick = null;
+                bellIcon.style.cursor = 'default';
+
+                // Terapkan Animasi
+                if (maxAlpaBulanIni >= 10) bellIcon.classList.add('bell-warn-10');
+                else if (maxAlpaBulanIni === 9) bellIcon.classList.add('bell-warn-9');
+                else if (maxAlpaBulanIni === 8) bellIcon.classList.add('bell-warn-8');
+
+                // Fungsi Klik memunculkan Modal
+                if (daftarBermasalah.length > 0) {
+                    bellIcon.style.cursor = 'pointer';
+                    bellIcon.onclick = () => {
+                        let htmlList = '';
+                        // Urutkan dari alpa terbanyak
+                        daftarBermasalah.sort((a,b) => b.totalAlpa - a.totalAlpa).forEach(anak => {
+                            let warnaAngka = anak.totalAlpa >= 10 ? '#DC2626' : '#EA580C';
+                            htmlList += `<div><span>${anak.nama}</span> <span style="color:${warnaAngka};">${anak.totalAlpa}x Alpa</span></div>`;
+                        });
+                        document.getElementById('isiDaftarAlpa').innerHTML = htmlList;
+                        document.getElementById('modalLonceng').style.display = 'flex';
+                    };
+                }
             }
 
-            // Balikkan urutan agar aktivitas paling baru muncul di paling atas
-            const eventsReversed = listEvents.reverse();
-
-            if (eventsReversed.length === 0) {
-                timelineWrapper.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:20px;">Belum ada aktivitas hari ini.</div>`;
-            } else {
-                timelineHTML = '<div class="timeline-container">';
-                eventsReversed.forEach(ev => {
-                    timelineHTML += `
-                        <div class="timeline-item">
-                            <div class="timeline-dot" style="background: ${ev.dotColor};"></div>
-                            <span class="timeline-time">${ev.time} WIB</span>
-                            <h5 class="timeline-title">${ev.title}</h5>
-                            <p class="timeline-desc">${ev.desc}</p>
-                            <span class="badge-status ${ev.badgeClass}">${ev.statusText}</span>
-                        </div>
-                    `;
-                });
-                timelineHTML += '</div>';
-                timelineWrapper.innerHTML = timelineHTML;
-            }
+            renderFilteredData('hari');
 
         } catch(e) {
             console.error("Dashboard DB Error:", e);
         }
     }
+    
     hydrateDashboard();
-        }
+
+    // Event Filter Waktu
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            renderFilteredData(e.target.getAttribute('data-filter'));
+        });
+    });
+
+    // Event Tooltip Pintar 
+    const tooltip = document.getElementById('namesTooltip');
+    const ttLabel = document.getElementById('ttLabel');
+    const ttNames = document.getElementById('ttNames');
+    const ttDot = document.getElementById('ttDot');
+
+    document.querySelectorAll('.legend-item').forEach(el => {
+        el.addEventListener('click', () => {
+            const type = el.getAttribute('data-type');
+            const color = el.getAttribute('data-color');
+            
+            ttLabel.textContent = `Daftar ${type}`;
+            ttDot.style.background = color;
+            
+            let htmlList = '';
+            const dataPilihan = tooltipDataObj[type] || {};
+            
+            for (const [namaSantri, jumlah] of Object.entries(dataPilihan)) {
+                htmlList += `<div><span>${namaSantri}</span> <span style="font-weight:700; color:${color};">${jumlah > 1 ? `${jumlah}x` : ''}</span></div>`;
+            }
+
+            if (htmlList === '') htmlList = `<div style="justify-content:center; color:var(--text-muted); border:none;">Kosong</div>`;
+
+            ttNames.innerHTML = htmlList;
+            tooltip.style.display = 'flex';
+        });
+    });
+
+    document.getElementById('btnCloseTooltip').addEventListener('click', () => {
+        tooltip.style.display = 'none';
+    });
+                    }
