@@ -8,20 +8,8 @@ import { api } from './api.js';
 
 const currentUserRole = 'guru'; 
 
-// ==========================================
-// KAMUS DATA AL-QUR'AN
-// ==========================================
-const namaSurat = [
-    "", "Al-Fatihah", "Al-Baqarah", "Ali 'Imran", "An-Nisa'", "Al-Ma'idah", "Al-An'am", "Al-A'raf", "Al-Anfal", "At-Taubah", "Yunus", "Hud", "Yusuf", "Ar-Ra'd", "Ibrahim", "Al-Hijr", "An-Nahl", "Al-Isra'", "Al-Kahf", "Maryam", "Taha", "Al-Anbiya'", "Al-Hajj", "Al-Mu'minun", "An-Nur", "Al-Furqan", "Asy-Syu'ara'", "An-Naml", "Al-Qasas", "Al-'Ankabut", "Ar-Rum", "Luqman", "As-Sajdah", "Al-Ahzab", "Saba'", "Fatir", "Yasin", "As-Saffat", "Sad", "Az-Zumar", "Ghafir", "Fussilat", "Asy-Syura", "Az-Zukhruf", "Ad-Dukhan", "Al-Jasiyah", "Al-Ahqaf", "Muhammad", "Al-Fath", "Al-Hujurat", "Qaf", "Az-Zariyat", "At-Tur", "An-Najm", "Al-Qamar", "Ar-Rahman", "Al-Waqi'ah", "Al-Hadid", "Al-Mujadilah", "Al-Hasyr", "Al-Mumtahanah", "As-Saff", "Al-Jumu'ah", "Al-Munafiqun", "At-Tagabun", "At-Talaq", "At-Tahrim", "Al-Mulk", "Al-Qalam", "Al-Haqqah", "Al-Ma'arij", "Nuh", "Al-Jinn", "Al-Muzzammil", "Al-Muddassir", "Al-Qiyamah", "Al-Insan", "Al-Mursalat", "An-Naba'", "An-Nazi'at", "'Abasa", "At-Takwir", "Al-Infitar", "Al-Mutaffifin", "Al-Insyiqaq", "Al-Buruj", "At-Tariq", "Al-A'la", "Al-Gasyiyah", "Al-Fajr", "Al-Balad", "Asy-Syams", "Al-Lail", "Ad-Duha", "Asy-Syarh", "At-Tin", "Al-'Alaq", "Al-Qadr", "Al-Bayyinah", "Az-Zalzalah", "Al-'Adiyat", "Al-Qari'ah", "At-Takasur", "Al-'Asr", "Al-Humazah", "Al-Fil", "Quraisy", "Al-Ma'un", "Al-Kausar", "Al-Kafirun", "An-Nasr", "Al-Lahab", "Al-Ikhlas", "Al-Falaq", "An-Nas"
-];
-
-const petaJuz = {
-    1: [1,2], 2: [2], 3: [2,3], 4: [3,4], 5: [4], 6: [4,5], 7: [5,6], 8: [6,7], 9: [7,8], 10: [8,9],
-    11: [9,10,11], 12: [11,12], 13: [12,13,14], 14: [15,16], 15: [17,18], 16: [18,19,20], 17: [21,22], 18: [23,24,25], 19: [25,26,27], 20: [27,28,29],
-    21: [29,30,31,32,33], 22: [33,34,35,36], 23: [36,37,38,39], 24: [39,40,41], 25: [41,42,43,44,45],
-    26: [46,47,48,49,50,51], 27: [51,52,53,54,55,56,57], 28: [58,59,60,61,62,63,64,65,66], 29: [67,68,69,70,71,72,73,74,75,76,77],
-    30: Array.from({length: 37}, (_, i) => i + 78)
-};
+const namaSurat = ["", "Al-Fatihah", "Al-Baqarah", "Ali 'Imran", "An-Nisa'", "Al-Ma'idah", "Al-An'am", "Al-A'raf", "Al-Anfal", "At-Taubah", "Yunus", "Hud", "Yusuf", "Ar-Ra'd", "Ibrahim", "Al-Hijr", "An-Nahl", "Al-Isra'", "Al-Kahf", "Maryam", "Taha", "Al-Anbiya'", "Al-Hajj", "Al-Mu'minun", "An-Nur", "Al-Furqan", "Asy-Syu'ara'", "An-Naml", "Al-Qasas", "Al-'Ankabut", "Ar-Rum", "Luqman", "As-Sajdah", "Al-Ahzab", "Saba'", "Fatir", "Yasin", "As-Saffat", "Sad", "Az-Zumar", "Ghafir", "Fussilat", "Asy-Syura", "Az-Zukhruf", "Ad-Dukhan", "Al-Jasiyah", "Al-Ahqaf", "Muhammad", "Al-Fath", "Al-Hujurat", "Qaf", "Az-Zariyat", "At-Tur", "An-Najm", "Al-Qamar", "Ar-Rahman", "Al-Waqi'ah", "Al-Hadid", "Al-Mujadilah", "Al-Hasyr", "Al-Mumtahanah", "As-Saff", "Al-Jumu'ah", "Al-Munafiqun", "At-Tagabun", "At-Talaq", "At-Tahrim", "Al-Mulk", "Al-Qalam", "Al-Haqqah", "Al-Ma'arij", "Nuh", "Al-Jinn", "Al-Muzzammil", "Al-Muddassir", "Al-Qiyamah", "Al-Insan", "Al-Mursalat", "An-Naba'", "An-Nazi'at", "'Abasa", "At-Takwir", "Al-Infitar", "Al-Mutaffifin", "Al-Insyiqaq", "Al-Buruj", "At-Tariq", "Al-A'la", "Al-Gasyiyah", "Al-Fajr", "Al-Balad", "Asy-Syams", "Al-Lail", "Ad-Duha", "Asy-Syarh", "At-Tin", "Al-'Alaq", "Al-Qadr", "Al-Bayyinah", "Az-Zalzalah", "Al-'Adiyat", "Al-Qari'ah", "At-Takasur", "Al-'Asr", "Al-Humazah", "Al-Fil", "Quraisy", "Al-Ma'un", "Al-Kausar", "Al-Kafirun", "An-Nasr", "Al-Lahab", "Al-Ikhlas", "Al-Falaq", "An-Nas"];
+const petaJuz = { 1: [1,2], 2: [2], 3: [2,3], 4: [3,4], 5: [4], 6: [4,5], 7: [5,6], 8: [6,7], 9: [7,8], 10: [8,9], 11: [9,10,11], 12: [11,12], 13: [12,13,14], 14: [15,16], 15: [17,18], 16: [18,19,20], 17: [21,22], 18: [23,24,25], 19: [25,26,27], 20: [27,28,29], 21: [29,30,31,32,33], 22: [33,34,35,36], 23: [36,37,38,39], 24: [39,40,41], 25: [41,42,43,44,45], 26: [46,47,48,49,50,51], 27: [51,52,53,54,55,56,57], 28: [58,59,60,61,62,63,64,65,66], 29: [67,68,69,70,71,72,73,74,75,76,77], 30: Array.from({length: 37}, (_, i) => i + 78) };
 
 export function renderInputHarian() {
     return `
@@ -35,15 +23,7 @@ export function renderInputHarian() {
             .input-header-controls select, .input-header-controls input { border: 1px solid var(--border); border-radius: 8px; padding: 10px 15px; font-size: 0.9rem; background: var(--bg-main); outline: none; flex: 1; min-width: 140px; color: var(--text-main);}
             
             .santri-card { background: var(--surface); border-radius: 12px; border: 1px solid var(--border); padding: 15px; margin-bottom: 12px; display: flex; flex-direction: column; transition: all 0.3s ease;}
-            
-            .santri-card.active-card { 
-                border: 2px solid var(--primary); 
-                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); 
-                transform: scale(1.02); 
-                z-index: 5; 
-                position: relative;
-                background: var(--surface); 
-            }
+            .santri-card.active-card { border: 2px solid var(--primary); box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); transform: scale(1.02); z-index: 5; position: relative; background: var(--surface); }
 
             .card-header-flex { display: flex; justify-content: space-between; align-items: center; }
             .info-santri { flex: 1; }
@@ -78,6 +58,20 @@ export function renderInputHarian() {
 
             .toast-save { font-size: 0.7rem; color: #10B981; font-weight: 600; opacity: 0; transition: 0.3s; margin-left: 5px; display: inline-flex; align-items: center; gap: 3px;}
             .toast-save.show { opacity: 1; }
+
+            /* Tombol Batch Save di Bawah */
+            .batch-save-container {
+                position: sticky; bottom: 65px; z-index: 60; padding: 15px; 
+                background: var(--surface); border-top: 1px solid var(--border);
+                box-shadow: 0 -4px 15px rgba(0,0,0,0.05); display: none;
+            }
+            .btn-batch-save {
+                width: 100%; padding: 16px; border-radius: 12px; border: none; 
+                background: var(--primary); color: white; font-weight: 700; font-size: 1.1rem; 
+                cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px;
+                box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4); transition: 0.3s;
+            }
+            .btn-batch-save:active { transform: scale(0.98); }
         </style>
 
         <div class="input-header-wrapper" id="inputHeader">
@@ -97,12 +91,20 @@ export function renderInputHarian() {
             </div>
         </div>
 
-        <div id="listSantriContainer" style="padding-bottom: 80px;">
+        <div id="listSantriContainer" style="padding-bottom: 20px;">
             <div style="text-align:center; padding: 40px; color: var(--text-muted);">
                 <i class="fas fa-users" style="font-size:3rem; margin-bottom:15px; opacity:0.5;"></i>
                 <p>Memuat daftar santri...</p>
             </div>
         </div>
+
+        <!-- WADAH TOMBOL SIMPAN SEKELAS -->
+        <div class="batch-save-container" id="batchSaveContainer">
+            <button class="btn-batch-save" id="btnBatchSaveAbsen" onclick="simpanAbsenSekelas(this)">
+                <i class="fas fa-save"></i> Simpan Kehadiran Kelas Ini
+            </button>
+        </div>
+        <div style="height: 80px;"></div>
     `;
 }
 
@@ -111,10 +113,9 @@ export async function initInputHarian() {
     const elKelas = document.getElementById('kelasInputHarian');
     const container = document.getElementById('listSantriContainer');
     const loader = document.getElementById('loadingIndicator');
+    const batchContainer = document.getElementById('batchSaveContainer');
     
-    // Menyimpan memori daftar santri yang sedang tampil agar datanya bisa diambil saat simpan
     let currentSantriData = []; 
-
     elTgl.valueAsDate = new Date();
 
     try {
@@ -124,7 +125,7 @@ export async function initInputHarian() {
             fetchDanRenderSantri();
         } else {
             elKelas.innerHTML = '<option value="">Belum ada kelas dibuat</option>';
-            container.innerHTML = '<p style="text-align:center;">Silakan buat kelas terlebih dahulu di menu Data Santri.</p>';
+            container.innerHTML = '<p style="text-align:center;">Silakan buat kelas terlebih dahulu.</p>';
         }
     } catch(err) { console.error(err); }
 
@@ -135,15 +136,17 @@ export async function initInputHarian() {
         if(!elKelas.value || !elTgl.value) return;
         loader.style.display = 'block';
         container.style.opacity = '0.5';
+        batchContainer.style.display = 'none';
 
         try {
             const santriList = await api.get('dapodik_santri', `select=*&nama_kelas=eq.${encodeURIComponent(elKelas.value)}&order=nama_santri.asc`);
-            currentSantriData = santriList; // Simpan ke memori lokal
+            currentSantriData = santriList; 
             
             if(santriList.length === 0) {
                 container.innerHTML = `<div style="text-align:center; padding:40px; color:var(--text-muted);">Tidak ada santri di kelas ini.</div>`;
             } else {
                 renderKartuSantri(santriList);
+                batchContainer.style.display = 'block'; // Tampilkan tombol simpan sekelas
             }
         } catch (error) {
             container.innerHTML = `<div style="text-align:center; color:red; padding:20px;">Gagal menarik data.</div>`;
@@ -155,7 +158,6 @@ export async function initInputHarian() {
 
     function renderKartuSantri(santriList) {
         let html = '';
-        
         santriList.forEach(s => {
             html += `
             <div class="santri-card" id="card_${s.id}">
@@ -197,74 +199,51 @@ export async function initInputHarian() {
                             <option value="Ummi">Ummi</option>
                             <option value="Al Qur'an">Al Qur'an</option>
                         </select>
-                        
                         <div id="t_buku_area_${s.id}" class="flex-row-gap">
                             <input type="number" id="t_jilid_${s.id}" class="compact-input" placeholder="Jilid">
                             <input type="number" id="t_hal_${s.id}" class="compact-input" placeholder="Hal">
                         </div>
-
                         <div id="t_quran_area_${s.id}" class="form-grid" style="display: none;">
                             <div class="flex-row-gap">
-                                <select id="t_q_juz_${s.id}" class="compact-input trigger-juz" data-target="t_q_surat_${s.id}" style="width:100px;">
-                                    ${generateJuzOptions(1)}
-                                </select>
+                                <select id="t_q_juz_${s.id}" class="compact-input trigger-juz" data-target="t_q_surat_${s.id}" style="width:100px;">${generateJuzOptions(1)}</select>
                                 <select id="t_q_surat_${s.id}" class="compact-input"></select>
                             </div>
                             <div class="flex-row-gap">
-                                <input type="number" id="t_q_a_awal_${s.id}" class="compact-input" placeholder="Ayat Awal">
-                                <span>-</span>
+                                <input type="number" id="t_q_a_awal_${s.id}" class="compact-input" placeholder="Ayat Awal"><span>-</span>
                                 <input type="number" id="t_q_a_akhir_${s.id}" class="compact-input" placeholder="Ayat Akhir">
                             </div>
                         </div>
-
                         <input type="text" id="t_catatan_${s.id}" class="compact-input" placeholder="Catatan Ustadz (Opsional)...">
-
                         <div class="btn-action-group">
-                            <button class="btn-status-save btn-status-lulus" onclick="saveDataRealtime('${s.id}', 'tahsin', 'Lulus', this)">
-                                <i class="fas fa-check"></i> Lanjut
-                            </button>
-                            <button class="btn-status-save btn-status-ulang" onclick="saveDataRealtime('${s.id}', 'tahsin', 'Ulang', this)">
-                                <i class="fas fa-undo"></i> Ulang
-                            </button>
+                            <button class="btn-status-save btn-status-lulus" onclick="saveDataRealtime('${s.id}', 'tahsin', 'Lulus', this)"><i class="fas fa-check"></i> Lanjut</button>
+                            <button class="btn-status-save btn-status-ulang" onclick="saveDataRealtime('${s.id}', 'tahsin', 'Ulang', this)"><i class="fas fa-undo"></i> Ulang</button>
                         </div>
                     </div>
 
                     <!-- FORM TAHFIDZ -->
                     <div id="form_tahfidz_${s.id}" class="form-grid" style="display:none;">
                         <div class="flex-row-gap">
-                            <select id="h_juz_${s.id}" class="compact-input trigger-juz" data-target="h_surat_${s.id}" style="width:100px;">
-                                ${generateJuzOptions(30)}
-                            </select>
+                            <select id="h_juz_${s.id}" class="compact-input trigger-juz" data-target="h_surat_${s.id}" style="width:100px;">${generateJuzOptions(30)}</select>
                             <select id="h_surat_${s.id}" class="compact-input"></select>
                         </div>
                         <div class="flex-row-gap">
-                            <input type="number" id="h_a_awal_${s.id}" class="compact-input" placeholder="Ayat Awal">
-                            <span>-</span>
+                            <input type="number" id="h_a_awal_${s.id}" class="compact-input" placeholder="Ayat Awal"><span>-</span>
                             <input type="number" id="h_a_akhir_${s.id}" class="compact-input" placeholder="Ayat Akhir">
                         </div>
                         <input type="text" id="h_catatan_${s.id}" class="compact-input" placeholder="Catatan Ustadz (Opsional)...">
-                        
                         <div class="btn-action-group">
-                            <button class="btn-status-save btn-status-lulus" onclick="saveDataRealtime('${s.id}', 'tahfidz', 'Lulus', this)">
-                                <i class="fas fa-check"></i> Lanjut
-                            </button>
-                            <button class="btn-status-save btn-status-ulang" onclick="saveDataRealtime('${s.id}', 'tahfidz', 'Ulang', this)">
-                                <i class="fas fa-undo"></i> Ulang
-                            </button>
+                            <button class="btn-status-save btn-status-lulus" onclick="saveDataRealtime('${s.id}', 'tahfidz', 'Lulus', this)"><i class="fas fa-check"></i> Lanjut</button>
+                            <button class="btn-status-save btn-status-ulang" onclick="saveDataRealtime('${s.id}', 'tahfidz', 'Ulang', this)"><i class="fas fa-undo"></i> Ulang</button>
                         </div>
                     </div>
                 </div>
             </div>
             `;
         });
-
         container.innerHTML = html;
         initLogikaInteraktif();
     }
     
-    // ==========================================
-    // LOGIKA UI (ACCORDION & TAB)
-    // ==========================================
     window.toggleAccordion = (id) => {
         const acc = document.getElementById(`acc_${id}`);
         const btn = document.getElementById(`expandBtn_${id}`);
@@ -279,32 +258,26 @@ export async function initInputHarian() {
             acc.style.display = 'block';
             btn.classList.add('active');
             card.classList.add('active-card');
-            
             setTimeout(() => {
                 const headerHeight = header.offsetHeight + 15;
-                const cardPosition = card.getBoundingClientRect().top;
-                const offsetPosition = cardPosition + window.pageYOffset - headerHeight;
-
-                window.scrollTo({
-                    top: offsetPosition,
-                    behavior: 'smooth'
-                });
+                const offsetPosition = card.getBoundingClientRect().top + window.pageYOffset - headerHeight;
+                window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
             }, 150);
         }
     };
 
     window.switchMode = (id, mode) => {
-        const tabTahsin = document.getElementById(`tab_tahsin_${id}`);
-        const tabTahfidz = document.getElementById(`tab_tahfidz_${id}`);
-        const formTahsin = document.getElementById(`form_tahsin_${id}`);
-        const formTahfidz = document.getElementById(`form_tahfidz_${id}`);
+        const tTahsin = document.getElementById(`tab_tahsin_${id}`);
+        const tTahfidz = document.getElementById(`tab_tahfidz_${id}`);
+        const fTahsin = document.getElementById(`form_tahsin_${id}`);
+        const fTahfidz = document.getElementById(`form_tahfidz_${id}`);
 
         if(mode === 'tahsin') {
-            tabTahsin.classList.add('active'); tabTahfidz.classList.remove('active');
-            formTahsin.style.display = 'grid'; formTahfidz.style.display = 'none';
+            tTahsin.classList.add('active'); tTahfidz.classList.remove('active');
+            fTahsin.style.display = 'grid'; fTahfidz.style.display = 'none';
         } else {
-            tabTahfidz.classList.add('active'); tabTahsin.classList.remove('active');
-            formTahfidz.style.display = 'grid'; formTahsin.style.display = 'none';
+            tTahfidz.classList.add('active'); tTahsin.classList.remove('active');
+            fTahfidz.style.display = 'grid'; fTahsin.style.display = 'none';
         }
     };
 
@@ -323,9 +296,7 @@ export async function initInputHarian() {
                 const acc = document.getElementById(`acc_${id}`);
                 const card = document.getElementById(`card_${id}`);
                 
-                // Trigger absensi otomatis
-                saveAbsenRealtime(id, val);
-
+                // CATATAN: Di sini auto-save dihapus! Absen baru disimpan saat tombol besar ditekan.
                 if (val !== 'H') {
                     expandBtn.style.display = 'none';
                     acc.style.display = 'none';
@@ -364,57 +335,76 @@ export async function initInputHarian() {
         setTimeout(() => t.classList.remove('show'), 2000);
     };
 
-    // ==========================================
-    // MESIN PENYIMPANAN "SINGLE TABLE" (ANTI ERROR)
-    // ==========================================
     async function upsertKeHarian(idSantri, payloadPartial) {
         const tglUI = elTgl.value;
         const queryMatch = `santri_id=eq.${idSantri}&tanggal=eq.${tglUI}`;
-
-        // Pastikan Identitas Utama Selalu Ikut
         payloadPartial.tanggal = tglUI;
         payloadPartial.santri_id = idSantri;
 
         try {
-            // Cek apakah hari ini anak tersebut sudah pernah diinput apa pun (absen/tahsin)
             const existing = await api.get('input_harian', queryMatch);
-            
             if (existing && existing.length > 0) {
-                // Jika sudah ada, cukup tambal/update baris datanya
                 await api.update('input_harian', existing[0].id, payloadPartial);
             } else {
-                // Jika masih perawan (belum ada data hari ini), buat baris baru
                 await api.post('input_harian', payloadPartial);
             }
-        } catch(e) {
-            alert(`🚨 GAGAL MENYIMPAN!\nAlasan: ${e.message || JSON.stringify(e)}`);
-            console.error("AutoSave Error:", e);
+        } catch(e) { console.error("AutoSave Error:", e); }
+    }
+
+    // ==========================================
+    // FUNGSI BARU: SIMPAN ABSEN BATCH (SEKELAS)
+    // ==========================================
+    window.simpanAbsenSekelas = async (btnElement) => {
+        const originalText = btnElement.innerHTML;
+        btnElement.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Menyimpan Kehadiran...`;
+        btnElement.style.background = '#4F567D';
+        btnElement.disabled = true;
+
+        try {
+            // Kita proses satu per satu santri yang ada di kelas ini
+            const promises = currentSantriData.map(async (s) => {
+                const checkedRadio = document.querySelector(`input[name="abs_${s.id}"]:checked`);
+                const val = checkedRadio ? checkedRadio.value : 'H';
+                
+                let statusBaku = 'Hadir';
+                if (val === 'I') statusBaku = 'Izin';
+                if (val === 'S') statusBaku = 'Sakit';
+                if (val === 'A') statusBaku = 'Alpa'; 
+
+                const payload = {
+                    nama_santri: s.nama_santri,
+                    nama_kelas: s.nama_kelas,
+                    nis: s.nis,
+                    status_hadir: statusBaku
+                };
+                
+                // Gunakan tambal sulam cerdas
+                await upsertKeHarian(s.id, payload);
+            });
+
+            // Tunggu semua proses selesai bersamaan
+            await Promise.all(promises);
+
+            btnElement.innerHTML = `<i class="fas fa-check-circle"></i> Berhasil Disimpan!`;
+            btnElement.style.background = '#10B981'; // Hijau Sukses
+            
+            setTimeout(() => {
+                btnElement.innerHTML = originalText;
+                btnElement.style.background = 'var(--primary)';
+                btnElement.disabled = false;
+            }, 2500);
+
+        } catch (error) {
+            alert("Gagal menyimpan absen masal. Cek koneksi Anda.");
+            btnElement.innerHTML = originalText;
+            btnElement.disabled = false;
         }
-    }
-
-    async function saveAbsenRealtime(id, status_huruf) {
-        let statusBaku = 'Hadir';
-        if (status_huruf === 'I') statusBaku = 'Izin';
-        if (status_huruf === 'S') statusBaku = 'Sakit';
-        if (status_huruf === 'A') statusBaku = 'Alpa'; 
-
-        // Mengambil data dapodik dari memori
-        const s = currentSantriData.find(x => x.id === id);
-
-        await upsertKeHarian(id, {
-            status_hadir: statusBaku,
-            nama_santri: s ? s.nama_santri : null,
-            nama_kelas: s ? s.nama_kelas : null,
-            nis: s ? s.nis : null
-        });
-        showToast(id);
-    }
+    };
 
     window.saveDataRealtime = async (id, jenisForm, targetStatus, btnElement) => {
         const originalText = btnElement.innerHTML;
         btnElement.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Menyimpan...`;
 
-        // Mengambil data dapodik dari memori untuk jaga-jaga
         const s = currentSantriData.find(x => x.id === id);
         let payload = {
             nama_santri: s ? s.nama_santri : null,
