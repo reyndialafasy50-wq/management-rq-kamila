@@ -1,7 +1,6 @@
 /**
  * ==================================================
- * BAGIAN 9: INPUT HARIAN MOBILE-FIRST 
- * (Auto-Save Real-Time, Adaptive Dark Mode & Smart Scroll)
+ * BAGIAN 9: INPUT HARIAN MOBILE-FIRST (SINGLE TABLE V2)
  * File: js/input_harian.js
  * ==================================================
  */
@@ -112,6 +111,9 @@ export async function initInputHarian() {
     const elKelas = document.getElementById('kelasInputHarian');
     const container = document.getElementById('listSantriContainer');
     const loader = document.getElementById('loadingIndicator');
+    
+    // Menyimpan memori daftar santri yang sedang tampil agar datanya bisa diambil saat simpan
+    let currentSantriData = []; 
 
     elTgl.valueAsDate = new Date();
 
@@ -136,6 +138,7 @@ export async function initInputHarian() {
 
         try {
             const santriList = await api.get('dapodik_santri', `select=*&nama_kelas=eq.${encodeURIComponent(elKelas.value)}&order=nama_santri.asc`);
+            currentSantriData = santriList; // Simpan ke memori lokal
             
             if(santriList.length === 0) {
                 container.innerHTML = `<div style="text-align:center; padding:40px; color:var(--text-muted);">Tidak ada santri di kelas ini.</div>`;
@@ -154,11 +157,6 @@ export async function initInputHarian() {
         let html = '';
         
         santriList.forEach(s => {
-            const mem = {
-                mapel: "Iqro", jilid: 3, hal: 15,
-                juz: 30, surat: 78, ayatA: 1, ayatB: 10
-            };
-
             html += `
             <div class="santri-card" id="card_${s.id}">
                 <div class="card-header-flex">
@@ -195,17 +193,17 @@ export async function initInputHarian() {
                     <!-- FORM TAHSIN -->
                     <div id="form_tahsin_${s.id}" class="form-grid">
                         <select class="compact-input trigger-mapel" id="t_mapel_${s.id}" data-id="${s.id}">
-                            <option value="Iqro" ${mem.mapel==='Iqro'?'selected':''}>Iqro</option>
-                            <option value="Ummi" ${mem.mapel==='Ummi'?'selected':''}>Ummi</option>
-                            <option value="Al Qur'an" ${mem.mapel==="Al Qur'an"?'selected':''}>Al Qur'an</option>
+                            <option value="Iqro">Iqro</option>
+                            <option value="Ummi">Ummi</option>
+                            <option value="Al Qur'an">Al Qur'an</option>
                         </select>
                         
-                        <div id="t_buku_area_${s.id}" class="flex-row-gap" style="display: ${mem.mapel !== "Al Qur'an" ? 'flex' : 'none'};">
-                            <input type="number" id="t_jilid_${s.id}" class="compact-input" placeholder="Jilid" value="${mem.jilid}">
-                            <input type="number" id="t_hal_${s.id}" class="compact-input" placeholder="Hal" value="${mem.hal}">
+                        <div id="t_buku_area_${s.id}" class="flex-row-gap">
+                            <input type="number" id="t_jilid_${s.id}" class="compact-input" placeholder="Jilid">
+                            <input type="number" id="t_hal_${s.id}" class="compact-input" placeholder="Hal">
                         </div>
 
-                        <div id="t_quran_area_${s.id}" class="form-grid" style="display: ${mem.mapel === "Al Qur'an" ? 'grid' : 'none'};">
+                        <div id="t_quran_area_${s.id}" class="form-grid" style="display: none;">
                             <div class="flex-row-gap">
                                 <select id="t_q_juz_${s.id}" class="compact-input trigger-juz" data-target="t_q_surat_${s.id}" style="width:100px;">
                                     ${generateJuzOptions(1)}
@@ -219,7 +217,7 @@ export async function initInputHarian() {
                             </div>
                         </div>
 
-                        <input type="text" id="t_catatan_${s.id}" class="compact-input" placeholder="Catatan tahsin (Opsional)...">
+                        <input type="text" id="t_catatan_${s.id}" class="compact-input" placeholder="Catatan Ustadz (Opsional)...">
 
                         <div class="btn-action-group">
                             <button class="btn-status-save btn-status-lulus" onclick="saveDataRealtime('${s.id}', 'tahsin', 'Lulus', this)">
@@ -235,16 +233,16 @@ export async function initInputHarian() {
                     <div id="form_tahfidz_${s.id}" class="form-grid" style="display:none;">
                         <div class="flex-row-gap">
                             <select id="h_juz_${s.id}" class="compact-input trigger-juz" data-target="h_surat_${s.id}" style="width:100px;">
-                                ${generateJuzOptions(mem.juz)}
+                                ${generateJuzOptions(30)}
                             </select>
                             <select id="h_surat_${s.id}" class="compact-input"></select>
                         </div>
                         <div class="flex-row-gap">
-                            <input type="number" id="h_a_awal_${s.id}" class="compact-input" placeholder="Ayat Awal" value="${mem.ayatA}">
+                            <input type="number" id="h_a_awal_${s.id}" class="compact-input" placeholder="Ayat Awal">
                             <span>-</span>
-                            <input type="number" id="h_a_akhir_${s.id}" class="compact-input" placeholder="Ayat Akhir" value="${mem.ayatB}">
+                            <input type="number" id="h_a_akhir_${s.id}" class="compact-input" placeholder="Ayat Akhir">
                         </div>
-                        <input type="text" id="h_catatan_${s.id}" class="compact-input" placeholder="Catatan murajaah (Opsional)...">
+                        <input type="text" id="h_catatan_${s.id}" class="compact-input" placeholder="Catatan Ustadz (Opsional)...">
                         
                         <div class="btn-action-group">
                             <button class="btn-status-save btn-status-lulus" onclick="saveDataRealtime('${s.id}', 'tahfidz', 'Lulus', this)">
@@ -265,7 +263,7 @@ export async function initInputHarian() {
     }
     
     // ==========================================
-    // LOGIKA AUTO-SCROLL PINTAR & BUKA TUTUP
+    // LOGIKA UI (ACCORDION & TAB)
     // ==========================================
     window.toggleAccordion = (id) => {
         const acc = document.getElementById(`acc_${id}`);
@@ -325,7 +323,7 @@ export async function initInputHarian() {
                 const acc = document.getElementById(`acc_${id}`);
                 const card = document.getElementById(`card_${id}`);
                 
-                // Trigger absensi
+                // Trigger absensi otomatis
                 saveAbsenRealtime(id, val);
 
                 if (val !== 'H') {
@@ -366,91 +364,94 @@ export async function initInputHarian() {
         setTimeout(() => t.classList.remove('show'), 2000);
     };
 
-    // FUNGSI INI SUDAH DISUNTIK DENGAN "DETEKTIF ERROR"
-    async function upsertData(table, queryMatch, payload) {
+    // ==========================================
+    // MESIN PENYIMPANAN "SINGLE TABLE" (ANTI ERROR)
+    // ==========================================
+    async function upsertKeHarian(idSantri, payloadPartial) {
+        const tglUI = elTgl.value;
+        const queryMatch = `santri_id=eq.${idSantri}&tanggal=eq.${tglUI}`;
+
+        // Pastikan Identitas Utama Selalu Ikut
+        payloadPartial.tanggal = tglUI;
+        payloadPartial.santri_id = idSantri;
+
         try {
-            const existing = await api.get(table, queryMatch);
-            if(existing && existing.length > 0) {
-                await api.update(table, existing[0].id, payload);
+            // Cek apakah hari ini anak tersebut sudah pernah diinput apa pun (absen/tahsin)
+            const existing = await api.get('input_harian', queryMatch);
+            
+            if (existing && existing.length > 0) {
+                // Jika sudah ada, cukup tambal/update baris datanya
+                await api.update('input_harian', existing[0].id, payloadPartial);
             } else {
-                await api.post(table, payload);
+                // Jika masih perawan (belum ada data hari ini), buat baris baru
+                await api.post('input_harian', payloadPartial);
             }
-        } catch(e) { 
-            // ALAT PELACAK: Menampilkan pop-up error langsung ke layar HP
-            alert(`🚨 GAGAL MENYIMPAN KE [${table}]\nAlasan: ${e.message || JSON.stringify(e)}`);
-            console.error("AutoSave Error:", e); 
+        } catch(e) {
+            alert(`🚨 GAGAL MENYIMPAN!\nAlasan: ${e.message || JSON.stringify(e)}`);
+            console.error("AutoSave Error:", e);
         }
     }
 
-    // 1. FUNGSI SIMPAN ABSENSI
     async function saveAbsenRealtime(id, status_huruf) {
-        const tglUI = elTgl.value;
-        
         let statusBaku = 'Hadir';
         if (status_huruf === 'I') statusBaku = 'Izin';
         if (status_huruf === 'S') statusBaku = 'Sakit';
         if (status_huruf === 'A') statusBaku = 'Alpa'; 
 
-        const queryMatch = `santri_id=eq.${id}&tgl=eq.${tglUI}`;
-        const payloadData = {
-            santri_id: id, 
-            tgl: tglUI, 
-            status_hadir: statusBaku
-        };
+        // Mengambil data dapodik dari memori
+        const s = currentSantriData.find(x => x.id === id);
 
-        await upsertData('kehadiran', queryMatch, payloadData);
+        await upsertKeHarian(id, {
+            status_hadir: statusBaku,
+            nama_santri: s ? s.nama_santri : null,
+            nama_kelas: s ? s.nama_kelas : null,
+            nis: s ? s.nis : null
+        });
         showToast(id);
     }
 
-    // 2. FUNGSI SIMPAN HAFALAN & TAHSIN
     window.saveDataRealtime = async (id, jenisForm, targetStatus, btnElement) => {
         const originalText = btnElement.innerHTML;
         btnElement.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Menyimpan...`;
 
-        const tglUI = elTgl.value;
+        // Mengambil data dapodik dari memori untuk jaga-jaga
+        const s = currentSantriData.find(x => x.id === id);
+        let payload = {
+            nama_santri: s ? s.nama_santri : null,
+            nama_kelas: s ? s.nama_kelas : null,
+            nis: s ? s.nis : null
+        };
 
         if (jenisForm === 'tahsin') {
             const mapel = document.getElementById(`t_mapel_${id}`).value;
-            // Payload Tahsin
-            let payload = { 
-                santri_id: id, 
-                tgl: tglUI, 
-                status: targetStatus,
-                program: mapel,
-                catatan: document.getElementById(`t_catatan_${id}`).value 
-            };
+            payload.tahsin_program = mapel;
+            payload.tahsin_status = targetStatus;
             
-            if(mapel === "Al Qur'an") {
-                payload.juz = document.getElementById(`t_q_juz_${id}`).value;
-                payload.surat = document.getElementById(`t_q_surat_${id}`).value;
-                payload.ayat_awal = document.getElementById(`t_q_a_awal_${id}`).value;
-                payload.ayat_akhir = document.getElementById(`t_q_a_akhir_${id}`).value;
+            const cat = document.getElementById(`t_catatan_${id}`).value;
+            if(cat) payload.catatan = cat;
+
+            if (mapel === "Al Qur'an") {
+                payload.tahsin_juz = document.getElementById(`t_q_juz_${id}`).value;
+                payload.tahsin_surat = document.getElementById(`t_q_surat_${id}`).value;
+                payload.tahsin_ayat_dari = document.getElementById(`t_q_a_awal_${id}`).value;
+                payload.tahsin_ayat_sampai = document.getElementById(`t_q_a_akhir_${id}`).value;
             } else {
-                payload.jilid = document.getElementById(`t_jilid_${id}`).value;
-                payload.halaman = document.getElementById(`t_hal_${id}`).value;
+                payload.tahsin_jilid = document.getElementById(`t_jilid_${id}`).value;
+                payload.tahsin_halaman = document.getElementById(`t_hal_${id}`).value;
             }
-            await upsertData('tahsin', `santri_id=eq.${id}&tgl=eq.${tglUI}`, payload);
         
         } else if (jenisForm === 'tahfidz') {
-            const suratVal = document.getElementById(`h_surat_${id}`).value;
-            const ayatAwal = document.getElementById(`h_a_awal_${id}`).value;
-            const ayatAkhir = document.getElementById(`h_a_akhir_${id}`).value;
-            const catatanVal = document.getElementById(`h_catatan_${id}`).value;
+            payload.tahfidz_status = targetStatus;
+            payload.tahfidz_juz = document.getElementById(`h_juz_${id}`).value;
+            payload.tahfidz_surat = document.getElementById(`h_surat_${id}`).value;
+            payload.tahfidz_ayat_dari = document.getElementById(`h_a_awal_${id}`).value;
+            payload.tahfidz_ayat_sampai = document.getElementById(`h_a_akhir_${id}`).value;
 
-            // Payload Tahfidz/Hafalan
-            let payload = {
-                santri_id: id,
-                tgl: tglUI,
-                surah_baru: suratVal,
-                ayat_baru: `${ayatAwal} - ${ayatAkhir} (${targetStatus})`
-            };
-
-            if(catatanVal) {
-                payload.murajaah_surah = catatanVal;
-            }
-
-            await upsertData('hafalan', `santri_id=eq.${id}&tgl=eq.${tglUI}`, payload);
+            const cat = document.getElementById(`h_catatan_${id}`).value;
+            if(cat) payload.catatan = cat;
         }
+
+        await upsertKeHarian(id, payload);
 
         setTimeout(() => {
             btnElement.innerHTML = `<i class="fas fa-check"></i> Disimpan`;
@@ -458,4 +459,4 @@ export async function initInputHarian() {
             setTimeout(() => { btnElement.innerHTML = originalText; }, 1000);
         }, 500); 
     };
-}
+                }
