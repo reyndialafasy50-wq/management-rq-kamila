@@ -14,7 +14,19 @@ const petaJuz = { 1: [1,2], 2: [2], 3: [2,3], 4: [3,4], 5: [4], 6: [4,5], 7: [5,
 export function renderInputHarian() {
     return `
         <style>
-            .input-header-wrapper { background: var(--surface); padding: 20px; border-radius: 16px; margin-bottom: 20px; border: 1px solid var(--border); position: sticky; top: 10px; z-index: 50; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: 0.3s;}
+            /* FIX POINT 1: Header Nempel (Flush) ke atas */
+            .input-header-wrapper { 
+                background: var(--surface); 
+                padding: 20px; 
+                margin: -20px -20px 20px -20px; 
+                border-radius: 0 0 16px 16px; 
+                border-bottom: 1px solid var(--border); 
+                position: sticky; 
+                top: 0; 
+                z-index: 50; 
+                box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
+                transition: 0.3s;
+            }
             .input-header-title { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
             .input-header-title h4 { margin: 0; font-size: 1rem; color: var(--text-main); font-weight: 700; }
             .input-header-title p { margin: 0; font-size: 0.75rem; color: var(--text-muted); }
@@ -59,11 +71,10 @@ export function renderInputHarian() {
             .toast-save { font-size: 0.7rem; color: #10B981; font-weight: 600; opacity: 0; transition: 0.3s; margin-left: 5px; display: inline-flex; align-items: center; gap: 3px;}
             .toast-save.show { opacity: 1; }
 
-            /* Tombol Batch Save di Bawah */
+            /* FIX POINT 2: Tombol Batch Save Mengikuti Scroll */
             .batch-save-container {
-                position: sticky; bottom: 65px; z-index: 60; padding: 15px; 
-                background: var(--surface); border-top: 1px solid var(--border);
-                box-shadow: 0 -4px 15px rgba(0,0,0,0.05); display: none;
+                padding: 10px 0 30px 0; 
+                display: none;
             }
             .btn-batch-save {
                 width: 100%; padding: 16px; border-radius: 12px; border: none; 
@@ -91,7 +102,7 @@ export function renderInputHarian() {
             </div>
         </div>
 
-        <div id="listSantriContainer" style="padding-bottom: 20px;">
+        <div id="listSantriContainer" style="padding-bottom: 10px;">
             <div style="text-align:center; padding: 40px; color: var(--text-muted);">
                 <i class="fas fa-users" style="font-size:3rem; margin-bottom:15px; opacity:0.5;"></i>
                 <p>Memuat daftar santri...</p>
@@ -104,7 +115,6 @@ export function renderInputHarian() {
                 <i class="fas fa-save"></i> Simpan Kehadiran Kelas Ini
             </button>
         </div>
-        <div style="height: 80px;"></div>
     `;
 }
 
