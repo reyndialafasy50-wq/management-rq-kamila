@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * BAGIAN 7: MODUL DASHBOARD (UI GRADASI REVERSE & ANTI-JITTER)
+ * BAGIAN 7: MODUL DASHBOARD (TERINTEGRASI SINGLE-TABLE V3)
  * File: js/dashboard.js
  * ==================================================
  */
@@ -21,24 +21,21 @@ export function renderDashboard() {
             
             <!-- KARTU 1: TANGGAL & JADWAL (GRADASI REVERSE DARI KANAN) -->
             <div class="info-card" style="display:flex; flex-direction:column; background: linear-gradient(135deg, #75B5B0 0%, #4F567D 100%); color: #ffffff; border: none; box-shadow: 0 6px 15px rgba(79, 86, 125, 0.2);">
-                <!-- Label Diperkecil -->
                 <p style="font-size: 0.65rem; font-weight: 800; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;"><i class="far fa-calendar-alt"></i> Tanggal & Waktu</p>
                 
-                <!-- Tanggal Diperkecil & Jam Diperbesar (Anti Goyang) -->
                 <p id="currentDateDisplay" style="font-size: 0.85rem; font-weight: 600; color: rgba(255,255,255,0.95); margin-bottom: 2px;">Memuat...</p>
                 <p id="realtimeClock" style="font-size: 1.35rem; font-weight: 800; color: #ffffff; margin-bottom: 15px; letter-spacing: 1px; font-variant-numeric: tabular-nums;">00.00.00</p>
                 
-                <!-- JADWAL SELANJUTNYA (VERTIKAL) -->
+                <!-- JADWAL SELANJUTNYA -->
                 <div style="border-top: 1px dashed rgba(255,255,255,0.3); padding-top: 12px; margin-top: auto;" id="jadwalArea">
                     <p style="font-size: 0.65rem; font-weight: 800; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;"><i class="fas fa-calendar-check" style="color: #A7F3D0;"></i> Jadwal Selanjutnya</p>
-                    
                     <div id="jadwalContent">
                         <span style="font-size:0.8rem; color:rgba(255,255,255,0.8);"><i class="fas fa-spinner fa-spin"></i> Memindai jadwal...</span>
                     </div>
                 </div>
             </div>
 
-            <!-- KARTU 2: TARGET KBM (Bawaan) -->
+            <!-- KARTU 2: TARGET KBM -->
             <div class="info-card target-card" style="display:flex; flex-direction:column;">
                 <p class="info-label">Target KBM</p>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -60,7 +57,6 @@ export function renderDashboard() {
 
         <!-- Chart Container -->
         <div class="dashboard-chart-card">
-            
             <div id="namesTooltip" style="display:none;">
                 <div class="tooltip-header">
                     <span class="tooltip-title"><div class="legend-dot" id="ttDot"></div> <span id="ttLabel">Daftar</span></span>
@@ -125,14 +121,13 @@ export function renderDashboard() {
 }
 
 export async function initDashboard() {
-    // 1. MESIN WAKTU (JAM & TANGGAL)
+    // 1. MESIN WAKTU 
     const elDate = document.getElementById('currentDateDisplay');
     const elClock = document.getElementById('realtimeClock');
     
     function updateClock() {
         const now = new Date();
         elDate.textContent = now.toLocaleDateString('id-ID', { weekday: 'long', day: '2-digit', month: 'short', year: 'numeric' });
-        // Format jam HH.MM.SS (titik sebagai pemisah)
         elClock.textContent = now.toLocaleTimeString('id-ID', { hour12: false }).replace(/:/g, '.'); 
     }
     setInterval(updateClock, 1000);
@@ -185,21 +180,20 @@ export async function initDashboard() {
         document.getElementById('btnCloseTooltip').addEventListener('click', () => tooltip.style.display = 'none');
     }
 
-    // 3. TARIK DATA DARI SUPABASE
+    // 3. TARIK DATA DARI DATABASE (VERSI SINGLE TABLE)
     async function hydrateDashboard() {
         try {
-            // Tgl Lokal
+            // Tgl Lokal Indonesia
             const d = new Date();
             const year = d.getFullYear();
             const month = String(d.getMonth() + 1).padStart(2, '0');
             const day = String(d.getDate()).padStart(2, '0');
             const todayStr = `${year}-${month}-${day}`;
             
-            const [santriList, kehadiranList, tahsinList, hafalanList, kelasList] = await Promise.all([
+            // HANYA BUTUH 3 PERMINTAAN SEKARANG! (Jauh lebih cepat)
+            const [santriList, harianList, kelasList] = await Promise.all([
                 api.get('dapodik_santri', 'select=id,nama_kelas,nama_santri'),
-                api.get('kehadiran', `select=santri_id,status_hadir&tgl=eq.${todayStr}`),
-                api.get('tahsin', `select=santri_id,program,status&tgl=eq.${todayStr}`),
-                api.get('hafalan', `select=santri_id,ayat_baru&tgl=eq.${todayStr}`),
+                api.get('input_harian', `select=*&tanggal=eq.${todayStr}`),
                 api.get('kelas', 'select=*')
             ]);
 
@@ -229,7 +223,6 @@ export async function initDashboard() {
                     }
                 });
 
-                // Cetak UI Jadwal: Teks Berwarna Putih dengan Badge Rapih
                 if (kelasAktif) {
                     jadwalContent.innerHTML = `
                         <div style="display: flex; flex-direction: column; gap: 6px;">
@@ -267,22 +260,23 @@ export async function initDashboard() {
                 }
             }
 
-            // --- B. LOGIKA GRAFIK REAL-TIME ---
+            // --- B. LOGIKA GRAFIK REAL-TIME TERBARU ---
             const totalSantri = santriList.length;
             document.getElementById('chartTotalText').textContent = totalSantri || 0;
 
             let hadir = 0, izinSakit = 0, alfa = 0, ulang = 0;
             
-            if(kehadiranList && kehadiranList.length > 0) {
-                kehadiranList.forEach(k => {
-                    if(k.status_hadir === 'Hadir') hadir++;
-                    else if(k.status_hadir === 'Izin' || k.status_hadir === 'Sakit') izinSakit++;
-                    else if(k.status_hadir === 'Alpa') alfa++;
+            if(harianList && harianList.length > 0) {
+                harianList.forEach(log => {
+                    // Menghitung Absen
+                    if(log.status_hadir === 'Hadir') hadir++;
+                    else if(log.status_hadir === 'Izin' || log.status_hadir === 'Sakit') izinSakit++;
+                    else if(log.status_hadir === 'Alpa') alfa++;
+
+                    // Menghitung Ulang (Cukup cari yang statusnya Ulang dari kolom Tahsin atau Tahfidz)
+                    if(log.tahsin_status === 'Ulang' || log.tahfidz_status === 'Ulang') ulang++;
                 });
             }
-
-            if(tahsinList) tahsinList.forEach(t => { if(t.status === 'Ulang') ulang++; });
-            if(hafalanList) hafalanList.forEach(h => { if(h.ayat_baru && h.ayat_baru.includes('Ulang')) ulang++; });
 
             document.getElementById('valHadir').textContent = hadir;
             document.getElementById('valIzinSkt').textContent = izinSakit;
@@ -296,32 +290,50 @@ export async function initDashboard() {
             myChart.data.datasets[3].data = [ulang, Math.max(0, total - ulang)];
             myChart.update();
 
-            // --- C. LOGIKA TABEL RIWAYAT TERKINI ---
+            // --- C. LOGIKA TABEL RIWAYAT TERKINI (MENYEDOT 1 TABEL) ---
             let logHTML = '';
-            const allLogs = [...(tahsinList || []), ...(hafalanList || [])].reverse().slice(0, 5); 
+            let listAktivitas = [];
+
+            // Memecah row tunggal menjadi daftar aktivitas
+            if (harianList && harianList.length > 0) {
+                harianList.forEach(row => {
+                    if (row.tahsin_status) {
+                        listAktivitas.push({
+                            nama: row.nama_santri || 'Tanpa Nama',
+                            kelas: row.nama_kelas || '-',
+                            program: row.tahsin_program || 'Tahsin',
+                            status: row.tahsin_status
+                        });
+                    }
+                    if (row.tahfidz_status) {
+                        listAktivitas.push({
+                            nama: row.nama_santri || 'Tanpa Nama',
+                            kelas: row.nama_kelas || '-',
+                            program: 'Tahfidz',
+                            status: row.tahfidz_status
+                        });
+                    }
+                });
+            }
+
+            // Balik urutan untuk menampilkan yang paling baru, ambil 5 teratas
+            const logTerbaru = listAktivitas.reverse().slice(0, 5);
             
-            if(allLogs.length === 0) {
-                logHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:30px;">Belum ada aktivitas hari ini.</td></tr>';
+            if(logTerbaru.length === 0) {
+                logHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:30px;">Belum ada aktivitas setoran hari ini.</td></tr>';
             } else {
-                allLogs.forEach(log => {
-                    const s = santriList.find(x => x.id === log.santri_id);
-                    const nama = s ? s.nama_santri : 'Tanpa Nama';
-                    const kelas = s ? s.nama_kelas : '-';
-                    
-                    let progStr = log.program ? log.program : 'Hafalan';
-                    let statStr = log.program ? log.status : (log.ayat_baru && log.ayat_baru.includes('Lanjut') ? 'Lanjut' : 'Ulang');
-                    
-                    let bgProg = log.program ? 'rgba(243, 155, 150, 0.15)' : 'rgba(117, 181, 176, 0.15)';
-                    let colProg = log.program ? 'var(--clr-koral)' : 'var(--primary)';
-                    let colStat = statStr === 'Ulang' ? 'var(--clr-koral)' : 'var(--text-muted)';
-                    if(statStr === 'Lanjut') colStat = 'var(--primary)';
+                logTerbaru.forEach(log => {
+                    let isTahfidz = log.program === 'Tahfidz';
+                    let bgProg = isTahfidz ? 'rgba(117, 181, 176, 0.15)' : 'rgba(243, 155, 150, 0.15)';
+                    let colProg = isTahfidz ? 'var(--primary)' : 'var(--clr-koral)';
+                    let colStat = log.status === 'Ulang' ? 'var(--clr-koral)' : 'var(--primary)';
 
                     logHTML += `
                         <tr style="border-bottom: 1px solid var(--border);">
-                            <td style="font-weight: 600;">${nama}</td>
-                            <td><i class="fas fa-tag" style="color:var(--text-muted); font-size:0.7rem;"></i> ${kelas}</td>
-                            <td><span style="background:${bgProg}; color:${colProg}; padding:4px 8px; border-radius:6px; font-size:0.7rem; font-weight:700;">${progStr}</span></td>
-                            <td style="text-align:center;"><span style="color:${colStat}; font-weight:700;">${statStr}</span></td>
+                            <td style="font-weight: 600;">${log.nama}</td>
+                            <td><i class="fas fa-tag" style="color:var(--text-muted); font-size:0.7rem;"></i> ${log.kelas}</td>
+                            <td><span style="background:${bgProg}; color:${colProg}; padding:4px 8px; border-radius:6px; font-size:0.7rem; font-weight:700;">${log.program}</span></td>
+                            <td style="text-align:center;"><span style="color:${colStat}; font-weight:700;">${log.status}</span></td>
                         </tr>
                     `;
                 });
@@ -334,4 +346,4 @@ export async function initDashboard() {
     }
 
     hydrateDashboard();
-}
+    }
