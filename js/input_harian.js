@@ -14,7 +14,7 @@ const petaJuz = { 1: [1,2], 2: [2], 3: [2,3], 4: [3,4], 5: [4], 6: [4,5], 7: [5,
 export function renderInputHarian() {
     return `
         <style>
-            /* FIX POINT 1: Header Nempel (Flush) ke atas */
+            /* FIX POINT 1: Header Menembus Padding (Rapat Sempurna) */
             .input-header-wrapper { 
                 background: var(--surface); 
                 padding: 20px; 
@@ -22,9 +22,9 @@ export function renderInputHarian() {
                 border-radius: 0 0 16px 16px; 
                 border-bottom: 1px solid var(--border); 
                 position: sticky; 
-                top: 0; 
+                top: -21px; /* INI KUNCI OBATNYA: Menutup celah padding container */
                 z-index: 50; 
-                box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
+                box-shadow: 0 8px 15px -3px rgba(0,0,0,0.08); 
                 transition: 0.3s;
             }
             .input-header-title { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
@@ -71,7 +71,7 @@ export function renderInputHarian() {
             .toast-save { font-size: 0.7rem; color: #10B981; font-weight: 600; opacity: 0; transition: 0.3s; margin-left: 5px; display: inline-flex; align-items: center; gap: 3px;}
             .toast-save.show { opacity: 1; }
 
-            /* FIX POINT 2: Tombol Batch Save Mengikuti Scroll */
+            /* FIX POINT 2: Tombol Batch Save Duduk Manis di Bawah */
             .batch-save-container {
                 padding: 10px 0 30px 0; 
                 display: none;
@@ -474,4 +474,4 @@ export async function initInputHarian() {
             setTimeout(() => { btnElement.innerHTML = originalText; }, 1000);
         }, 500); 
     };
-                   }
+           }
