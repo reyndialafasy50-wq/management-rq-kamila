@@ -353,6 +353,7 @@ export async function initInputHarian() {
 
     // ==========================================
     // FUNGSI BARU: SIMPAN ABSEN BATCH (SEKELAS)
+    // DENGAN ALERT SYOK TERAPI ALPA KE-10
     // ==========================================
     window.simpanAbsenSekelas = async (btnElement) => {
         const originalText = btnElement.innerHTML;
@@ -380,6 +381,20 @@ export async function initInputHarian() {
                 
                 // Gunakan tambal sulam cerdas
                 await upsertKeHarian(s.id, payload);
+
+                // --- FITUR BARU: SYOK TERAPI ALPA KE-10 ---
+                // Jika Ustadz menginput "Alpa", cek total alpanya bulan ini
+                if (statusBaku === 'Alpa') {
+                    const tglBulanIni = new Date().toISOString().substring(0, 7); // Hasil: YYYY-MM
+                    const res = await api.get('input_harian', `select=id&santri_id=eq.${s.id}&status_hadir=eq.Alpa&tanggal=gte.${tglBulanIni}-01`);
+                    
+                    if (res && res.length >= 10) {
+                        setTimeout(() => {
+                            alert(`🚨 Gawat Ustadz!\n\nAnanda ${s.nama_santri} baru saja mencapai batas ALPA ${res.length}X bulan ini!\nMohon segera agendakan evaluasi khusus.`);
+                        }, 1000);
+                    }
+                }
+                // ------------------------------------------
             });
 
             // Tunggu semua proses selesai bersamaan
@@ -449,4 +464,4 @@ export async function initInputHarian() {
             setTimeout(() => { btnElement.innerHTML = originalText; }, 1000);
         }, 500); 
     };
-    }
+}
