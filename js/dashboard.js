@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * BAGIAN 7: MODUL DASHBOARD (SMART FILTER KELAS & LOG DETAIL)
+ * BAGIAN 7: MODUL DASHBOARD (TIMELINE RIWAYAT & SMART FILTER)
  * File: js/dashboard.js
  * ==================================================
  */
@@ -10,6 +10,72 @@ let myChart;
 
 export function renderDashboard() {
     return `
+        <style>
+            /* STYLING TIMELINE RIWAYAT AKTIVITAS */
+            .timeline-container {
+                position: relative;
+                padding-left: 20px;
+                margin-top: 15px;
+            }
+            .timeline-container::before {
+                content: '';
+                position: absolute;
+                top: 10px;
+                bottom: 10px;
+                left: 6px;
+                width: 2px;
+                background: var(--border);
+            }
+            .timeline-item {
+                position: relative;
+                margin-bottom: 20px;
+                padding-left: 15px;
+            }
+            .timeline-dot {
+                position: absolute;
+                left: -20px;
+                top: 4px;
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background: var(--primary);
+                border: 2px solid var(--surface);
+                box-shadow: 0 0 0 2px var(--border);
+            }
+            .timeline-time {
+                font-size: 0.7rem;
+                font-weight: 700;
+                color: var(--text-muted);
+                background: var(--bg-main);
+                padding: 2px 8px;
+                border-radius: 10px;
+                display: inline-block;
+                margin-bottom: 4px;
+            }
+            .timeline-title {
+                font-size: 0.95rem;
+                font-weight: 700;
+                color: var(--text-main);
+                text-transform: uppercase;
+                margin: 0 0 2px 0;
+            }
+            .timeline-desc {
+                font-size: 0.85rem;
+                color: var(--text-muted);
+                margin: 0 0 4px 0;
+            }
+            .badge-status {
+                font-size: 0.7rem;
+                font-weight: 800;
+                padding: 2px 8px;
+                border-radius: 6px;
+                display: inline-block;
+            }
+            .badge-lulus { background: #D1FAE5; color: #065F46; }
+            .badge-ulang { background: #FEE2E2; color: #991B1B; }
+            .badge-absen { background: #E0E7FF; color: #3730A3; }
+        </style>
+
         <!-- Sapaan -->
         <div class="greeting-area">
             <h3 id="welcomeGreeting">Ahlan wa Sahlan, Ustadz!</h3>
@@ -52,7 +118,6 @@ export function renderDashboard() {
             <div class="chart-container-box">
                 <canvas id="concentricChart"></canvas>
                 <div class="chart-center-text">
-                    <!-- Keterangan Kelas Dinamis -->
                     <p id="chartClassNameText" style="margin: 0; font-size: 0.65rem; font-weight: 800; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase;">MENGHITUNG...</p>
                     <h3 id="chartTotalText" style="margin: 0; font-size: 2.2rem; color: var(--text-main); font-weight: 700; line-height: 1.1;">0</h3>
                 </div>
@@ -66,22 +131,12 @@ export function renderDashboard() {
             </div>
         </div>
 
-        <div style="margin-bottom: 30px;">
-            <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 15px;"><i class="fas fa-list-ul" style="color: var(--primary); margin-right: 8px;"></i> Log Riwayat Hari Ini</h4>
-            <div class="custom-table-container">
-                <table class="custom-table">
-                    <thead>
-                        <tr>
-                            <th>Nama Santri</th>
-                            <th>Kelas</th>
-                            <th>Kategori</th>
-                            <th style="text-align: center;">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="logTableBody">
-                        <tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:20px;">Memuat riwayat...</td></tr>
-                    </tbody>
-                </table>
+        <!-- RIWAYAT AKTIVITAS HARI INI (DESAIN TIMELINE) -->
+        <div style="margin-bottom: 30px; background: var(--surface); padding: 20px; border-radius: 16px; border: 1px solid var(--border);">
+            <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 15px;"><i class="fas fa-history" style="color: var(--primary); margin-right: 8px;"></i> Riwayat Aktivitas Hari Ini</h4>
+            
+            <div id="timelineWrapper">
+                <p style="text-align:center; color:var(--text-muted); padding:20px;">Memuat riwayat...</p>
             </div>
         </div>
     `;
@@ -102,7 +157,6 @@ export async function initDashboard() {
     const ctx = document.getElementById('concentricChart');
     if(!ctx) return;
 
-    const style = getComputedStyle(document.body);
     const trackColor = document.body.hasAttribute('data-theme') ? 'rgba(255,255,255,0.05)' : '#E8E6F0';
     const gapColor = document.body.hasAttribute('data-theme') ? '#1E2130' : '#FFFFFF'; 
 
@@ -133,7 +187,7 @@ export async function initDashboard() {
             
             const [santriList, harianList, kelasList] = await Promise.all([
                 api.get('dapodik_santri', 'select=id,nama_kelas,nama_santri'),
-                api.get('input_harian', `select=*&tanggal=eq.${todayStr}`),
+                api.get('input_harian', `select=*&tanggal=eq.${todayStr}&order=created_at.asc`),
                 api.get('kelas', 'select=*')
             ]);
 
@@ -168,10 +222,8 @@ export async function initDashboard() {
                 }
             }
 
-            // --- B. GRAFIK (HANYA HITUNG KELAS YG AKTIF) ---
+            // --- B. HITUNG GRAFIK DONAT ---
             let namaKelasChart = kelasAktif ? kelasAktif.nama_kelas : (kelasMendatang ? kelasMendatang.nama_kelas : null);
-            
-            // Total santri untuk kelas yang berjalan, jika tidak ada, total semua santri.
             let chartSantriList = santriList;
             if (namaKelasChart) chartSantriList = santriList.filter(s => s.nama_kelas === namaKelasChart);
             
@@ -183,7 +235,6 @@ export async function initDashboard() {
             
             if(harianList && harianList.length > 0) {
                 harianList.forEach(log => {
-                    // Hanya hitung grafik untuk kelas yang sedang tampil di donat
                     if (namaKelasChart && log.nama_kelas !== namaKelasChart) return;
 
                     if(log.status_hadir === 'Hadir') hadir++;
@@ -206,70 +257,103 @@ export async function initDashboard() {
             myChart.data.datasets[3].data = [ulang, Math.max(0, total - ulang)];
             myChart.update();
 
-            // --- C. TABEL LOG DETAIL & RAPI ---
-            let logHTML = '';
-            let listAktivitas = [];
+            // --- C. LOGIKA TIMELINE RIWAYAT AKTIVITAS ---
+            const timelineWrapper = document.getElementById('timelineWrapper');
+            let timelineHTML = '';
+            let listEvents = [];
+            let kelasAbsenSet = new Set();
 
             if (harianList && harianList.length > 0) {
                 harianList.forEach(row => {
-                    // 1. Catat Jika Ada Kehadiran
-                    if (row.status_hadir) {
-                        listAktivitas.push({ nama: row.nama_santri, kelas: row.nama_kelas, program: 'Kehadiran', status: row.status_hadir });
+                    // Ambil Waktu Jam.Menit WIB
+                    let timeStr = '12.00';
+                    if (row.created_at) {
+                        const dt = new Date(row.created_at);
+                        timeStr = `${String(dt.getHours()).padStart(2,'0')}.${String(dt.getMinutes()).padStart(2,'0')}`;
                     }
-                    // 2. Catat Jika Ada Setoran Tahsin
+
+                    // 1. EVENT KEHADIRAN (DIKELOMPOKKAN PER KELAS)
+                    if (row.status_hadir && row.nama_kelas && !kelasAbsenSet.has(row.nama_kelas)) {
+                        kelasAbsenSet.add(row.nama_kelas);
+                        listEvents.push({
+                            time: timeStr,
+                            title: `KELAS ${row.nama_kelas.toUpperCase()}`,
+                            desc: 'Terabsensi',
+                            type: 'absen',
+                            statusText: 'SELESAI',
+                            badgeClass: 'badge-absen',
+                            dotColor: '#8999B8'
+                        });
+                    }
+
+                    // 2. EVENT TAHSIN
                     if (row.tahsin_status) {
-                        listAktivitas.push({ nama: row.nama_santri, kelas: row.nama_kelas, program: row.tahsin_program || 'Tahsin', status: row.tahsin_status });
+                        let descTahsin = '';
+                        if (row.tahsin_program === "Al Qur'an") {
+                            const surah = row.tahsin_surat || 'Al-Baqarah';
+                            const aAwal = row.tahsin_ayat_dari || '1';
+                            const aAkhir = row.tahsin_ayat_sampai || '10';
+                            descTahsin = `Al Qur'an Juz ${row.tahsin_juz || 1} (${surah} ${aAwal}-${aAkhir})`;
+                        } else {
+                            descTahsin = `${row.tahsin_program || 'Iqro'} ${row.tahsin_jilid || 1} hal. ${row.tahsin_halaman || 1}`;
+                        }
+
+                        listEvents.push({
+                            time: timeStr,
+                            title: row.nama_santri || 'Tanpa Nama',
+                            desc: descTahsin,
+                            type: 'tahsin',
+                            statusText: row.tahsin_status,
+                            badgeClass: row.tahsin_status === 'Ulang' ? 'badge-ulang' : 'badge-lulus',
+                            dotColor: row.tahsin_status === 'Ulang' ? '#F39B96' : '#75B5B0'
+                        });
                     }
-                    // 3. Catat Jika Ada Setoran Tahfidz
+
+                    // 3. EVENT TAHFIDZ
                     if (row.tahfidz_status) {
-                        listAktivitas.push({ nama: row.nama_santri, kelas: row.nama_kelas, program: 'Tahfidz', status: row.tahfidz_status });
+                        const surah = row.tahfidz_surat || 'An-Naba\'';
+                        const aAwal = row.tahfidz_ayat_dari || '1';
+                        const aAkhir = row.tahfidz_ayat_sampai || '10';
+                        const descTahfidz = `Al Qur'an Juz ${row.tahfidz_juz || 30} ${surah} ${aAwal}-${aAkhir}`;
+
+                        listEvents.push({
+                            time: timeStr,
+                            title: row.nama_santri || 'Tanpa Nama',
+                            desc: descTahfidz,
+                            type: 'tahfidz',
+                            statusText: row.tahfidz_status,
+                            badgeClass: row.tahfidz_status === 'Ulang' ? 'badge-ulang' : 'badge-lulus',
+                            dotColor: row.tahfidz_status === 'Ulang' ? '#F39B96' : '#10B981'
+                        });
                     }
                 });
             }
 
-            // Ambil 8 aktivitas teratas agar riwayat lebih terlihat
-            const logTerbaru = listAktivitas.reverse().slice(0, 8);
-            
-            if(logTerbaru.length === 0) {
-                logHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:30px;">Belum ada aktivitas hari ini.</td></tr>';
+            // Balikkan urutan agar aktivitas paling baru muncul di paling atas
+            const eventsReversed = listEvents.reverse();
+
+            if (eventsReversed.length === 0) {
+                timelineWrapper.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:20px;">Belum ada aktivitas hari ini.</div>`;
             } else {
-                logTerbaru.forEach(log => {
-                    let bgProg = '', colProg = '', colStat = '';
-
-                    // Styling Label berdasarkan Kategori Program/Aktivitas
-                    if (log.program === 'Kehadiran') {
-                        bgProg = 'rgba(137, 153, 184, 0.15)'; // Biru pudar
-                        colProg = 'var(--clr-biru)';
-                        
-                        // Warna status kehadiran
-                        if (log.status === 'Hadir') colStat = 'var(--clr-toska)';
-                        else if (log.status === 'Alpa') colStat = 'var(--clr-koral)';
-                        else colStat = 'var(--clr-biru)'; // Izin/Sakit
-                    } else if (log.program === 'Tahfidz') {
-                        bgProg = 'rgba(117, 181, 176, 0.15)'; 
-                        colProg = 'var(--primary)';
-                        colStat = log.status === 'Ulang' ? 'var(--clr-koral)' : 'var(--primary)';
-                    } else { // Iqro / Ummi / Al Quran
-                        bgProg = 'rgba(243, 155, 150, 0.15)'; 
-                        colProg = 'var(--clr-koral)';
-                        colStat = log.status === 'Ulang' ? 'var(--clr-koral)' : 'var(--primary)';
-                    }
-
-                    logHTML += `
-                        <tr style="border-bottom: 1px solid var(--border);">
-                            <td style="font-weight: 600;">${log.nama || 'Tanpa Nama'}</td>
-                            <td><i class="fas fa-tag" style="color:var(--text-muted); font-size:0.7rem;"></i> ${log.kelas || '-'}</td>
-                            <td><span style="background:${bgProg}; color:${colProg}; padding:4px 8px; border-radius:6px; font-size:0.7rem; font-weight:700;">${log.program}</span></td>
-                            <td style="text-align:center;"><span style="color:${colStat}; font-weight:700;">${log.status}</span></td>
-                        </tr>
+                timelineHTML = '<div class="timeline-container">';
+                eventsReversed.forEach(ev => {
+                    timelineHTML += `
+                        <div class="timeline-item">
+                            <div class="timeline-dot" style="background: ${ev.dotColor};"></div>
+                            <span class="timeline-time">${ev.time} WIB</span>
+                            <h5 class="timeline-title">${ev.title}</h5>
+                            <p class="timeline-desc">${ev.desc}</p>
+                            <span class="badge-status ${ev.badgeClass}">${ev.statusText}</span>
+                        </div>
                     `;
                 });
+                timelineHTML += '</div>';
+                timelineWrapper.innerHTML = timelineHTML;
             }
-            document.getElementById('logTableBody').innerHTML = logHTML;
 
         } catch(e) {
             console.error("Dashboard DB Error:", e);
         }
     }
     hydrateDashboard();
-}
+        }
