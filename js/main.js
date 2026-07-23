@@ -10,22 +10,28 @@ import { renderInputHarian, initInputHarian } from './input_harian.js';
 import { api } from './api.js';
 
 // ==========================================
-// FUNGSI LONCENG GLOBAL (AMAN TANPA FILE TAMBAHAN)
+// FUNGSI LONCENG GLOBAL (ANTI-MELESET)
 // ==========================================
 window.periksaNotifikasiGlobal = async () => {
     // 1. Cari Lonceng
     const bellIcon = document.getElementById('bellNotif') || document.querySelector('.fa-bell');
     if (!bellIcon) return;
 
-    // 2. Cegah bentrokan dengan dashboard.js versi lama
-    bellIcon.id = 'bellNotif_Aman';
-
-    // 3. Suntik CSS Animasi Goyang
+    // 2. Suntik CSS Animasi Goyang (Ditambah Paksaan Inline-Block)
     if (!document.getElementById('cssLoncengBaru')) {
         const style = document.createElement('style');
         style.id = 'cssLoncengBaru';
         style.innerHTML = `
-            @keyframes shakeSuper { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(15deg); } 50% { transform: rotate(-15deg); } 75% { transform: rotate(10deg); } }
+            @keyframes shakeSuper { 
+                0%, 100% { transform: rotate(0deg); } 
+                25% { transform: rotate(20deg); } 
+                50% { transform: rotate(-20deg); } 
+                75% { transform: rotate(15deg); } 
+            }
+            .bell-kritis-8, .bell-kritis-9, .bell-kritis-10 {
+                display: inline-block !important; /* WAJIB AGAR BISA DIGOYANG */
+                transform-origin: top center !important; /* TITIK TUMPU GOYANG DI ATAS */
+            }
             .bell-kritis-8 { color: #F59E0B !important; animation: shakeSuper 0.5s infinite; }
             .bell-kritis-9 { color: #EA580C !important; animation: shakeSuper 0.3s infinite; }
             .bell-kritis-10 { color: #DC2626 !important; animation: shakeSuper 0.15s infinite; filter: drop-shadow(0 0 8px rgba(220, 38, 38, 0.6)); }
@@ -42,10 +48,13 @@ window.periksaNotifikasiGlobal = async () => {
             api.get('dapodik_santri', 'select=id,nama_santri,hp_ortu,no_hp')
         ]);
 
-        // Matikan lonceng sebagai default
-        bellIcon.className = 'fas fa-bell'; 
-        bellIcon.onclick = null;
-        bellIcon.style.cursor = 'default';
+        // 3. Amankan Area Klik (Cari kotak pembungkusnya agar klik tidak meleset)
+        const areaKlik = bellIcon.closest('button, a, div[class*="nav"]') || bellIcon;
+
+        // Reset Lonceng
+        bellIcon.classList.remove('bell-kritis-8', 'bell-kritis-9', 'bell-kritis-10');
+        areaKlik.onclick = null;
+        areaKlik.style.cursor = 'default';
 
         if (!harianList || harianList.length === 0) return;
 
@@ -61,7 +70,6 @@ window.periksaNotifikasiGlobal = async () => {
 
         for (const key in rekapAlpa) {
             const data = rekapAlpa[key];
-            // Mengecek apakah sudah dicentang (Mute) oleh Ustadz
             const sudahDisenyapkan = localStorage.getItem(`bisu_alpa_${bulanIni}_${data.id}`);
             
             if (data.count >= 8 && !sudahDisenyapkan) {
@@ -77,11 +85,12 @@ window.periksaNotifikasiGlobal = async () => {
         else if (maxAlpa === 9) bellIcon.classList.add('bell-kritis-9');
         else if (maxAlpa === 8) bellIcon.classList.add('bell-kritis-8');
 
-        // Jika ada santri, pasang event klik Pop-up
+        // Pasang sensor klik di area yang luas
         if (daftarKritis.length > 0) {
-            bellIcon.style.cursor = 'pointer';
-            bellIcon.onclick = (e) => {
+            areaKlik.style.cursor = 'pointer';
+            areaKlik.onclick = (e) => {
                 e.preventDefault();
+                e.stopPropagation(); // Cegah klik bocor ke elemen lain
                 window.tampilkanModalEvaluasi(daftarKritis, bulanIni);
             };
         }
