@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * BAGIAN 7: MODUL DASHBOARD (SMART FILTER, TOOLTIP & LONCENG ALPA)
+ * BAGIAN 7: MODUL DASHBOARD (MURNI TANPA LONCENG)
  * File: js/dashboard.js
  * ==================================================
  */
@@ -14,7 +14,6 @@ let namaKelasAktif = null;
 export function renderDashboard() {
     return `
         <style>
-            /* STYLING TIMELINE RIWAYAT AKTIVITAS */
             .timeline-container { position: relative; padding-left: 20px; margin-top: 15px; }
             .timeline-container::before { content: ''; position: absolute; top: 10px; bottom: 10px; left: 6px; width: 2px; background: var(--border); }
             .timeline-item { position: relative; margin-bottom: 20px; padding-left: 15px; }
@@ -27,14 +26,7 @@ export function renderDashboard() {
             .badge-ulang { background: #FEE2E2; color: #991B1B; }
             .badge-absen { background: #E0E7FF; color: #3730A3; }
             
-            /* STYLING TOOLTIP PINTAR */
-            #namesTooltip {
-                position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-                background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);
-                border: 1px solid var(--border); border-radius: 16px;
-                padding: 15px; z-index: 100; width: 85%; box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-                display: none; flex-direction: column;
-            }
+            #namesTooltip { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 16px; padding: 15px; z-index: 100; width: 85%; box-shadow: 0 10px 40px rgba(0,0,0,0.2); display: none; flex-direction: column; }
             [data-theme="dark"] #namesTooltip { background: rgba(30,33,48,0.95); }
             .tooltip-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 10px;}
             .tooltip-title { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 1rem;}
@@ -44,38 +36,6 @@ export function renderDashboard() {
             .tooltip-close:active { transform: scale(0.9); }
             .legend-item { cursor: pointer; transition: 0.2s; padding: 5px; border-radius: 8px; }
             .legend-item:active { background: var(--bg-main); transform: scale(0.95); }
-
-            /* ANIMASI LONCENG ALPA */
-            @keyframes shakeLonceng {
-                0% { transform: rotate(0deg); }
-                25% { transform: rotate(15deg); }
-                50% { transform: rotate(0deg); }
-                75% { transform: rotate(-15deg); }
-                100% { transform: rotate(0deg); }
-            }
-            .bell-warn-8 { color: #F59E0B !important; animation: shakeLonceng 0.5s infinite; } /* Oren */
-            .bell-warn-9 { color: #EA580C !important; animation: shakeLonceng 0.3s infinite; } /* Oren Tua */
-            .bell-warn-10 { color: #DC2626 !important; animation: shakeLonceng 0.15s infinite; filter: drop-shadow(0 0 8px rgba(220, 38, 38, 0.9)); }
-
-            /* POP-UP PERINGATAN LONCENG */
-            #modalLonceng {
-                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
-                display: none; justify-content: center; align-items: center; z-index: 9999;
-            }
-            .modal-lonceng-content {
-                background: var(--surface); width: 85%; max-width: 350px;
-                border-radius: 20px; padding: 25px; text-align: center;
-                box-shadow: 0 15px 50px rgba(0,0,0,0.3); position: relative;
-            }
-            .icon-alert-red { font-size: 3rem; color: #DC2626; filter: drop-shadow(0 4px 6px rgba(220,38,38,0.4)); margin-bottom: 15px; }
-            .btn-tutup-modal {
-                background: var(--bg-main); border: 1px solid var(--border);
-                padding: 10px 20px; border-radius: 10px; font-weight: 700;
-                color: var(--text-main); margin-top: 20px; width: 100%; cursor: pointer;
-            }
-            .list-santri-alpa { max-height: 150px; overflow-y: auto; text-align: left; margin-top: 15px; font-size: 0.85rem; border-top: 1px dashed var(--border); padding-top: 10px;}
-            .list-santri-alpa div { margin-bottom: 8px; display: flex; justify-content: space-between; font-weight: 600; color: var(--text-main);}
         </style>
 
         <div class="greeting-area">
@@ -116,8 +76,6 @@ export function renderDashboard() {
         </div>
 
         <div class="dashboard-chart-card" style="position: relative;">
-            
-            <!-- WADAH TOOLTIP -->
             <div id="namesTooltip">
                 <div class="tooltip-header">
                     <span class="tooltip-title"><div class="legend-dot" id="ttDot"></div> <span id="ttLabel">Daftar</span></span>
@@ -143,24 +101,9 @@ export function renderDashboard() {
         </div>
 
         <div style="margin-bottom: 30px; background: var(--surface); padding: 20px; border-radius: 16px; border: 1px solid var(--border);">
-            <h4 id="titleRiwayat" style="font-size: 1rem; font-weight: 700; margin-bottom: 15px;"><i class="fas fa-history" style="color: var(--primary); margin-right: 8px;"></i> Riwayat Aktivitas Hari Ini</h4>
+            <h4 id="titleRiwayat" style="font-size: 1rem; font-weight: 700; margin-bottom: 15px;"><i class="fas fa-history" style="color: var(--primary); margin-right: 8px;"></i> Riwayat Aktivitas</h4>
             <div id="timelineWrapper">
                 <p style="text-align:center; color:var(--text-muted); padding:20px;"><i class="fas fa-circle-notch fa-spin"></i> Memuat data...</p>
-            </div>
-        </div>
-
-        <!-- MODAL LONCENG ALPA -->
-        <div id="modalLonceng">
-            <div class="modal-lonceng-content">
-                <i class="fas fa-exclamation-triangle icon-alert-red"></i>
-                <h3 style="margin:0 0 10px 0; color:var(--text-main); font-size:1.1rem;">Evaluasi Kehadiran!</h3>
-                <p style="font-size:0.85rem; color:var(--text-muted); margin:0;">Ananda berikut telah mencapai batas kritis Alpa di bulan ini. Mohon ditindaklanjuti.</p>
-                
-                <div class="list-santri-alpa" id="isiDaftarAlpa">
-                    <!-- Akan diisi otomatis oleh JS -->
-                </div>
-
-                <button class="btn-tutup-modal" onclick="document.getElementById('modalLonceng').style.display='none'">Tutup & Paham</button>
             </div>
         </div>
     `;
@@ -186,21 +129,17 @@ export async function initDashboard() {
 
     const chartConfig = {
         type: 'doughnut',
-        data: {
-            labels: ['Hadir', 'Izin', 'Alfa', 'Ulang'],
-            datasets: [
-                { data: [0, 1], backgroundColor: ['#75B5B0', trackColor], borderWidth: 4, borderColor: gapColor, borderRadius: 20 },
-                { data: [0, 1], backgroundColor: ['#8999B8', trackColor], borderWidth: 4, borderColor: gapColor, borderRadius: 20 },
-                { data: [0, 1], backgroundColor: ['#F39B96', trackColor], borderWidth: 4, borderColor: gapColor, borderRadius: 20 },
-                { data: [0, 1], backgroundColor: ['#4F567D', trackColor], borderWidth: 4, borderColor: gapColor, borderRadius: 20 } 
-            ]
-        },
+        data: { labels: ['Hadir', 'Izin', 'Alfa', 'Ulang'], datasets: [
+            { data: [0, 1], backgroundColor: ['#75B5B0', trackColor], borderWidth: 4, borderColor: gapColor, borderRadius: 20 },
+            { data: [0, 1], backgroundColor: ['#8999B8', trackColor], borderWidth: 4, borderColor: gapColor, borderRadius: 20 },
+            { data: [0, 1], backgroundColor: ['#F39B96', trackColor], borderWidth: 4, borderColor: gapColor, borderRadius: 20 },
+            { data: [0, 1], backgroundColor: ['#4F567D', trackColor], borderWidth: 4, borderColor: gapColor, borderRadius: 20 } 
+        ]},
         options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { display: false }, tooltip: { enabled: false } }, animation: { animateScale: true, animateRotate: true } }
     };
     if (myChart) myChart.destroy();
     myChart = new Chart(ctx.getContext('2d'), chartConfig);
 
-    // Format Tanggal
     const formatDate = (date) => {
         const d = new Date(date);
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -229,7 +168,6 @@ export async function initDashboard() {
         document.getElementById('titleRiwayat').innerHTML = `<i class="fas fa-history" style="color: var(--primary); margin-right: 8px;"></i> Riwayat Aktivitas ${titleSuffix}`;
 
         const filteredLog = rawHarianList.filter(log => log.tanggal >= startDateFilter && log.tanggal <= todayStr);
-
         tooltipDataObj = { 'Hadir': {}, 'Izin/Skt': {}, 'Alfa': {}, 'Ulang': {} };
         let hadir = 0, izinSakit = 0, alfa = 0, ulang = 0;
         
@@ -239,9 +177,7 @@ export async function initDashboard() {
 
         filteredLog.forEach(log => {
             if (namaKelasAktif && log.nama_kelas !== namaKelasAktif) return; 
-
             const nama = log.nama_santri || 'Tanpa Nama';
-
             if(log.status_hadir === 'Hadir') { hadir++; tooltipDataObj['Hadir'][nama] = (tooltipDataObj['Hadir'][nama] || 0) + 1; }
             else if(log.status_hadir === 'Izin' || log.status_hadir === 'Sakit') { izinSakit++; tooltipDataObj['Izin/Skt'][nama] = (tooltipDataObj['Izin/Skt'][nama] || 0) + 1; }
             else if(log.status_hadir === 'Alpa') { alfa++; tooltipDataObj['Alfa'][nama] = (tooltipDataObj['Alfa'][nama] || 0) + 1; }
@@ -267,7 +203,7 @@ export async function initDashboard() {
         const timelineWrapper = document.getElementById('timelineWrapper');
         let timelineHTML = '';
         let listEvents = [];
-        let kelasAbsenSet = new Set(); 
+        let kelasAbsenSet = new Set();
 
         filteredLog.forEach(row => {
             let timeStr = '12.00';
@@ -275,22 +211,17 @@ export async function initDashboard() {
                 const dt = new Date(row.created_at);
                 timeStr = `${String(dt.getHours()).padStart(2,'0')}.${String(dt.getMinutes()).padStart(2,'0')}`;
             }
-            
             const uniqKey = `${row.tanggal}_${row.nama_kelas}`; 
 
             if (row.status_hadir && row.nama_kelas && !kelasAbsenSet.has(uniqKey)) {
                 kelasAbsenSet.add(uniqKey);
                 let titleAbs = `KELAS ${row.nama_kelas.toUpperCase()}`;
                 if(filterType !== 'hari') titleAbs += ` <span style="font-size:0.6rem; color:#999;">(${row.tanggal.split('-').reverse().join('/')})</span>`;
-                
                 listEvents.push({ time: timeStr, title: titleAbs, desc: 'Terabsensi', statusText: 'SELESAI', badgeClass: 'badge-absen', dotColor: '#8999B8' });
             }
 
             if (row.tahsin_status) {
-                let descTahsin = '';
-                if (row.tahsin_program === "Al Qur'an") descTahsin = `Al Qur'an Juz ${row.tahsin_juz || 1} (${row.tahsin_surat || ''} ${row.tahsin_ayat_dari || 1}-${row.tahsin_ayat_sampai || 10})`;
-                else descTahsin = `${row.tahsin_program || 'Iqro'} ${row.tahsin_jilid || 1} hal. ${row.tahsin_halaman || 1}`;
-                
+                let descTahsin = row.tahsin_program === "Al Qur'an" ? `Al Qur'an Juz ${row.tahsin_juz || 1} (${row.tahsin_surat || ''} ${row.tahsin_ayat_dari || 1}-${row.tahsin_ayat_sampai || 10})` : `${row.tahsin_program || 'Iqro'} ${row.tahsin_jilid || 1} hal. ${row.tahsin_halaman || 1}`;
                 listEvents.push({ time: timeStr, title: row.nama_santri || 'Tanpa Nama', desc: descTahsin, statusText: row.tahsin_status, badgeClass: row.tahsin_status === 'Ulang' ? 'badge-ulang' : 'badge-lulus', dotColor: row.tahsin_status === 'Ulang' ? '#F39B96' : '#75B5B0' });
             }
 
@@ -301,7 +232,6 @@ export async function initDashboard() {
         });
 
         const eventsReversed = listEvents.reverse().slice(0, 15); 
-
         if (eventsReversed.length === 0) {
             timelineWrapper.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:20px;">Belum ada aktivitas.</div>`;
         } else {
@@ -321,100 +251,31 @@ export async function initDashboard() {
                 api.get('input_harian', `select=*&tanggal=gte.${startOfMonthStr}&order=created_at.asc`),
                 api.get('kelas', 'select=*')
             ]);
-
-            rawHarianList = harianList || [];
-            rawSantriList = santriList || [];
+            rawHarianList = harianList || []; rawSantriList = santriList || [];
 
             if(kelasList.length > 0) {
                 const currentMins = today.getHours() * 60 + today.getMinutes();
-                let kelasAktif = null;
-                let kelasMendatang = null;
-
+                let kelasAktif = null, kelasMendatang = null;
                 kelasList.forEach(k => {
                     if (k.jam_kelas && k.jam_kelas.includes('-')) {
                         const [sStr, eStr] = k.jam_kelas.split('-');
-                        const [hS, mS] = sStr.trim().split(':').map(Number);
-                        const [hE, mE] = eStr.trim().split(':').map(Number);
-                        const startMins = (hS * 60) + (mS || 0);
-                        const endMins = (hE * 60) + (mE || 0);
-
+                        const startMins = (parseInt(sStr.split(':')[0]) * 60) + (parseInt(sStr.split(':')[1]) || 0);
+                        const endMins = (parseInt(eStr.split(':')[0]) * 60) + (parseInt(eStr.split(':')[1]) || 0);
                         if (currentMins >= startMins && currentMins <= endMins) kelasAktif = k;
-                        else if (currentMins < startMins) {
-                            if (!kelasMendatang || startMins < kelasMendatang.startMins) kelasMendatang = { ...k, startMins };
-                        }
+                        else if (currentMins < startMins) { if (!kelasMendatang || startMins < kelasMendatang.startMins) kelasMendatang = { ...k, startMins }; }
                     }
                 });
-
                 const jadwalContent = document.getElementById('jadwalContent');
-                if (kelasAktif) {
-                    namaKelasAktif = kelasAktif.nama_kelas;
-                    jadwalContent.innerHTML = `<div style="display: flex; flex-direction: column; gap: 6px;"><div style="align-self: flex-start;"><span style="background: rgba(254, 226, 226, 0.9); color: #991B1B; padding: 4px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 800;">BERJALAN</span></div><div style="font-size: 1.05rem; font-weight: 800; color: #ffffff;">${kelasAktif.nama_kelas}</div></div>`;
-                } else if (kelasMendatang) {
-                    namaKelasAktif = kelasMendatang.nama_kelas;
-                    jadwalContent.innerHTML = `<div style="display: flex; flex-direction: column; gap: 6px;"><div style="align-self: flex-start;"><span style="background: rgba(209, 250, 229, 0.9); color: #065F46; padding: 4px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 800;">MENUNGGU</span></div><div style="font-size: 1.05rem; font-weight: 800; color: #ffffff;">${kelasMendatang.nama_kelas}</div></div>`;
-                } else {
-                    jadwalContent.innerHTML = `<span style="font-size:0.85rem; color:rgba(255,255,255,0.8); font-weight:600;">Semua kelas selesai.</span>`;
-                }
+                if (kelasAktif) { namaKelasAktif = kelasAktif.nama_kelas; jadwalContent.innerHTML = `<div style="display: flex; flex-direction: column; gap: 6px;"><div style="align-self: flex-start;"><span style="background: rgba(254, 226, 226, 0.9); color: #991B1B; padding: 4px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 800;">BERJALAN</span></div><div style="font-size: 1.05rem; font-weight: 800; color: #ffffff;">${kelasAktif.nama_kelas}</div></div>`; }
+                else if (kelasMendatang) { namaKelasAktif = kelasMendatang.nama_kelas; jadwalContent.innerHTML = `<div style="display: flex; flex-direction: column; gap: 6px;"><div style="align-self: flex-start;"><span style="background: rgba(209, 250, 229, 0.9); color: #065F46; padding: 4px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 800;">MENUNGGU</span></div><div style="font-size: 1.05rem; font-weight: 800; color: #ffffff;">${kelasMendatang.nama_kelas}</div></div>`; }
+                else { jadwalContent.innerHTML = `<span style="font-size:0.85rem; color:rgba(255,255,255,0.8); font-weight:600;">Semua kelas selesai.</span>`; }
             }
-
-            // ==========================================
-            // LOGIKA LONCENG PERINGATAN ALPA (8x, 9x, 10x)
-            // ==========================================
-            const bellIcon = document.getElementById('bellNotif');
-            if (bellIcon) {
-                let rekapAlpa = {};
-                rawHarianList.forEach(log => {
-                    if (log.status_hadir === 'Alpa') {
-                        rekapAlpa[log.nama_santri] = (rekapAlpa[log.nama_santri] || 0) + 1;
-                    }
-                });
-
-                let maxAlpaBulanIni = 0;
-                let daftarBermasalah = [];
-
-                for (const [nama, totalAlpa] of Object.entries(rekapAlpa)) {
-                    if (totalAlpa >= 8) {
-                        daftarBermasalah.push({ nama, totalAlpa });
-                        if (totalAlpa > maxAlpaBulanIni) maxAlpaBulanIni = totalAlpa;
-                    }
-                }
-
-                // Reset Class Lonceng
-                bellIcon.classList.remove('bell-warn-8', 'bell-warn-9', 'bell-warn-10');
-                bellIcon.onclick = null;
-                bellIcon.style.cursor = 'default';
-
-                // Terapkan Animasi
-                if (maxAlpaBulanIni >= 10) bellIcon.classList.add('bell-warn-10');
-                else if (maxAlpaBulanIni === 9) bellIcon.classList.add('bell-warn-9');
-                else if (maxAlpaBulanIni === 8) bellIcon.classList.add('bell-warn-8');
-
-                // Fungsi Klik memunculkan Modal
-                if (daftarBermasalah.length > 0) {
-                    bellIcon.style.cursor = 'pointer';
-                    bellIcon.onclick = () => {
-                        let htmlList = '';
-                        // Urutkan dari alpa terbanyak
-                        daftarBermasalah.sort((a,b) => b.totalAlpa - a.totalAlpa).forEach(anak => {
-                            let warnaAngka = anak.totalAlpa >= 10 ? '#DC2626' : '#EA580C';
-                            htmlList += `<div><span>${anak.nama}</span> <span style="color:${warnaAngka};">${anak.totalAlpa}x Alpa</span></div>`;
-                        });
-                        document.getElementById('isiDaftarAlpa').innerHTML = htmlList;
-                        document.getElementById('modalLonceng').style.display = 'flex';
-                    };
-                }
-            }
-
             renderFilteredData('hari');
-
-        } catch(e) {
-            console.error("Dashboard DB Error:", e);
-        }
+        } catch(e) { console.error("Dashboard Error:", e); }
     }
     
     hydrateDashboard();
 
-    // Event Filter Waktu
     document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -423,7 +284,6 @@ export async function initDashboard() {
         });
     });
 
-    // Event Tooltip Pintar 
     const tooltip = document.getElementById('namesTooltip');
     const ttLabel = document.getElementById('ttLabel');
     const ttNames = document.getElementById('ttNames');
@@ -432,26 +292,16 @@ export async function initDashboard() {
     document.querySelectorAll('.legend-item').forEach(el => {
         el.addEventListener('click', () => {
             const type = el.getAttribute('data-type');
-            const color = el.getAttribute('data-color');
-            
             ttLabel.textContent = `Daftar ${type}`;
-            ttDot.style.background = color;
-            
+            ttDot.style.background = el.getAttribute('data-color');
             let htmlList = '';
             const dataPilihan = tooltipDataObj[type] || {};
-            
-            for (const [namaSantri, jumlah] of Object.entries(dataPilihan)) {
-                htmlList += `<div><span>${namaSantri}</span> <span style="font-weight:700; color:${color};">${jumlah > 1 ? `${jumlah}x` : ''}</span></div>`;
-            }
-
+            for (const [namaSantri, jumlah] of Object.entries(dataPilihan)) htmlList += `<div><span>${namaSantri}</span> <span style="font-weight:700; color:${el.getAttribute('data-color')};">${jumlah > 1 ? `${jumlah}x` : ''}</span></div>`;
             if (htmlList === '') htmlList = `<div style="justify-content:center; color:var(--text-muted); border:none;">Kosong</div>`;
-
             ttNames.innerHTML = htmlList;
             tooltip.style.display = 'flex';
         });
     });
 
-    document.getElementById('btnCloseTooltip').addEventListener('click', () => {
-        tooltip.style.display = 'none';
-    });
-                    }
+    document.getElementById('btnCloseTooltip').addEventListener('click', () => tooltip.style.display = 'none');
+                                                                                         }
