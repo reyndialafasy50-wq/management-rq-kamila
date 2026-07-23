@@ -6,18 +6,21 @@
  */
 import { renderDashboard, initDashboard } from './dashboard.js';
 import { renderSantri, initSantri } from './santri.js';
-import { renderInputHarian, initInputHarian } from './input_harian.js'; 
-import { api } from './api.js'; 
+import { renderInputHarian, initInputHarian } from './input_harian.js';
+import { api } from './api.js';
 
 // ==========================================
-// FUNGSI LONCENG GLOBAL (BISA DIPANGGIL DARI MANA SAJA)
+// FUNGSI LONCENG GLOBAL (AMAN TANPA FILE TAMBAHAN)
 // ==========================================
 window.periksaNotifikasiGlobal = async () => {
-    // Cari Ikon Lonceng di Header
-    const bellIcon = document.querySelector('.notif-btn .fa-bell') || document.getElementById('bellNotif');
+    // 1. Cari Lonceng
+    const bellIcon = document.getElementById('bellNotif') || document.querySelector('.fa-bell');
     if (!bellIcon) return;
 
-    // Suntik CSS Animasi (Hanya 1x)
+    // 2. Cegah bentrokan dengan dashboard.js versi lama
+    bellIcon.id = 'bellNotif_Aman';
+
+    // 3. Suntik CSS Animasi Goyang
     if (!document.getElementById('cssLoncengBaru')) {
         const style = document.createElement('style');
         style.id = 'cssLoncengBaru';
@@ -34,13 +37,12 @@ window.periksaNotifikasiGlobal = async () => {
         const d = new Date();
         const bulanIni = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 
-        // Tarik data dari Supabase
         const [harianList, santriList] = await Promise.all([
             api.get('input_harian', `select=*&tanggal=gte.${bulanIni}-01&status_hadir=eq.Alpa`),
             api.get('dapodik_santri', 'select=id,nama_santri,hp_ortu,no_hp')
         ]);
 
-        // Reset Lonceng ke Awal
+        // Matikan lonceng sebagai default
         bellIcon.className = 'fas fa-bell'; 
         bellIcon.onclick = null;
         bellIcon.style.cursor = 'default';
@@ -57,9 +59,9 @@ window.periksaNotifikasiGlobal = async () => {
         let maxAlpa = 0;
         let daftarKritis = [];
 
-        // Saring santri kritis yang BELUM DI-MUTE
         for (const key in rekapAlpa) {
             const data = rekapAlpa[key];
+            // Mengecek apakah sudah dicentang (Mute) oleh Ustadz
             const sudahDisenyapkan = localStorage.getItem(`bisu_alpa_${bulanIni}_${data.id}`);
             
             if (data.count >= 8 && !sudahDisenyapkan) {
@@ -70,12 +72,12 @@ window.periksaNotifikasiGlobal = async () => {
             }
         }
 
-        // Terapkan Efek Goyang sesuai keparahan
+        // Terapkan goyangan lonceng
         if (maxAlpa >= 10) bellIcon.classList.add('bell-kritis-10');
         else if (maxAlpa === 9) bellIcon.classList.add('bell-kritis-9');
         else if (maxAlpa === 8) bellIcon.classList.add('bell-kritis-8');
 
-        // Jika ada santri kritis, aktifkan tombol Pop-up
+        // Jika ada santri, pasang event klik Pop-up
         if (daftarKritis.length > 0) {
             bellIcon.style.cursor = 'pointer';
             bellIcon.onclick = (e) => {
@@ -87,7 +89,7 @@ window.periksaNotifikasiGlobal = async () => {
 };
 
 // ==========================================
-// FUNGSI POP-UP & TOMBOL AKSI
+// FUNGSI POP-UP & 3 TOMBOL (PROFIL, WA, MUTE)
 // ==========================================
 window.tampilkanModalEvaluasi = (daftar, bulanIni) => {
     let modal = document.getElementById('modalLoncengGlobal');
@@ -116,8 +118,11 @@ window.tampilkanModalEvaluasi = (daftar, bulanIni) => {
                     <div style="font-size: 0.75rem; font-weight: 800; color: ${color}; margin-top: 4px;">${s.count}x Alpa</div>
                 </div>
                 <div style="display: flex; gap: 6px;">
-                    <button onclick="window.bukaProfilSantri()" title="Profil" style="background: rgba(59, 130, 246, 0.1); border: none; color: #3B82F6; width:34px; height:34px; border-radius: 8px; cursor: pointer; display:flex; align-items:center; justify-content:center;"><i class="fas fa-eye"></i></button>
+                    <!-- Tombol Profil -->
+                    <button onclick="window.bukaProfilSantriLonceng()" title="Profil" style="background: rgba(59, 130, 246, 0.1); border: none; color: #3B82F6; width:34px; height:34px; border-radius: 8px; cursor: pointer; display:flex; align-items:center; justify-content:center;"><i class="fas fa-eye"></i></button>
+                    <!-- Tombol WhatsApp -->
                     ${hp ? `<a href="${link}" target="_blank" title="WhatsApp" style="background: rgba(16, 185, 129, 0.1); color: #10B981; width:34px; height:34px; border-radius: 8px; text-decoration: none; display: flex; align-items: center; justify-content:center;"><i class="fab fa-whatsapp"></i></a>` : `<button onclick="alert('No HP belum diisi!')" style="background: #E5E7EB; color: #9CA3AF; border: none; width:34px; height:34px; border-radius: 8px; cursor: not-allowed; display:flex; align-items:center; justify-content:center;"><i class="fab fa-whatsapp"></i></button>`}
+                    <!-- Tombol Centang Mute -->
                     <button onclick="window.senyapkanLonceng('${s.id}', '${bulanIni}', '${s.nama}')" title="Tandai Selesai" style="background: rgba(239, 68, 68, 0.1); border: none; color: #EF4444; width:34px; height:34px; border-radius: 8px; cursor: pointer; display:flex; align-items:center; justify-content:center;"><i class="fas fa-check-double"></i></button>
                 </div>
             </div>
@@ -136,7 +141,7 @@ window.tampilkanModalEvaluasi = (daftar, bulanIni) => {
     modal.style.display = 'flex';
 };
 
-window.bukaProfilSantri = () => {
+window.bukaProfilSantriLonceng = () => {
     document.getElementById('modalLoncengGlobal').style.display = 'none';
     window.location.hash = '#santri'; 
 };
@@ -145,7 +150,7 @@ window.senyapkanLonceng = (id, bulan, nama) => {
     if(confirm(`Tandai evaluasi ananda ${nama} SELESAI?\n\nLonceng peringatan untuk ananda ini akan dimatikan sampai bulan depan.`)) {
         localStorage.setItem(`bisu_alpa_${bulan}_${id}`, 'true');
         document.getElementById('modalLoncengGlobal').style.display = 'none';
-        window.periksaNotifikasiGlobal(); // Lonceng dicek ulang, pasti berhenti goyang!
+        window.periksaNotifikasiGlobal(); // Lonceng akan langsung di-refresh & mati
     }
 };
 
@@ -191,15 +196,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // PANGGIL LONCENG SETIAP PINDAH HALAMAN
-        window.periksaNotifikasiGlobal();
+        if (window.periksaNotifikasiGlobal) window.periksaNotifikasiGlobal();
     };
 
     window.addEventListener('hashchange', loadPage);
     loadPage();
 
-    // Dark Mode Toggle
     const btnThemeToggle = document.getElementById('btnThemeToggle');
     const themeIcon = document.getElementById('themeIcon');
+    
     if (localStorage.getItem('theme') === 'dark') {
         document.body.setAttribute('data-theme', 'dark');
         if(themeIcon) themeIcon.classList.replace('fa-moon', 'fa-sun');
@@ -219,7 +224,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Sidebar Toggle
     const sidebar = document.getElementById('sidebar');
     const btnToggleSidebar = document.getElementById('btnToggleSidebar');
     const sidebarOverlay = document.getElementById('sidebarOverlay');
