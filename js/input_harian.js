@@ -22,7 +22,7 @@ export function renderInputHarian() {
                 border-radius: 0 0 16px 16px; 
                 border-bottom: 1px solid var(--border); 
                 position: sticky; 
-                top: -21px; /* INI KUNCI OBATNYA: Menutup celah padding container */
+                top: -21px; 
                 z-index: 50; 
                 box-shadow: 0 8px 15px -3px rgba(0,0,0,0.08); 
                 transition: 0.3s;
@@ -413,6 +413,9 @@ export async function initInputHarian() {
             btnElement.innerHTML = `<i class="fas fa-check-circle"></i> Berhasil Disimpan!`;
             btnElement.style.background = '#10B981'; // Hijau Sukses
             
+            // 👇 PEMANGGIL LONCENG OTOMATIS ADA DI SINI 👇
+            if (window.periksaNotifikasiGlobal) window.periksaNotifikasiGlobal();
+            
             setTimeout(() => {
                 btnElement.innerHTML = originalText;
                 btnElement.style.background = 'var(--primary)';
@@ -474,4 +477,4 @@ export async function initInputHarian() {
             setTimeout(() => { btnElement.innerHTML = originalText; }, 1000);
         }, 500); 
     };
-           }
+        }
