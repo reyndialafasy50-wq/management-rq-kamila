@@ -7,17 +7,16 @@
 import { renderDashboard, initDashboard } from './dashboard.js';
 import { renderSantri, initSantri } from './santri.js';
 import { renderInputHarian, initInputHarian } from './input_harian.js';
+import { renderLaporan, initLaporan } from './laporan.js'; // <-- INI YANG BIKIN LAPORAN MUNCUL
 import { api } from './api.js';
 
 // ==========================================
 // FUNGSI LONCENG GLOBAL (ANTI-MELESET)
 // ==========================================
 window.periksaNotifikasiGlobal = async () => {
-    // 1. Cari Lonceng
     const bellIcon = document.getElementById('bellNotif') || document.querySelector('.fa-bell');
     if (!bellIcon) return;
 
-    // 2. Suntik CSS Animasi Goyang (Ditambah Paksaan Inline-Block)
     if (!document.getElementById('cssLoncengBaru')) {
         const style = document.createElement('style');
         style.id = 'cssLoncengBaru';
@@ -29,8 +28,8 @@ window.periksaNotifikasiGlobal = async () => {
                 75% { transform: rotate(15deg); } 
             }
             .bell-kritis-8, .bell-kritis-9, .bell-kritis-10 {
-                display: inline-block !important; /* WAJIB AGAR BISA DIGOYANG */
-                transform-origin: top center !important; /* TITIK TUMPU GOYANG DI ATAS */
+                display: inline-block !important;
+                transform-origin: top center !important;
             }
             .bell-kritis-8 { color: #F59E0B !important; animation: shakeSuper 0.5s infinite; }
             .bell-kritis-9 { color: #EA580C !important; animation: shakeSuper 0.3s infinite; }
@@ -48,10 +47,7 @@ window.periksaNotifikasiGlobal = async () => {
             api.get('dapodik_santri', 'select=id,nama_santri,hp_ortu,no_hp')
         ]);
 
-        // 3. Amankan Area Klik (Cari kotak pembungkusnya agar klik tidak meleset)
         const areaKlik = bellIcon.closest('button, a, div[class*="nav"]') || bellIcon;
-
-        // Reset Lonceng
         bellIcon.classList.remove('bell-kritis-8', 'bell-kritis-9', 'bell-kritis-10');
         areaKlik.onclick = null;
         areaKlik.style.cursor = 'default';
@@ -80,17 +76,15 @@ window.periksaNotifikasiGlobal = async () => {
             }
         }
 
-        // Terapkan goyangan lonceng
         if (maxAlpa >= 10) bellIcon.classList.add('bell-kritis-10');
         else if (maxAlpa === 9) bellIcon.classList.add('bell-kritis-9');
         else if (maxAlpa === 8) bellIcon.classList.add('bell-kritis-8');
 
-        // Pasang sensor klik di area yang luas
         if (daftarKritis.length > 0) {
             areaKlik.style.cursor = 'pointer';
             areaKlik.onclick = (e) => {
                 e.preventDefault();
-                e.stopPropagation(); // Cegah klik bocor ke elemen lain
+                e.stopPropagation();
                 window.tampilkanModalEvaluasi(daftarKritis, bulanIni);
             };
         }
@@ -127,11 +121,8 @@ window.tampilkanModalEvaluasi = (daftar, bulanIni) => {
                     <div style="font-size: 0.75rem; font-weight: 800; color: ${color}; margin-top: 4px;">${s.count}x Alpa</div>
                 </div>
                 <div style="display: flex; gap: 6px;">
-                    <!-- Tombol Profil -->
                     <button onclick="window.bukaProfilSantriLonceng()" title="Profil" style="background: rgba(59, 130, 246, 0.1); border: none; color: #3B82F6; width:34px; height:34px; border-radius: 8px; cursor: pointer; display:flex; align-items:center; justify-content:center;"><i class="fas fa-eye"></i></button>
-                    <!-- Tombol WhatsApp -->
                     ${hp ? `<a href="${link}" target="_blank" title="WhatsApp" style="background: rgba(16, 185, 129, 0.1); color: #10B981; width:34px; height:34px; border-radius: 8px; text-decoration: none; display: flex; align-items: center; justify-content:center;"><i class="fab fa-whatsapp"></i></a>` : `<button onclick="alert('No HP belum diisi!')" style="background: #E5E7EB; color: #9CA3AF; border: none; width:34px; height:34px; border-radius: 8px; cursor: not-allowed; display:flex; align-items:center; justify-content:center;"><i class="fab fa-whatsapp"></i></button>`}
-                    <!-- Tombol Centang Mute -->
                     <button onclick="window.senyapkanLonceng('${s.id}', '${bulanIni}', '${s.nama}')" title="Tandai Selesai" style="background: rgba(239, 68, 68, 0.1); border: none; color: #EF4444; width:34px; height:34px; border-radius: 8px; cursor: pointer; display:flex; align-items:center; justify-content:center;"><i class="fas fa-check-double"></i></button>
                 </div>
             </div>
@@ -159,7 +150,7 @@ window.senyapkanLonceng = (id, bulan, nama) => {
     if(confirm(`Tandai evaluasi ananda ${nama} SELESAI?\n\nLonceng peringatan untuk ananda ini akan dimatikan sampai bulan depan.`)) {
         localStorage.setItem(`bisu_alpa_${bulan}_${id}`, 'true');
         document.getElementById('modalLoncengGlobal').style.display = 'none';
-        window.periksaNotifikasiGlobal(); // Lonceng akan langsung di-refresh & mati
+        window.periksaNotifikasiGlobal(); 
     }
 };
 
@@ -194,8 +185,10 @@ document.addEventListener('DOMContentLoaded', () => {
             mainContent.innerHTML = renderInputHarian();
             initInputHarian();
         } else if (hash === '#laporan') {
-            pageTitle.textContent = 'Laporan & Rapor';
-            mainContent.innerHTML = `<div class="card" style="padding:40px; text-align:center;"><h2>Fitur Laporan segera hadir!</h2></div>`;
+            // 🔥 INI DIA KUNCI LAPORANNYA 🔥
+            pageTitle.textContent = 'Laporan & Rapor Bulanan';
+            mainContent.innerHTML = renderLaporan();
+            initLaporan();
         } else if (hash === '#setting') {
             pageTitle.textContent = 'Pengaturan Sistem';
             mainContent.innerHTML = `<div class="card" style="padding:40px; text-align:center;"><h2>Fitur Pengaturan segera hadir!</h2></div>`;
@@ -204,7 +197,6 @@ document.addEventListener('DOMContentLoaded', () => {
             mainContent.innerHTML = `<div class="card" style="padding:40px; text-align:center; color: red;"><h2>404 Not Found</h2></div>`;
         }
 
-        // PANGGIL LONCENG SETIAP PINDAH HALAMAN
         if (window.periksaNotifikasiGlobal) window.periksaNotifikasiGlobal();
     };
 
