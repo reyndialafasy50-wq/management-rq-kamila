@@ -8,7 +8,7 @@
 import { renderDashboard, initDashboard } from './dashboard.js';
 import { renderSantri, initSantri } from './santri.js';
 import { renderInputHarian, initInputHarian } from './input_harian.js'; 
-import { api } from './api.js'; // <-- TAMBAHAN: Untuk mengecek database Lonceng Alpa
+import { api } from './api.js'; 
 
 document.addEventListener('DOMContentLoaded', () => {
     // -----------------------------------------
@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadPage = () => {
         const hash = window.location.hash || '#dashboard';
 
+        // Update Navigasi Aktif
         navLinks.forEach(link => {
             link.classList.remove('active');
             if (link.getAttribute('href') === hash) {
@@ -30,33 +31,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
         mainContent.innerHTML = '<div style="text-align:center; padding: 50px;"><i class="fas fa-spinner fa-spin fa-2x"></i></div>';
 
+        // Routing Halaman
         if (hash === '#dashboard') {
             pageTitle.textContent = 'Dashboard';
             mainContent.innerHTML = renderDashboard();
             initDashboard();
-            
         } else if (hash === '#santri') {
             pageTitle.textContent = 'Data Santri & Kelas';
             mainContent.innerHTML = renderSantri();
             initSantri();
-            
         } else if (hash === '#harian') { 
             pageTitle.textContent = 'Input Harian (Absen & Hafalan)';
             mainContent.innerHTML = renderInputHarian();
             initInputHarian();
-            
         } else if (hash === '#laporan') {
             pageTitle.textContent = 'Laporan & Rapor';
             mainContent.innerHTML = `<div class="card" style="padding:40px; text-align:center;"><h2>Fitur Laporan segera hadir!</h2></div>`;
-            
         } else if (hash === '#setting') {
             pageTitle.textContent = 'Pengaturan Sistem';
             mainContent.innerHTML = `<div class="card" style="padding:40px; text-align:center;"><h2>Fitur Pengaturan segera hadir!</h2></div>`;
-            
         } else {
             pageTitle.textContent = 'Halaman Tidak Ditemukan';
             mainContent.innerHTML = `<div class="card" style="padding:40px; text-align:center; color: red;"><h2>404 Not Found</h2></div>`;
         }
+
+        // PENTING: Panggil ulang lonceng setiap kali pindah halaman agar tetap hidup!
+        periksaNotifikasiGlobal();
     };
 
     window.addEventListener('hashchange', loadPage);
@@ -112,18 +112,26 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // -----------------------------------------
-    // 4. [BARU] SISTEM NOTIFIKASI LONCENG ALPA
+    // 4. SISTEM NOTIFIKASI LONCENG ALPA
     // -----------------------------------------
     
-    // Suntik Animasi CSS untuk Lonceng
-    const styleLonceng = document.createElement('style');
-    styleLonceng.innerHTML = `
-        @keyframes shakeKritis { 0%, 100% { transform: rotate(0deg); } 20% { transform: rotate(15deg); } 40% { transform: rotate(-15deg); } 60% { transform: rotate(10deg); } 80% { transform: rotate(-10deg); } }
-        .bell-warn-8 { color: #F59E0B !important; animation: shakeKritis 0.5s infinite; }
-        .bell-warn-9 { color: #EA580C !important; animation: shakeKritis 0.3s infinite; }
-        .bell-warn-10 { color: #DC2626 !important; animation: shakeKritis 0.15s infinite; filter: drop-shadow(0 0 8px rgba(220, 38, 38, 0.6)); }
-    `;
-    document.head.appendChild(styleLonceng);
+    // Suntik Animasi CSS untuk Lonceng (Hanya 1x agar tidak dobel/terlalu cepat)
+    if (!document.getElementById('cssLonceng')) {
+        const styleLonceng = document.createElement('style');
+        styleLonceng.id = 'cssLonceng';
+        styleLonceng.innerHTML = `
+            @keyframes shakeKritis { 
+                0%, 100% { transform: rotate(0deg); } 
+                25% { transform: rotate(15deg); } 
+                50% { transform: rotate(-15deg); } 
+                75% { transform: rotate(10deg); } 
+            }
+            .bell-warn-8 { color: #F59E0B !important; animation: shakeKritis 0.5s infinite; }
+            .bell-warn-9 { color: #EA580C !important; animation: shakeKritis 0.3s infinite; }
+            .bell-warn-10 { color: #DC2626 !important; animation: shakeKritis 0.15s infinite; filter: drop-shadow(0 0 8px rgba(220, 38, 38, 0.6)); }
+        `;
+        document.head.appendChild(styleLonceng);
+    }
 
     // Fungsi Utama Pemantau Lonceng
     async function periksaNotifikasiGlobal() {
@@ -141,6 +149,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!harianList || harianList.length === 0) {
                 bellIcon.className = 'fas fa-bell';
+                bellIcon.onclick = null;
+                bellIcon.style.cursor = 'default';
                 return;
             }
 
@@ -166,22 +176,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
+            // Terapkan Kelas CSS
             bellIcon.classList.remove('bell-warn-8', 'bell-warn-9', 'bell-warn-10');
             if (maxAlpa >= 10) bellIcon.classList.add('bell-warn-10');
             else if (maxAlpa === 9) bellIcon.classList.add('bell-warn-9');
             else if (maxAlpa === 8) bellIcon.classList.add('bell-warn-8');
 
-            const newBell = bellIcon.cloneNode(true);
-            bellIcon.parentNode.replaceChild(newBell, bellIcon);
-            
+            // Aktifkan Tombol Klik Lonceng
             if (daftarKritis.length > 0) {
-                newBell.style.cursor = 'pointer';
-                newBell.addEventListener('click', (e) => {
+                bellIcon.style.cursor = 'pointer';
+                bellIcon.onclick = (e) => {
                     e.preventDefault();
                     tampilkanModalEvaluasi(daftarKritis, bulanIni);
-                });
+                };
             } else {
-                newBell.style.cursor = 'default';
+                bellIcon.style.cursor = 'default';
+                bellIcon.onclick = null;
             }
         } catch(e) { console.error('Gagal notifikasi:', e); }
     }
@@ -248,7 +258,4 @@ document.addEventListener('DOMContentLoaded', () => {
             periksaNotifikasiGlobal();
         }
     };
-
-    // Jalankan Pemantau Lonceng saat web siap
-    periksaNotifikasiGlobal();
 });
