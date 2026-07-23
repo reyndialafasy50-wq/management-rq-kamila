@@ -11,6 +11,14 @@ import { renderInputHarian, initInputHarian } from './input_harian.js';
 import { api } from './api.js'; 
 
 document.addEventListener('DOMContentLoaded', () => {
+    
+    // 🔥 SOLUSI ANTI-BAJAK: Ubah Identitas Lonceng Secara Gaib 🔥
+    // Ini memastikan kode lama di dashboard.js tidak bisa merusak lonceng lagi
+    const loncengLama = document.getElementById('bellNotif');
+    if (loncengLama) {
+        loncengLama.id = 'bellNotif_Aman';
+    }
+
     // -----------------------------------------
     // 1. SISTEM ROUTER HALAMAN (NAVIGASI)
     // -----------------------------------------
@@ -21,7 +29,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadPage = () => {
         const hash = window.location.hash || '#dashboard';
 
-        // Update Navigasi Aktif
         navLinks.forEach(link => {
             link.classList.remove('active');
             if (link.getAttribute('href') === hash) {
@@ -31,7 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         mainContent.innerHTML = '<div style="text-align:center; padding: 50px;"><i class="fas fa-spinner fa-spin fa-2x"></i></div>';
 
-        // Routing Halaman
         if (hash === '#dashboard') {
             pageTitle.textContent = 'Dashboard';
             mainContent.innerHTML = renderDashboard();
@@ -55,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
             mainContent.innerHTML = `<div class="card" style="padding:40px; text-align:center; color: red;"><h2>404 Not Found</h2></div>`;
         }
 
-        // PENTING: Panggil ulang lonceng setiap kali pindah halaman agar tetap hidup!
+        // Panggil penyegaran lonceng setiap kali pindah halaman
         periksaNotifikasiGlobal();
     };
 
@@ -115,27 +121,28 @@ document.addEventListener('DOMContentLoaded', () => {
     // 4. SISTEM NOTIFIKASI LONCENG ALPA
     // -----------------------------------------
     
-    // Suntik Animasi CSS untuk Lonceng (Hanya 1x agar tidak dobel/terlalu cepat)
-    if (!document.getElementById('cssLonceng')) {
+    // Suntik Animasi CSS untuk Lonceng
+    if (!document.getElementById('cssLoncengBaru')) {
         const styleLonceng = document.createElement('style');
-        styleLonceng.id = 'cssLonceng';
+        styleLonceng.id = 'cssLoncengBaru';
         styleLonceng.innerHTML = `
-            @keyframes shakeKritis { 
+            @keyframes shakeSuper { 
                 0%, 100% { transform: rotate(0deg); } 
                 25% { transform: rotate(15deg); } 
                 50% { transform: rotate(-15deg); } 
                 75% { transform: rotate(10deg); } 
             }
-            .bell-warn-8 { color: #F59E0B !important; animation: shakeKritis 0.5s infinite; }
-            .bell-warn-9 { color: #EA580C !important; animation: shakeKritis 0.3s infinite; }
-            .bell-warn-10 { color: #DC2626 !important; animation: shakeKritis 0.15s infinite; filter: drop-shadow(0 0 8px rgba(220, 38, 38, 0.6)); }
+            .bell-kritis-8 { color: #F59E0B !important; animation: shakeSuper 0.5s infinite; }
+            .bell-kritis-9 { color: #EA580C !important; animation: shakeSuper 0.3s infinite; }
+            .bell-kritis-10 { color: #DC2626 !important; animation: shakeSuper 0.15s infinite; filter: drop-shadow(0 0 8px rgba(220, 38, 38, 0.6)); }
         `;
         document.head.appendChild(styleLonceng);
     }
 
     // Fungsi Utama Pemantau Lonceng
     async function periksaNotifikasiGlobal() {
-        const bellIcon = document.getElementById('bellNotif');
+        // Cari lonceng dengan ID Baru
+        const bellIcon = document.getElementById('bellNotif_Aman');
         if (!bellIcon) return;
 
         try {
@@ -147,8 +154,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 api.get('dapodik_santri', 'select=id,nama_santri,hp_ortu,no_hp')
             ]);
 
+            // Jika tidak ada data alpa sama sekali
             if (!harianList || harianList.length === 0) {
-                bellIcon.className = 'fas fa-bell';
+                bellIcon.className = 'fas fa-bell'; // Reset icon bersih
                 bellIcon.onclick = null;
                 bellIcon.style.cursor = 'default';
                 return;
@@ -176,11 +184,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // Terapkan Kelas CSS
-            bellIcon.classList.remove('bell-warn-8', 'bell-warn-9', 'bell-warn-10');
-            if (maxAlpa >= 10) bellIcon.classList.add('bell-warn-10');
-            else if (maxAlpa === 9) bellIcon.classList.add('bell-warn-9');
-            else if (maxAlpa === 8) bellIcon.classList.add('bell-warn-8');
+            // Bersihkan kelas animasi lama (supaya bisa ditimpa yang baru)
+            bellIcon.className = 'fas fa-bell'; 
+            
+            // Terapkan Kelas CSS Goyang
+            if (maxAlpa >= 10) bellIcon.classList.add('bell-kritis-10');
+            else if (maxAlpa === 9) bellIcon.classList.add('bell-kritis-9');
+            else if (maxAlpa === 8) bellIcon.classList.add('bell-kritis-8');
 
             // Aktifkan Tombol Klik Lonceng
             if (daftarKritis.length > 0) {
@@ -193,10 +203,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 bellIcon.style.cursor = 'default';
                 bellIcon.onclick = null;
             }
-        } catch(e) { console.error('Gagal notifikasi:', e); }
+        } catch(e) { console.error('Gagal memuat notifikasi:', e); }
     }
 
-    // Fungsi Membuat Tampilan Pop-up
+    // Fungsi Membuat Tampilan Pop-up Opsi B (3 Tombol)
     function tampilkanModalEvaluasi(daftar, bulanIni) {
         let modal = document.getElementById('modalLoncengGlobal');
         if (!modal) {
@@ -244,17 +254,18 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.style.display = 'flex';
     }
 
-    // Fungsi Pindah ke Profil Santri (Global)
+    // Fungsi Global Pindah ke Profil Santri
     window.bukaProfilSantri = () => {
         document.getElementById('modalLoncengGlobal').style.display = 'none';
         window.location.hash = '#santri'; 
     };
 
-    // Fungsi Mematikan Lonceng (Mute Global)
+    // Fungsi Global Mematikan Lonceng (Mute)
     window.senyapkanLonceng = (id, bulan, nama) => {
         if(confirm(`Tandai evaluasi ananda ${nama} SELESAI?\n\nLonceng peringatan untuk ananda ini akan dimatikan sampai bulan depan.`)) {
             localStorage.setItem(`bisu_alpa_${bulan}_${id}`, 'true');
             document.getElementById('modalLoncengGlobal').style.display = 'none';
+            // Cek lonceng lagi untuk mematikan goyangannya
             periksaNotifikasiGlobal();
         }
     };
