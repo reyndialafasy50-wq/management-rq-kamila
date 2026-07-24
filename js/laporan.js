@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * MODUL LAPORAN (REKAP KELAS & RAPOR INDIVIDU)
+ * MODUL LAPORAN (REKAP KELAS & RAPOR INDIVIDU + PDF)
  * File: js/laporan.js
  * ==================================================
  */
@@ -16,7 +16,7 @@ export const renderLaporan = () => {
             animation: fadeIn 0.3s ease;
         }
 
-        /* Tombol Cetak & Unduh Lebih Ramping & Estetik */
+        /* Tombol Ramping & Estetik */
         .action-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -85,7 +85,6 @@ export const renderLaporan = () => {
             border-color: #93C5FD;
         }
 
-        /* Area Preview Kertas */
         .preview-header {
             display: flex;
             align-items: center;
@@ -131,7 +130,6 @@ export const renderLaporan = () => {
             gap: 8px;
         }
 
-        /* MEJA VIRTUAL & KERTAS */
         .meja-virtual {
             width: 100%;
             overflow-x: auto;
@@ -219,33 +217,17 @@ export const renderLaporan = () => {
         .box-nilai.alpa { background: #FEF2F2; border-color: #EF4444; }
         .box-nilai h4 { margin: 0; font-size: 0.85rem; color: #475569; text-transform: uppercase; }
         .box-nilai span { display: block; font-size: 1.5rem; font-weight: 800; margin-top: 5px; }
-
-        /* CSS KHUSUS CETAK (Print Mode) */
-        @media print {
-            body * { visibility: hidden; }
-            #areaKertas, #areaKertas * { visibility: visible; }
-            #areaKertas {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                box-shadow: none;
-                margin: 0;
-                padding: 20px;
-            }
-            .meja-virtual { background: white; padding: 0; box-shadow: none; }
-        }
     </style>
 
     <div class="laporan-wrapper">
         
-        <!-- 1. TOMBOL CETAK & UNDUH (Dibuat Lebih Ramping) -->
+        <!-- Tombol Aksi (Ramping) -->
         <div class="action-grid">
-            <button class="btn-action btn-cetak" id="btnCetakDokumen"><i class="fas fa-print"></i> Cetak Dokumen</button>
-            <button class="btn-action btn-unduh" id="btnKirimWa"><i class="fab fa-whatsapp"></i> Kirim WhatsApp</button>
+            <button class="btn-action btn-cetak" id="btnCetakDokumen"><i class="fas fa-print"></i> Cetak / PDF</button>
+            <button class="btn-action btn-unduh" id="btnKirimWa"><i class="fab fa-whatsapp"></i> Unduh PDF & WA</button>
         </div>
 
-        <!-- 2. KARTU FILTER -->
+        <!-- Filter Card -->
         <div class="filter-card">
             <div class="form-group">
                 <label>Jenis Laporan</label>
@@ -274,7 +256,7 @@ export const renderLaporan = () => {
             </div>
         </div>
 
-        <!-- 3. AREA PREVIEW -->
+        <!-- Area Preview -->
         <div>
             <div class="preview-header">
                 <i class="fas fa-file-invoice"></i> Kertas Laporan (Live)
@@ -289,11 +271,9 @@ export const renderLaporan = () => {
                 <i class="fas fa-hand-point-up"></i> Geser kertas ke kiri/kanan untuk meninjau tabel
             </div>
 
-            <!-- MEJA VIRTUAL -->
             <div class="meja-virtual">
                 <div class="kertas-laporan" id="areaKertas">
                     
-                    <!-- KOP SURAT -->
                     <div class="kop-surat">
                         <div class="kop-ikon"><i class="fas fa-book-reader"></i></div>
                         <div class="kop-teks">
@@ -303,13 +283,11 @@ export const renderLaporan = () => {
                         </div>
                     </div>
                     
-                    <!-- INFO KELAS -->
                     <div class="info-kertas" id="infoKertasLandscape">
                         <div>Kelas: <span id="lblKertasKelas">Belum dipilih</span></div>
                         <div>Bulan: <span id="lblKertasBulan">...</span></div>
                     </div>
                     
-                    <!-- INFO SANTRI -->
                     <div class="info-kertas" id="infoKertasPortrait" style="display: none; flex-direction: column; gap: 5px;">
                         <div>Nama: <span id="lblRaporNama" style="font-weight: 800; font-size: 1.1rem; border-bottom: 1px dotted black;">Belum dipilih</span></div>
                         <div style="display: flex; justify-content: space-between;">
@@ -318,7 +296,6 @@ export const renderLaporan = () => {
                         </div>
                     </div>
 
-                    <!-- KONTEN LANDSCAPE -->
                     <div id="kontenLandscape">
                         <table class="tabel-rapi">
                             <thead>
@@ -330,9 +307,9 @@ export const renderLaporan = () => {
                                     <th rowspan="2" style="width: 15%;">Keterangan</th>
                                 </tr>
                                 <tr>
-                                    <th style="width: 7%;" title="Hadir">H</th>
-                                    <th style="width: 8%;" title="Sakit / Izin">S/I</th>
-                                    <th style="width: 7%;" title="Alpa">A</th>
+                                    <th style="width: 7%;">H</th>
+                                    <th style="width: 8%;">S/I</th>
+                                    <th style="width: 7%;">A</th>
                                     <th>Tahfidz</th>
                                     <th>Tahsin</th>
                                 </tr>
@@ -347,7 +324,6 @@ export const renderLaporan = () => {
                         </table>
                     </div>
                     
-                    <!-- KONTEN PORTRAIT -->
                     <div id="kontenPortrait" style="display: none;">
                         <h3 style="text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 10px; margin-bottom: 15px;">A. REKAPITULASI KEHADIRAN</h3>
                         <div class="box-rekap-individu">
@@ -386,12 +362,11 @@ export const renderLaporan = () => {
                         </table>
                         
                         <h3 style="text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 10px; margin-bottom: 15px; margin-top: 25px;">C. CATATAN EVALUASI</h3>
-                        <div id="catatanEvaluasiBox" style="border: 1px solid #94A3B8; min-height: 80px; padding: 10px; border-radius: 5px; font-style: italic; color: #475569;" contenteditable="true">
+                        <div style="border: 1px solid #94A3B8; min-height: 80px; padding: 10px; border-radius: 5px; font-style: italic; color: #475569;" contenteditable="true">
                             (Ketik catatan evaluasi khusus untuk ananda di sini...)
                         </div>
                     </div>
                     
-                    <!-- TANDA TANGAN -->
                     <div style="margin-top: 40px; display: flex; justify-content: space-between; font-size: 0.9rem;">
                         <div style="text-align: center; width: 220px; color: black; display: none;" id="ttdOrtu">
                             <p style="margin-bottom: 70px;">Mengetahui,<br><b>Orang Tua / Wali</b></p>
@@ -412,6 +387,13 @@ export const renderLaporan = () => {
 };
 
 export const initLaporan = async () => {
+    // Dynamic load script html2pdf jika belum ada di index.html
+    if (!window.html2pdf) {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+        document.head.appendChild(script);
+    }
+
     const jenisLaporan = document.getElementById('jenisLaporan');
     const selectKelas = document.getElementById('laporanPilihKelas');
     const groupSantri = document.getElementById('groupPilihSantri');
@@ -428,7 +410,6 @@ export const initLaporan = async () => {
     const ttdOrtu = document.getElementById('ttdOrtu');
     const labelTtd = document.getElementById('labelTtd');
 
-    // Load Daftar Kelas Dari Database
     try {
         if(window.api && window.api.get) {
             const dataSantri = await window.api.get('dapodik_santri', 'select=kelas');
@@ -445,9 +426,7 @@ export const initLaporan = async () => {
                 });
             }
         }
-    } catch(e) {
-        console.error("Gagal memuat kelas:", e);
-    }
+    } catch(e) { console.error(e); }
 
     const updateJenisKertas = () => {
         if (jenisLaporan.value === 'portrait') {
@@ -478,25 +457,18 @@ export const initLaporan = async () => {
         const kelasVal = selectKelas.value;
         const bulanVal = inputBulan.value;
         
-        const lblKertasKelas = document.getElementById('lblKertasKelas');
-        const lblKertasBulan = document.getElementById('lblKertasBulan');
-        const lblRaporKelas = document.getElementById('lblRaporKelas');
-        const lblRaporBulan = document.getElementById('lblRaporBulan');
-        const lblRaporNama = document.getElementById('lblRaporNama');
-
-        lblKertasKelas.textContent = kelasVal || 'Belum dipilih';
-        lblRaporKelas.textContent = kelasVal || 'Belum dipilih';
+        document.getElementById('lblKertasKelas').textContent = kelasVal || 'Belum dipilih';
+        document.getElementById('lblRaporKelas').textContent = kelasVal || 'Belum dipilih';
 
         if (bulanVal) {
             const date = new Date(bulanVal + '-01');
             const namaBulan = date.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
-            lblKertasBulan.textContent = namaBulan;
-            lblRaporBulan.textContent = namaBulan;
+            document.getElementById('lblKertasBulan').textContent = namaBulan;
+            document.getElementById('lblRaporBulan').textContent = namaBulan;
         }
 
         if (!window.api || !window.api.get) return;
 
-        // JIKA LANDSCAPE: REKAP KELAS
         if (jenisLaporan.value === 'landscape') {
             const tbody = document.getElementById('tbodyKertas');
             if (!kelasVal) {
@@ -505,174 +477,141 @@ export const initLaporan = async () => {
             }
 
             try {
-                tbody.innerHTML = `<tr><td colspan="8" class="center" style="padding: 20px;">Memuat data dari database...</td></tr>`;
-                
-                // Ambil santri berdasarkan kelas
+                tbody.innerHTML = `<tr><td colspan="8" class="center" style="padding: 20px;">Memuat data database...</td></tr>`;
                 const santriList = await window.api.get('dapodik_santri', `select=id,nama_santri&kelas=eq.${kelasVal}&order=nama_santri.asc`);
                 
                 if (!santriList || santriList.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="8" class="center" style="padding: 20px; color: #64748B;">Tidak ada santri di kelas ini.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="8" class="center" style="padding: 20px;">Tidak ada santri.</td></tr>`;
                     return;
                 }
 
-                // Ambil rekap absensi & mutabaah bulan terkait jika ada
-                // (Mengambil absensi berdasarkan rentang bulan)
                 const tglMulai = bulanVal + '-01';
                 const tglSelesai = bulanVal + '-31';
                 
                 let absensiList = [];
-                try {
-                    absensiList = await window.api.get('absensi_harian', `select=santri_id,status&tanggal=gte.${tglMulai}&tanggal=lte.${tglSelesai}`);
-                } catch(err) { absensiList = []; }
+                try { absensiList = await window.api.get('absensi_harian', `select=santri_id,status&tanggal=gte.${tglMulai}&tanggal=lte.${tglSelesai}`); } catch(e){}
 
                 let mutabaahList = [];
-                try {
-                    mutabaahList = await window.api.get('mutabaah', `select=santri_id,materi,jilid_juz,halaman_surat&tanggal=gte.${tglMulai}&tanggal=lte.${tglSelesai}&order=tanggal.desc`);
-                } catch(err) { mutabaahList = []; }
+                try { mutabaahList = await window.api.get('mutabaah', `select=santri_id,materi,jilid_juz,halaman_surat&tanggal=gte.${tglMulai}&tanggal=lte.${tglSelesai}&order=tanggal.desc`); } catch(e){}
 
                 let html = '';
                 santriList.forEach((s, idx) => {
-                    // Hitung H, S/I, A dari absensiList
-                    const absSantri = absensiList.filter(a => a.santri_id == s.id);
-                    const hadirCount = absSantri.filter(a => a.status === 'Hadir' || a.status === 'H').length;
-                    const siCount = absSantri.filter(a => a.status === 'Sakit' || a.status === 'Izin' || a.status === 'S/I').length;
-                    const alpaCount = absSantri.filter(a => a.status === 'Alpa' || a.status === 'A').length;
+                    const abs = absensiList.filter(a => a.santri_id == s.id);
+                    const h = abs.filter(a => a.status === 'Hadir' || a.status === 'H').length;
+                    const si = abs.filter(a => a.status === 'Sakit' || a.status === 'Izin' || a.status === 'S/I').length;
+                    const a = abs.filter(a => a.status === 'Alpa' || a.status === 'A').length;
 
-                    // Capaian Terakhir
-                    const mutTahfidz = mutabaahList.find(m => m.santri_id == s.id && m.materi === 'Tahfidz');
-                    const mutTahsin = mutabaahList.find(m => m.santri_id == s.id && m.materi === 'Tahsin');
-
-                    const strTahfidz = mutTahfidz ? `${mutTahfidz.jilid_juz || ''} - ${mutTahfidz.halaman_surat || ''}` : '-';
-                    const strTahsin = mutTahsin ? `${mutTahsin.jilid_juz || ''} - ${mutTahsin.halaman_surat || ''}` : '-';
+                    const mTahfidz = mutabaahList.find(m => m.santri_id == s.id && m.materi === 'Tahfidz');
+                    const mTahsin = mutabaahList.find(m => m.santri_id == s.id && m.materi === 'Tahsin');
 
                     html += `
                         <tr>
                             <td class="center">${idx + 1}</td>
                             <td class="left">${s.nama_santri}</td>
-                            <td class="center" style="color: #10B981; font-weight: bold;">${hadirCount}</td>
-                            <td class="center" style="color: #F59E0B; font-weight: bold;">${siCount}</td>
-                            <td class="center" style="color: #EF4444; font-weight: bold;">${alpaCount}</td>
-                            <td class="center">${strTahfidz}</td>
-                            <td class="center">${strTahsin}</td>
+                            <td class="center" style="color: #10B981; font-weight: bold;">${h}</td>
+                            <td class="center" style="color: #F59E0B; font-weight: bold;">${si}</td>
+                            <td class="center" style="color: #EF4444; font-weight: bold;">${a}</td>
+                            <td class="center">${mTahfidz ? `${mTahfidz.jilid_juz || ''} - ${mTahfidz.halaman_surat || ''}` : '-'}</td>
+                            <td class="center">${mTahsin ? `${mTahsin.jilid_juz || ''} - ${mTahsin.halaman_surat || ''}` : '-'}</td>
                             <td class="center">-</td>
                         </tr>
                     `;
                 });
                 tbody.innerHTML = html;
-
-            } catch (err) {
-                console.error("Gagal memuat rekap kelas:", err);
-                tbody.innerHTML = `<tr><td colspan="8" class="center" style="color: red;">Gagal memuat data dari server.</td></tr>`;
-            }
-        } 
-        
-        // JIKA PORTRAIT: RAPOR INDIVIDU
-        else if (jenisLaporan.value === 'portrait') {
+            } catch (err) { console.error(err); }
+        } else if (jenisLaporan.value === 'portrait') {
             if (kelasVal) {
                 try {
                     const santriKelas = await window.api.get('dapodik_santri', `select=id,nama_santri&kelas=eq.${kelasVal}&order=nama_santri.asc`);
-                    const currentSelectedId = selectSantri.value;
+                    const curr = selectSantri.value;
                     selectSantri.innerHTML = '<option value="">-- Pilih Santri --</option>';
-                    if (santriKelas) {
-                        santriKelas.forEach(s => {
-                            const opt = document.createElement('option');
-                            opt.value = s.id;
-                            opt.textContent = s.nama_santri;
-                            if (s.id == currentSelectedId) opt.selected = true;
-                            selectSantri.appendChild(opt);
-                        });
-                    }
+                    santriKelas.forEach(s => {
+                        const opt = document.createElement('option');
+                        opt.value = s.id;
+                        opt.textContent = s.nama_santri;
+                        if (s.id == curr) opt.selected = true;
+                        selectSantri.appendChild(opt);
+                    });
                 } catch(e) { console.error(e); }
             }
 
             const santriId = selectSantri.value;
-            if (!santriId) {
-                lblRaporNama.textContent = 'Belum dipilih';
-                document.getElementById('raporHadir').textContent = '0';
-                document.getElementById('raporSakitIzin').textContent = '0';
-                document.getElementById('raporAlpa').textContent = '0';
-                document.getElementById('raporTahfidz').textContent = '-';
-                document.getElementById('raporTahsin').textContent = '-';
-                return;
-            }
+            if (!santriId) return;
 
-            lblRaporNama.textContent = selectSantri.options[selectSantri.selectedIndex].text;
+            document.getElementById('lblRaporNama').textContent = selectSantri.options[selectSantri.selectedIndex].text;
 
             try {
                 const tglMulai = bulanVal + '-01';
                 const tglSelesai = bulanVal + '-31';
-
-                // Ambil absensi individu
                 const absensi = await window.api.get('absensi_harian', `select=status&santri_id=eq.${santriId}&tanggal=gte.${tglMulai}&tanggal=lte.${tglSelesai}`);
-                const h = absensi.filter(a => a.status === 'Hadir' || a.status === 'H').length;
-                const si = absensi.filter(a => a.status === 'Sakit' || a.status === 'Izin' || a.status === 'S/I').length;
-                const a = absensi.filter(a => a.status === 'Alpa' || a.status === 'A').length;
-
-                document.getElementById('raporHadir').textContent = h;
-                document.getElementById('raporSakitIzin').textContent = si;
-                document.getElementById('raporAlpa').textContent = a;
-
-                // Ambil mutabaah individu
-                const mutabaah = await window.api.get('mutabaah', `select=materi,jilid_juz,halaman_surat&santri_id=eq.${santriId}&tanggal=gte.${tglMulai}&tanggal=lte.${tglSelesai}&order=tanggal.desc`);
                 
+                document.getElementById('raporHadir').textContent = absensi.filter(a => a.status === 'Hadir' || a.status === 'H').length;
+                document.getElementById('raporSakitIzin').textContent = absensi.filter(a => a.status === 'Sakit' || a.status === 'Izin' || a.status === 'S/I').length;
+                document.getElementById('raporAlpa').textContent = absensi.filter(a => a.status === 'Alpa' || a.status === 'A').length;
+
+                const mutabaah = await window.api.get('mutabaah', `select=materi,jilid_juz,halaman_surat&santri_id=eq.${santriId}&tanggal=gte.${tglMulai}&tanggal=lte.${tglSelesai}&order=tanggal.desc`);
                 const mTahfidz = mutabaah.find(m => m.materi === 'Tahfidz');
                 const mTahsin = mutabaah.find(m => m.materi === 'Tahsin');
 
-                document.getElementById('raporTahfidz').textContent = mTahfidz ? `${mTahfidz.jilid_juz || ''} - ${mTahfidz.halaman_surat || ''}` : 'Belum ada catatan';
-                document.getElementById('raporTahsin').textContent = mTahsin ? `${mTahsin.jilid_juz || ''} - ${mTahsin.halaman_surat || ''}` : 'Belum ada catatan';
-
-            } catch (err) {
-                console.error("Gagal memuat rapor individu:", err);
-            }
+                document.getElementById('raporTahfidz').textContent = mTahfidz ? `${mTahfidz.jilid_juz || ''} - ${mTahfidz.halaman_surat || ''}` : '-';
+                document.getElementById('raporTahsin').textContent = mTahsin ? `${mTahsin.jilid_juz || ''} - ${mTahsin.halaman_surat || ''}` : '-';
+            } catch(e) { console.error(e); }
         }
     };
 
-    // Event Listeners
     if (jenisLaporan) jenisLaporan.addEventListener('change', updateJenisKertas);
     if (selectKelas) selectKelas.addEventListener('change', muatDataLaporan);
     if (selectSantri) selectSantri.addEventListener('change', muatDataLaporan);
     if (inputBulan) inputBulan.addEventListener('change', muatDataLaporan);
 
-    // Tombol Putar Kertas (Simulasi Toggle Landscape/Portrait)
-    const btnPutar = document.getElementById('btnPutarKertas');
-    if (btnPutar) {
-        btnPutar.addEventListener('click', () => {
-            jenisLaporan.value = jenisLaporan.value === 'landscape' ? 'portrait' : 'landscape';
-            updateJenisKertas();
-        });
-    }
+    document.getElementById('btnPutarKertas')?.addEventListener('click', () => {
+        jenisLaporan.value = jenisLaporan.value === 'landscape' ? 'portrait' : 'landscape';
+        updateJenisKertas();
+    });
 
-    // Tombol Simpan Catatan
-    const btnSimpanCatatan = document.getElementById('btnSimpanCatatan');
-    if (btnSimpanCatatan) {
-        btnSimpanCatatan.addEventListener('click', () => {
-            alert('Catatan evaluasi berhasil disimpan secara lokal pada dokumen.');
-        });
-    }
+    document.getElementById('btnSimpanCatatan')?.addEventListener('click', () => {
+        alert('Catatan evaluasi berhasil disimpan.');
+    });
 
-    // Tombol Cetak (Hidup)
-    const btnCetak = document.getElementById('btnCetakDokumen');
-    if (btnCetak) {
-        btnCetak.addEventListener('click', () => {
+    // Fungsi Cetak / Generate PDF
+    const generatePdf = (download = true) => {
+        const element = document.getElementById('areaKertas');
+        const opt = {
+            margin:       10,
+            filename:     `Laporan_${selectKelas.value || 'Dokumen'}_${inputBulan.value}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: jenisLaporan.value === 'landscape' ? 'landscape' : 'portrait' }
+        };
+
+        if(window.html2pdf) {
+            if(download) {
+                window.html2pdf().from(element).set(opt).save();
+            } else {
+                return window.html2pdf().from(element).set(opt).outputPdf('blob');
+            }
+        } else {
             window.print();
-        });
-    }
+        }
+    };
 
-    // Tombol Kirim WhatsApp (Hidup)
-    const btnWa = document.getElementById('btnKirimWa');
-    if (btnWa) {
-        btnWa.addEventListener('click', () => {
-            const jenis = jenisLaporan.value;
+    document.getElementById('btnCetakDokumen')?.addEventListener('click', () => generatePdf(true));
+
+    // Tombol Kirim WhatsApp (Otomatis unduh PDF penunjang + arahkan teks ke WA)
+    document.getElementById('btnKirimWa')?.addEventListener('click', () => {
+        // Generate PDF unduh otomatis agar laporan fisik/digitalnya siap dikirim
+        generatePdf(true);
+
+        setTimeout(() => {
+            const jenis = jenisLaporan.value === 'landscape' ? 'Rekap Absensi Kelas' : 'Rapor Individu';
             const kelas = selectKelas.value || 'Semua Kelas';
             const bulan = inputBulan.value;
             
-            let pesan = `Assalamu'alaikum, berikut laporan perkembangan Rumah Qur'an Kamila:\n\n* Jenis: ${jenis === 'landscape' ? 'Rekap Absensi Kelas' : 'Rapor Individu'}\n* Kelas: ${kelas}\n* Bulan: ${bulan}\n\nSilakan cek dokumen fisik/digital resmi yang telah diterbitkan. Terima kasih.`;
+            let pesan = `Assalamu'alaikum, berikut file PDF Laporan Perkembangan Rumah Qur'an Kamila:\n\n* Jenis: ${jenis}\n* Kelas: ${kelas}\n* Bulan: ${bulan}\n\n*(File PDF laporan telah diunduh ke perangkat Anda, silakan lampirkan file PDF tersebut di chat ini).*`;
             
-            const encoded = encodeURIComponent(pesan);
-            window.open(`https://wa.me/?text=${encoded}`, '_blank');
-        });
-    }
+            window.open(`https://wa.me/?text=${encodeURIComponent(pesan)}`, '_blank');
+        }, 1000);
+    });
 
-    // Inisialisasi awal
     updateJenisKertas();
 };
