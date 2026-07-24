@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * MODUL LAPORAN (REKAP KELAS & RAPOR INDIVIDU + PDF)
+ * MODUL LAPORAN (REKAP KELAS & RAPOR INDIVIDU + F4 & LOGO)
  * File: js/laporan.js
  * ==================================================
  */
@@ -16,7 +16,7 @@ export const renderLaporan = () => {
             animation: fadeIn 0.3s ease;
         }
 
-        /* Tombol Ramping & Estetik */
+        /* Tombol Aksi Ramping */
         .action-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -130,6 +130,7 @@ export const renderLaporan = () => {
             gap: 8px;
         }
 
+        /* MEJA VIRTUAL & KERTAS F4 */
         .meja-virtual {
             width: 100%;
             overflow-x: auto;
@@ -142,36 +143,40 @@ export const renderLaporan = () => {
         .kertas-laporan {
             background: white !important;
             color: black !important;
-            min-width: 850px;
-            padding: 40px;
-            border-radius: 5px;
+            width: 794px; /* Proporsi standar A4/F4 lebar */
+            min-height: 1123px; /* Proporsi tinggi standar */
+            padding: 45px;
+            border-radius: 4px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.15);
             margin: 0 auto;
             position: relative;
-            transition: all 0.3s ease;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
         
-        .kertas-laporan.portrait {
-            min-width: unset;
-            width: 600px;
-            max-width: 100%;
+        .kertas-laporan.landscape {
+            width: 1123px;
+            min-height: 794px;
         }
 
         .kop-surat {
             display: flex;
             align-items: center;
-            border-bottom: 3px solid black;
+            border-bottom: 3px solid #1E3A8A;
             padding-bottom: 15px;
             margin-bottom: 20px;
         }
-        .kop-ikon {
-            font-size: 3rem;
-            color: #1E3A8A;
+        .kop-logo {
+            width: 75px;
+            height: 75px;
+            object-fit: contain;
             margin-right: 20px;
         }
         .kop-teks h2 { margin: 0; font-size: 1.6rem; font-weight: 900; color: #1E3A8A; letter-spacing: 1px; }
-        .kop-teks p { margin: 5px 0 0; font-size: 0.9rem; font-weight: 600; color: #333; }
-        .kop-teks small { font-style: italic; color: #666; }
+        .kop-teks p { margin: 4px 0 0; font-size: 0.9rem; font-weight: 600; color: #333; }
+        .kop-teks small { font-style: italic; color: #666; font-size: 0.8rem; }
 
         .info-kertas {
             display: flex;
@@ -188,7 +193,7 @@ export const renderLaporan = () => {
         }
         .tabel-rapi th, .tabel-rapi td {
             border: 1px solid #94A3B8;
-            padding: 12px 8px;
+            padding: 10px 8px;
         }
         .tabel-rapi th {
             background: #F8FAFC !important;
@@ -221,7 +226,7 @@ export const renderLaporan = () => {
 
     <div class="laporan-wrapper">
         
-        <!-- Tombol Aksi (Ramping) -->
+        <!-- Tombol Aksi Ramping -->
         <div class="action-grid">
             <button class="btn-action btn-cetak" id="btnCetakDokumen"><i class="fas fa-print"></i> Cetak / PDF</button>
             <button class="btn-action btn-unduh" id="btnKirimWa"><i class="fab fa-whatsapp"></i> Unduh PDF & WA</button>
@@ -232,8 +237,8 @@ export const renderLaporan = () => {
             <div class="form-group">
                 <label>Jenis Laporan</label>
                 <select class="form-control-laporan" id="jenisLaporan">
-                    <option value="landscape">Rekap Absensi Kelas (Landscape)</option>
-                    <option value="portrait">Rapor Individu (Portrait)</option>
+                    <option value="landscape">Rekap Absensi Kelas (Landscape F4)</option>
+                    <option value="portrait">Rapor Individu (Portrait F4)</option>
                 </select>
             </div>
             <div class="form-group">
@@ -259,122 +264,129 @@ export const renderLaporan = () => {
         <!-- Area Preview -->
         <div>
             <div class="preview-header">
-                <i class="fas fa-file-invoice"></i> Kertas Laporan (Live)
+                <i class="fas fa-file-invoice"></i> Lembar Kerja F4 (Live Preview)
             </div>
             
             <div class="mini-btn-grid">
-                <button class="btn-mini" id="btnPutarKertas" style="background: #F59E0B;"><i class="fas fa-sync-alt"></i> Putar Kertas</button>
+                <button class="btn-mini" id="btnPutarKertas" style="background: #F59E0B;"><i class="fas fa-sync-alt"></i> Putar Orientasi</button>
                 <button class="btn-mini" id="btnSimpanCatatan" style="background: #5AA99A;"><i class="fas fa-save"></i> Simpan Catatan</button>
             </div>
 
             <div class="petunjuk-geser" id="petunjukGeser">
-                <i class="fas fa-hand-point-up"></i> Geser kertas ke kiri/kanan untuk meninjau tabel
+                <i class="fas fa-hand-point-up"></i> Geser kertas ke kiri/kanan untuk meninjau secara utuh
             </div>
 
             <div class="meja-virtual">
-                <div class="kertas-laporan" id="areaKertas">
+                <!-- Default Landscape F4 -->
+                <div class="kertas-laporan landscape" id="areaKertas">
                     
-                    <div class="kop-surat">
-                        <div class="kop-ikon"><i class="fas fa-book-reader"></i></div>
-                        <div class="kop-teks">
-                            <h2>RUMAH QUR'AN KAMILA</h2>
-                            <p>Pusat Pendidikan & Tahfidz Al-Qur'an Anak</p>
-                            <small>Mencetak Generasi Qur'ani yang Berakhlak Mulia</small>
+                    <div>
+                        <!-- KOP SURAT DENGAN LOGO RESMI RQ -->
+                        <div class="kop-surat">
+                            <img src="Logo Rq Kamila.jpg" alt="Logo RQ Kamila" class="kop-logo">
+                            <div class="kop-teks">
+                                <h2>RUMAH QUR'AN KAMILA</h2>
+                                <p>Pusat Pendidikan & Tahfidz Al-Qur'an Anak</p>
+                                <small>Mencetak Generasi Qur'ani yang Berakhlak Mulia</small>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="info-kertas" id="infoKertasLandscape">
-                        <div>Kelas: <span id="lblKertasKelas">Belum dipilih</span></div>
-                        <div>Bulan: <span id="lblKertasBulan">...</span></div>
-                    </div>
-                    
-                    <div class="info-kertas" id="infoKertasPortrait" style="display: none; flex-direction: column; gap: 5px;">
-                        <div>Nama: <span id="lblRaporNama" style="font-weight: 800; font-size: 1.1rem; border-bottom: 1px dotted black;">Belum dipilih</span></div>
-                        <div style="display: flex; justify-content: space-between;">
-                            <div>Kelas: <span id="lblRaporKelas">...</span></div>
-                            <div>Bulan: <span id="lblRaporBulan">...</span></div>
+                        
+                        <div class="info-kertas" id="infoKertasLandscape">
+                            <div>Kelas: <span id="lblKertasKelas">Belum dipilih</span></div>
+                            <div>Bulan: <span id="lblKertasBulan">...</span></div>
                         </div>
-                    </div>
+                        
+                        <div class="info-kertas" id="infoKertasPortrait" style="display: none; flex-direction: column; gap: 5px;">
+                            <div>Nama: <span id="lblRaporNama" style="font-weight: 800; font-size: 1.1rem; border-bottom: 1px dotted black;">Belum dipilih</span></div>
+                            <div style="display: flex; justify-content: space-between;">
+                               <div>Kelas: <span id="lblRaporKelas">...</span></div>
+                               <div>Bulan: <span id="lblRaporBulan">...</span></div>
+                            </div>
+                        </div>
 
-                    <div id="kontenLandscape">
-                        <table class="tabel-rapi">
-                            <thead>
-                                <tr>
-                                    <th rowspan="2" style="width: 5%;">No</th>
-                                    <th rowspan="2" style="width: 30%;">Nama Santri</th>
-                                    <th colspan="3">Kehadiran</th>
-                                    <th colspan="2">Capaian Terakhir</th>
-                                    <th rowspan="2" style="width: 15%;">Keterangan</th>
-                                </tr>
-                                <tr>
-                                    <th style="width: 7%;">H</th>
-                                    <th style="width: 8%;">S/I</th>
-                                    <th style="width: 7%;">A</th>
-                                    <th>Tahfidz</th>
-                                    <th>Tahsin</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tbodyKertas">
-                                <tr>
-                                    <td colspan="8" class="center" style="padding: 30px; color: #64748B;">
-                                        <i>Silakan pilih kelas terlebih dahulu untuk memuat data.</i>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <div id="kontenPortrait" style="display: none;">
-                        <h3 style="text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 10px; margin-bottom: 15px;">A. REKAPITULASI KEHADIRAN</h3>
-                        <div class="box-rekap-individu">
-                            <div class="box-nilai hadir">
-                                <h4>Hadir</h4>
-                                <span id="raporHadir" style="color: #10B981;">0</span>
-                            </div>
-                            <div class="box-nilai izin">
-                                <h4>Sakit/Izin</h4>
-                                <span id="raporSakitIzin" style="color: #F59E0B;">0</span>
-                            </div>
-                            <div class="box-nilai alpa">
-                                <h4>Alpa</h4>
-                                <span id="raporAlpa" style="color: #EF4444;">0</span>
-                            </div>
+                        <!-- KONTEN LANDSCAPE -->
+                        <div id="kontenLandscape">
+                            <table class="tabel-rapi">
+                                <thead>
+                                    <tr>
+                                        <th rowspan="2" style="width: 5%;">No</th>
+                                        <th rowspan="2" style="width: 30%;">Nama Santri</th>
+                                        <th colspan="3">Kehadiran</th>
+                                        <th colspan="2">Capaian Terakhir</th>
+                                        <th rowspan="2" style="width: 15%;">Keterangan</th>
+                                    </tr>
+                                    <tr>
+                                        <th style="width: 7%;">H</th>
+                                        <th style="width: 8%;">S/I</th>
+                                        <th style="width: 7%;">A</th>
+                                        <th>Tahfidz</th>
+                                        <th>Tahsin</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbodyKertas">
+                                    <tr>
+                                        <td colspan="8" class="center" style="padding: 30px; color: #64748B;">
+                                            <i>Silakan pilih kelas terlebih dahulu untuk memuat data.</i>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                         
-                        <h3 style="text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 10px; margin-bottom: 15px;">B. CAPAIAN MATERI (MUTAKHIR)</h3>
-                        <table class="tabel-rapi">
-                            <thead>
-                                <tr>
-                                    <th style="width: 30%;">Materi</th>
-                                    <th>Jilid/Juz & Halaman/Surat (Terakhir)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td style="font-weight: bold;">Tahfidz</td>
-                                    <td id="raporTahfidz" class="center">-</td>
-                                </tr>
-                                <tr>
-                                    <td style="font-weight: bold;">Tahsin</td>
-                                    <td id="raporTahsin" class="center">-</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        
-                        <h3 style="text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 10px; margin-bottom: 15px; margin-top: 25px;">C. CATATAN EVALUASI</h3>
-                        <div style="border: 1px solid #94A3B8; min-height: 80px; padding: 10px; border-radius: 5px; font-style: italic; color: #475569;" contenteditable="true">
-                            (Ketik catatan evaluasi khusus untuk ananda di sini...)
+                        <!-- KONTEN PORTRAIT -->
+                        <div id="kontenPortrait" style="display: none;">
+                            <h3 style="text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 8px; margin-bottom: 15px; font-size: 1rem;">A. REKAPITULASI KEHADIRAN</h3>
+                            <div class="box-rekap-individu">
+                                <div class="box-nilai hadir">
+                                    <h4>Hadir</h4>
+                                    <span id="raporHadir" style="color: #10B981;">0</span>
+                                </div>
+                                <div class="box-nilai izin">
+                                    <h4>Sakit/Izin</h4>
+                                    <span id="raporSakitIzin" style="color: #F59E0B;">0</span>
+                                </div>
+                                <div class="box-nilai alpa">
+                                    <h4>Alpa</h4>
+                                    <span id="raporAlpa" style="color: #EF4444;">0</span>
+                                </div>
+                            </div>
+                            
+                            <h3 style="text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 8px; margin-bottom: 15px; font-size: 1rem;">B. CAPAIAN MATERI (MUTAKHIR)</h3>
+                            <table class="tabel-rapi">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 30%;">Materi</th>
+                                        <th>Jilid/Juz & Halaman/Surat (Terakhir)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="font-weight: bold;">Tahfidz</td>
+                                        <td id="raporTahfidz" class="center">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="font-weight: bold;">Tahsin</td>
+                                        <td id="raporTahsin" class="center">-</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            
+                            <h3 style="text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 8px; margin-bottom: 15px; margin-top: 20px; font-size: 1rem;">C. CATATAN EVALUASI</h3>
+                            <div style="border: 1px solid #94A3B8; min-height: 70px; padding: 10px; border-radius: 5px; font-style: italic; color: #475569;" contenteditable="true">
+                                (Ketik catatan evaluasi khusus untuk ananda di sini...)
+                            </div>
                         </div>
                     </div>
                     
-                    <div style="margin-top: 40px; display: flex; justify-content: space-between; font-size: 0.9rem;">
+                    <!-- TANDA TANGAN (Di bagian bawah kertas) -->
+                    <div style="margin-top: 30px; display: flex; justify-content: space-between; font-size: 0.9rem;">
                         <div style="text-align: center; width: 220px; color: black; display: none;" id="ttdOrtu">
-                            <p style="margin-bottom: 70px;">Mengetahui,<br><b>Orang Tua / Wali</b></p>
+                            <p style="margin-bottom: 60px;">Mengetahui,<br><b>Orang Tua / Wali</b></p>
                             <p style="font-weight: bold; text-decoration: underline; margin: 0;">_______________________</p>
                         </div>
                         
                         <div style="text-align: center; width: 220px; color: black; margin-left: auto;">
-                            <p style="margin-bottom: 70px;">Mengetahui,<br><b id="labelTtd">Kepala Madrasah</b></p>
+                            <p style="margin-bottom: 60px;">Mengetahui,<br><b id="labelTtd">Kepala Madrasah</b></p>
                             <p style="font-weight: bold; text-decoration: underline; margin: 0;">_______________________</p>
                         </div>
                     </div>
@@ -387,7 +399,6 @@ export const renderLaporan = () => {
 };
 
 export const initLaporan = async () => {
-    // Dynamic load script html2pdf jika belum ada di index.html
     if (!window.html2pdf) {
         const script = document.createElement('script');
         script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
@@ -430,7 +441,7 @@ export const initLaporan = async () => {
 
     const updateJenisKertas = () => {
         if (jenisLaporan.value === 'portrait') {
-            kertas.classList.add('portrait');
+            kertas.classList.remove('landscape');
             groupSantri.style.display = 'block';
             kontenLandscape.style.display = 'none';
             infoLandscape.style.display = 'none';
@@ -440,7 +451,7 @@ export const initLaporan = async () => {
             labelTtd.textContent = 'Wali Kelas / Guru';
             petunjukGeser.style.display = 'none';
         } else {
-            kertas.classList.remove('portrait');
+            kertas.classList.add('landscape');
             groupSantri.style.display = 'none';
             kontenLandscape.style.display = 'block';
             infoLandscape.style.display = 'flex';
@@ -573,15 +584,15 @@ export const initLaporan = async () => {
         alert('Catatan evaluasi berhasil disimpan.');
     });
 
-    // Fungsi Cetak / Generate PDF
     const generatePdf = (download = true) => {
         const element = document.getElementById('areaKertas');
+        const isLandscape = jenisLaporan.value === 'landscape';
         const opt = {
             margin:       10,
             filename:     `Laporan_${selectKelas.value || 'Dokumen'}_${inputBulan.value}.pdf`,
             image:        { type: 'jpeg', quality: 0.98 },
             html2canvas:  { scale: 2, useCORS: true },
-            jsPDF:        { unit: 'mm', format: 'a4', orientation: jenisLaporan.value === 'landscape' ? 'landscape' : 'portrait' }
+            jsPDF:        { unit: 'mm', format: 'f4', orientation: isLandscape ? 'landscape' : 'portrait' }
         };
 
         if(window.html2pdf) {
@@ -597,9 +608,7 @@ export const initLaporan = async () => {
 
     document.getElementById('btnCetakDokumen')?.addEventListener('click', () => generatePdf(true));
 
-    // Tombol Kirim WhatsApp (Otomatis unduh PDF penunjang + arahkan teks ke WA)
     document.getElementById('btnKirimWa')?.addEventListener('click', () => {
-        // Generate PDF unduh otomatis agar laporan fisik/digitalnya siap dikirim
         generatePdf(true);
 
         setTimeout(() => {
