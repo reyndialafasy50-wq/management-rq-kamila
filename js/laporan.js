@@ -1,12 +1,12 @@
 /**
  * ==================================================
- * MODUL LAPORAN & RAPOR - VERSI FINAL (FIX API IMPORT & JARAK TAB)
+ * MODUL LAPORAN & RAPOR - VERSI FINAL (GABUNGAN DB & UI)
  * File: js/laporan.js
  * ==================================================
  */
 
-// KITA KEMBALIKAN IMPORT API SESUAI PERMINTAAN USTADZ
-import { api } from './api.js';
+// KEMBALI MENGGUNAKAN IMPORT API LANGSUNG (Terbukti Jalan)
+import { api } from './api.js'; 
 
 export const renderLaporan = () => {
     return `
@@ -38,7 +38,7 @@ export const renderLaporan = () => {
         .kertas-laporan { background: #FFFFFF !important; color: #000000 !important; margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.15); position: relative; box-sizing: border-box; width: 794px; min-height: 1218px; padding: 50px; display: flex; flex-direction: column; transition: all 0.3s ease; }
         .kertas-laporan.landscape { width: 1218px; min-height: 794px; }
 
-        /* 5. ELEMEN KERTAS (KOP SURAT) */
+        /* 5. ELEMEN KERTAS (KOP SURAT PRESISI TENGAH & LOGO PNG) */
         .kop-surat { position: relative; display: flex; justify-content: center; align-items: center; border-bottom: 4px solid #1E3A8A; padding-bottom: 15px; margin-bottom: 25px; min-height: 100px; }
         .kop-logo { position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 90px; height: 90px; object-fit: contain; }
         .kop-teks { text-align: center; width: 100%; padding: 0 100px; }
@@ -46,27 +46,26 @@ export const renderLaporan = () => {
         .kop-teks p { margin: 6px 0 0; font-size: 1rem; font-weight: 700; color: #333; }
         .kop-teks small { display: block; margin-top: 2px; font-style: italic; color: #64748B; font-size: 0.85rem; }
         
-        /* FIX: GRID KHUSUS IDENTITAS AGAR ADA JARAK SEPERTI DI-TAB */
-        /* Kolom 1 diperbesar dari 180px menjadi 200px, dan kolom jarak menjadi 30px */
+        /* FIX: GRID KHUSUS IDENTITAS DENGAN JARAK TAB EXTRA LEBAR */
+        /* Kolom 1 (Label) lebar 180px, Kolom 2 (Titik Dua) lebar 30px (berfungsi sebagai jarak/tab) */
         .info-grid-landscape {
             display: grid;
-            grid-template-columns: 200px 30px 1fr;
-            row-gap: 12px;
-            font-size: 1rem;
-            font-weight: 700;
-            margin-bottom: 25px;
-            white-space: nowrap;
-        }
-        /* Kolom 1 diperbesar dari 140px menjadi 160px, jarak 30px */
-        .info-grid-portrait {
-            display: grid;
-            grid-template-columns: 160px 30px 1fr 80px 30px 120px;
+            grid-template-columns: 180px 30px 1fr; 
             row-gap: 12px;
             font-size: 1rem;
             font-weight: 700;
             margin-bottom: 25px;
             align-items: center;
-            white-space: nowrap;
+        }
+        /* Kolom 1 lebar 140px, Kolom Jarak 30px, lalu untuk kolom kanan juga diberi jarak ekstra */
+        .info-grid-portrait {
+            display: grid;
+            grid-template-columns: 140px 30px 1fr 80px 30px 120px;
+            row-gap: 14px;
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+            align-items: center;
         }
         
         .tabel-rapi { width: 100%; border-collapse: collapse; font-size: 0.95rem; margin-bottom: auto; white-space: normal; }
@@ -89,11 +88,13 @@ export const renderLaporan = () => {
     </style>
 
     <div class="laporan-wrapper">
+        <!-- TOMBOL AKSI -->
         <div class="action-grid">
             <button class="btn-action btn-cetak" id="btnCetakDokumen"><i class="fas fa-file-pdf"></i> Unduh PDF</button>
             <button class="btn-action btn-unduh" id="btnKirimWa"><i class="fab fa-whatsapp"></i> Unduh & WA</button>
         </div>
 
+        <!-- FILTER -->
         <div class="filter-card">
             <div class="form-group">
                 <label>Jenis Laporan</label>
@@ -105,7 +106,7 @@ export const renderLaporan = () => {
             <div class="form-group">
                 <label>Pilih Kelas</label>
                 <select class="form-control-laporan" id="laporanPilihKelas">
-                    <option value="">-- Sedang memuat... --</option>
+                    <option value="">-- Sedang Memuat... --</option>
                 </select>
             </div>
             <div class="form-group" id="groupPilihSantri" style="display: none;">
@@ -127,6 +128,7 @@ export const renderLaporan = () => {
             <div class="meja-virtual">
                 <div class="kertas-laporan landscape" id="areaKertas">
                     
+                    <!-- KOP SURAT PNG BERSAMA -->
                     <div class="kop-surat">
                         <img src="logo_kamila.png" alt="Logo RQ Kamila" class="kop-logo" onerror="this.style.display='none'">
                         <div class="kop-teks">
@@ -136,17 +138,17 @@ export const renderLaporan = () => {
                         </div>
                     </div>
                     
-                    <!-- INFO KELAS LANDSCAPE -->
+                    <!-- INFO LANDSCAPE (GRID TITIK DUA RAPI) -->
                     <div class="info-grid-landscape" id="infoKertasLandscape">
-                        <div>Nama Kelas</div><div class="center">:</div><div id="lblKertasKelas" style="white-space: normal;">Belum dipilih</div>
-                        <div>Ustadz Pengampu</div><div class="center">:</div><div id="lblKertasUstadz" style="white-space: normal;">-</div>
-                        <div>Bulan Laporan</div><div class="center">:</div><div id="lblKertasBulan" style="white-space: normal;">...</div>
+                        <div>Nama Kelas</div><div class="center">:</div><div id="lblKertasKelas">Belum dipilih</div>
+                        <div>Ustadz Pengampu</div><div class="center">:</div><div id="lblKertasUstadz">-</div>
+                        <div>Bulan Laporan</div><div class="center">:</div><div id="lblKertasBulan">...</div>
                     </div>
                     
-                    <!-- INFO SANTRI PORTRAIT -->
+                    <!-- INFO PORTRAIT (GRID TITIK DUA RAPI SEJAJAR) -->
                     <div class="info-grid-portrait" id="infoKertasPortrait" style="display: none;">
-                        <div>Nama Santri</div><div class="center">:</div><div id="lblRaporNama" style="font-weight: 900; font-size: 1.1rem; text-decoration: underline; white-space: normal; padding-right: 10px;">Belum dipilih</div>
-                        <div>Kelas</div><div class="center">:</div><div id="lblRaporKelas" style="white-space: normal;">...</div>
+                        <div>Nama Santri</div><div class="center">:</div><div id="lblRaporNama" style="font-weight: 900; font-size: 1.15rem; text-decoration: underline;">Belum dipilih</div>
+                        <div>Kelas</div><div class="center">:</div><div id="lblRaporKelas">...</div>
 
                         <div>NIS</div><div class="center">:</div><div id="lblRaporNis" style="font-family: monospace; font-size: 1.1rem;">-</div>
                         <div>Bulan</div><div class="center">:</div><div id="lblRaporBulan">...</div>
@@ -221,6 +223,7 @@ export const renderLaporan = () => {
                         </div>
                     </div>
                     
+                    <!-- TANDA TANGAN -->
                     <div class="ttd-area">
                         <div class="ttd-box hide" id="ttdOrtu">
                             <p style="margin-bottom: 80px;">Mengetahui,<br><b>Wali Santri</b></p>
@@ -240,7 +243,7 @@ export const renderLaporan = () => {
 };
 
 export const initLaporan = async () => {
-    // 1. Suntik Library html2pdf
+    // 1. Suntik Library PDF
     if (!window.html2pdf) {
         const script = document.createElement('script');
         script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
@@ -267,7 +270,7 @@ export const initLaporan = async () => {
     let rawKelasData = [];
     let rawSantriData = [];
 
-    // 2. Fungsi Load Daftar Kelas dengan menggunakan api dari import
+    // 2. Load Daftar Kelas (MENGGUNAKAN IMPORT API)
     const loadDaftarKelas = async () => {
         try {
             const dataKelas = await api.get('kelas', 'select=nama_kelas,nama_ustadz');
@@ -284,12 +287,12 @@ export const initLaporan = async () => {
             }
         } catch(e) { 
             console.error("Gagal load kelas:", e); 
-            el.kelas.innerHTML = '<option value="">-- Gagal Memuat (Cek Koneksi) --</option>';
+            el.kelas.innerHTML = '<option value="">-- Gagal Memuat --</option>';
         }
     };
-    loadDaftarKelas(); // Panggil saat awal dimuat
+    loadDaftarKelas();
 
-    // 3. Fungsi Ubah Orientasi Kertas
+    // 3. Fungsi Ubah Orientasi
     const switchMode = () => {
         const isPortrait = el.jenis.value === 'portrait';
         el.kertas.classList.toggle('landscape', !isPortrait);
@@ -309,7 +312,7 @@ export const initLaporan = async () => {
         loadDataLaporan();
     };
 
-    // 4. Tarik Data Utama Laporan ke dalam Tabel menggunakan api dari import
+    // 4. Tarik Data Utama ke Tabel Laporan
     const loadDataLaporan = async () => {
         const kelasVal = el.kelas.value;
         const bulanVal = el.bulan.value;
@@ -324,14 +327,14 @@ export const initLaporan = async () => {
             document.getElementById('lblKertasBulan').textContent = namaBulan;
             document.getElementById('lblRaporBulan').textContent = namaBulan;
         }
-        
+
         const tglMulai = bulanVal + '-01';
         const tglSelesai = bulanVal + '-31';
 
         // PROSES UNTUK LANDSCAPE (REKAP KELAS)
         if (el.jenis.value === 'landscape') {
             if (!kelasVal) {
-                el.tbody.innerHTML = `<tr><td colspan="8" class="center" style="padding: 40px; color: #94A3B8;">Pilih kelas untuk memuat data.</td></tr>`;
+                el.tbody.innerHTML = `<tr><td colspan="8" class="center" style="padding: 40px; color: #94A3B8;">Pilih kelas untuk memuat data rekapitulasi.</td></tr>`;
                 return;
             }
 
@@ -453,7 +456,7 @@ export const initLaporan = async () => {
     el.santri.addEventListener('change', loadDataLaporan);
     el.bulan.addEventListener('change', loadDataLaporan);
 
-    // 6. FUNGSI GENERATE PDF
+    // 6. FUNGSI GENERATE PDF (Dengan Pengaman Anti-Block)
     const triggerPDF = (isWA = false) => {
         const btnId = isWA ? 'btnKirimWa' : 'btnCetakDokumen';
         const btnElement = document.getElementById(btnId);
