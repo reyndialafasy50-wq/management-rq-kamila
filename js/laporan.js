@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * MODUL LAPORAN & RAPOR - VERSI FINAL (FIX KONEKSI API)
+ * MODUL LAPORAN & RAPOR - VERSI FINAL (TYPO FIXED & DB MATCHED)
  * File: js/laporan.js
  * ==================================================
  */
@@ -37,7 +37,7 @@ export const renderLaporan = () => {
         .kertas-laporan { background: #FFFFFF !important; color: #000000 !important; margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.15); position: relative; box-sizing: border-box; width: 794px; min-height: 1218px; padding: 50px; display: flex; flex-direction: column; transition: all 0.3s ease; }
         .kertas-laporan.landscape { width: 1218px; min-height: 794px; }
 
-        /* 5. ELEMEN KERTAS (KOP SURAT) */
+        /* 5. ELEMEN KERTAS */
         .kop-surat { position: relative; display: flex; justify-content: center; align-items: center; border-bottom: 4px solid #1E3A8A; padding-bottom: 15px; margin-bottom: 25px; min-height: 100px; }
         .kop-logo { position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 90px; height: 90px; object-fit: contain; }
         .kop-teks { text-align: center; width: 100%; padding: 0 100px; }
@@ -45,26 +45,9 @@ export const renderLaporan = () => {
         .kop-teks p { margin: 6px 0 0; font-size: 1rem; font-weight: 700; color: #333; }
         .kop-teks small { display: block; margin-top: 2px; font-style: italic; color: #64748B; font-size: 0.85rem; }
         
-        /* GRID KHUSUS IDENTITAS AGAR ADA JARAK SEPERTI DI-TAB */
-        .info-grid-landscape {
-            display: grid;
-            grid-template-columns: 200px 30px 1fr;
-            row-gap: 12px;
-            font-size: 1rem;
-            font-weight: 700;
-            margin-bottom: 25px;
-            white-space: nowrap;
-        }
-        .info-grid-portrait {
-            display: grid;
-            grid-template-columns: 160px 30px 1fr 80px 30px 120px;
-            row-gap: 12px;
-            font-size: 1rem;
-            font-weight: 700;
-            margin-bottom: 25px;
-            align-items: center;
-            white-space: nowrap;
-        }
+        /* GRID KHUSUS IDENTITAS */
+        .info-grid-landscape { display: grid; grid-template-columns: 200px 30px 1fr; row-gap: 12px; font-size: 1rem; font-weight: 700; margin-bottom: 25px; white-space: nowrap; }
+        .info-grid-portrait { display: grid; grid-template-columns: 160px 30px 1fr 80px 30px 120px; row-gap: 12px; font-size: 1rem; font-weight: 700; margin-bottom: 25px; align-items: center; white-space: nowrap; }
         
         .tabel-rapi { width: 100%; border-collapse: collapse; font-size: 0.95rem; margin-bottom: auto; white-space: normal; }
         .tabel-rapi th, .tabel-rapi td { border: 1px solid #94A3B8; padding: 12px 10px; }
@@ -133,14 +116,12 @@ export const renderLaporan = () => {
                         </div>
                     </div>
                     
-                    <!-- INFO KELAS LANDSCAPE -->
                     <div class="info-grid-landscape" id="infoKertasLandscape">
                         <div>Nama Kelas</div><div class="center">:</div><div id="lblKertasKelas" style="white-space: normal;">Belum dipilih</div>
                         <div>Ustadz Pengampu</div><div class="center">:</div><div id="lblKertasUstadz" style="white-space: normal;">-</div>
                         <div>Bulan Laporan</div><div class="center">:</div><div id="lblKertasBulan" style="white-space: normal;">...</div>
                     </div>
                     
-                    <!-- INFO SANTRI PORTRAIT -->
                     <div class="info-grid-portrait" id="infoKertasPortrait" style="display: none;">
                         <div>Nama Santri</div><div class="center">:</div><div id="lblRaporNama" style="font-weight: 900; font-size: 1.15rem; text-decoration: underline; white-space: normal; padding-right: 10px;">Belum dipilih</div>
                         <div>Kelas</div><div class="center">:</div><div id="lblRaporKelas" style="white-space: normal;">...</div>
@@ -149,7 +130,6 @@ export const renderLaporan = () => {
                         <div>Bulan</div><div class="center">:</div><div id="lblRaporBulan">...</div>
                     </div>
 
-                    <!-- KONTEN LANDSCAPE -->
                     <div id="kontenLandscape">
                         <table class="tabel-rapi">
                             <thead>
@@ -174,7 +154,6 @@ export const renderLaporan = () => {
                         </table>
                     </div>
                     
-                    <!-- KONTEN PORTRAIT -->
                     <div id="kontenPortrait" style="display: none; flex-grow: 1;">
                         <h3 style="text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 10px; margin-bottom: 20px;">A. REKAPITULASI KEHADIRAN</h3>
                         <div class="box-rekap-individu">
@@ -237,7 +216,6 @@ export const renderLaporan = () => {
 };
 
 export const initLaporan = async () => {
-    // 1. Suntik Library HTML2PDF
     if (!window.html2pdf) {
         const script = document.createElement('script');
         script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
@@ -263,26 +241,24 @@ export const initLaporan = async () => {
 
     let rawSantriData = [];
 
-    // 2. Load Daftar Kelas (MENGGUNAKAN CARA LAMA YANG PASTI JALAN: Ambil dari dapodik_santri)
+    // FUNGSI LOAD KELAS (TANPA TYPO & 100% AMAN!)
     const loadDaftarKelas = async () => {
         try {
-            // Kita tarik daftar kelas unik dari tabel dapodik_santri
-            const dataSantri = await api.get('dapodik_santri', 'select=nama_kelas');
-            if(dataSantri && dataKelas.length > 0) {
-                const kelasUnik = [...new Set(dataSantri.map(item => item.nama_kelas))].filter(Boolean).sort();
+            // Karena screenshot membuktikan tabel 'kelas' ada, kita panggil dengan santai
+            const dataKelas = await api.get('kelas', 'select=nama_kelas');
+            if (dataKelas && dataKelas.length > 0) {
                 el.kelas.innerHTML = '<option value="">-- Pilih Kelas --</option>';
-                kelasUnik.forEach(k => el.kelas.add(new Option(k, k)));
+                dataKelas.forEach(k => el.kelas.add(new Option(k.nama_kelas, k.nama_kelas)));
             } else {
                 el.kelas.innerHTML = '<option value="">-- Data Kelas Kosong --</option>';
             }
         } catch(e) { 
             console.error("Gagal load kelas:", e); 
-            el.kelas.innerHTML = '<option value="">-- Gagal Memuat --</option>';
+            el.kelas.innerHTML = '<option value="">-- Gagal Memuat API --</option>';
         }
     };
     loadDaftarKelas();
 
-    // 3. Fungsi Ubah Orientasi
     const switchMode = () => {
         const isPortrait = el.jenis.value === 'portrait';
         el.kertas.classList.toggle('landscape', !isPortrait);
@@ -302,13 +278,35 @@ export const initLaporan = async () => {
         loadDataLaporan();
     };
 
-    // 4. Tarik Data Utama Laporan ke dalam Tabel
+    // FUNGSI PENCARI NILAI MUTAKHIR (Sesuai kolom di DB Ustadz)
+    const parseCapaian = (logs) => {
+        logs.sort((x, y) => new Date(y.tanggal) - new Date(x.tanggal));
+        
+        let teksTahfidz = '-';
+        const lastTahfidz = logs.find(l => (l.tahfidz_juz && l.tahfidz_juz.trim() !== '') || (l.tahfidz_surat && l.tahfidz_surat.trim() !== ''));
+        if (lastTahfidz) {
+            teksTahfidz = `Juz ${lastTahfidz.tahfidz_juz || '-'} (Surat ${lastTahfidz.tahfidz_surat || '-'})`;
+        }
+
+        let teksTahsin = '-';
+        const lastTahsin = logs.find(l => (l.tahsin_program && l.tahsin_program.trim() !== '') || (l.tahsin_jilid && l.tahsin_jilid.trim() !== ''));
+        if (lastTahsin) {
+            if (lastTahsin.tahsin_program === "Al Qur'an" || lastTahsin.tahsin_program === "Al-Qur'an") {
+                teksTahsin = `Juz ${lastTahsin.tahsin_juz || '-'} (Surat ${lastTahsin.tahsin_surat || '-'})`;
+            } else {
+                teksTahsin = `${lastTahsin.tahsin_program || 'Iqro'} Jilid ${lastTahsin.tahsin_jilid || '-'} Hal. ${lastTahsin.tahsin_halaman || '-'}`;
+            }
+        }
+
+        return { teksTahfidz, teksTahsin };
+    };
+
     const loadDataLaporan = async () => {
         const kelasVal = el.kelas.value;
         const bulanVal = el.bulan.value;
         
         document.getElementById('lblKertasKelas').textContent = kelasVal || 'Belum dipilih';
-        document.getElementById('lblKertasUstadz').textContent = '-'; // Kosongkan karena tidak diambil dari DB
+        document.getElementById('lblKertasUstadz').textContent = '-'; 
         document.getElementById('lblRaporKelas').textContent = kelasVal || 'Belum dipilih';
 
         if (bulanVal) {
@@ -320,7 +318,6 @@ export const initLaporan = async () => {
         const tglMulai = bulanVal + '-01';
         const tglSelesai = bulanVal + '-31';
 
-        // PROSES UNTUK LANDSCAPE (REKAP KELAS)
         if (el.jenis.value === 'landscape') {
             if (!kelasVal) {
                 el.tbody.innerHTML = `<tr><td colspan="8" class="center" style="padding: 40px; color: #94A3B8;">Pilih kelas untuk memuat data rekapitulasi.</td></tr>`;
@@ -336,30 +333,19 @@ export const initLaporan = async () => {
                     return;
                 }
 
-                const harianList = await api.get('input_harian', `select=*&nama_kelas=eq.${kelasVal}&tanggal=gte.${tglMulai}&tanggal=lte.${tglSelesai}`) || [];
+                // DIBUAT AMAN! Tarik semua data bulan ini, biar JS yang filter by nama_santri 
+                // Mencegah error jika tabel input_harian kebetulan tidak punya kolom nama_kelas
+                const harianList = await api.get('input_harian', `select=*&tanggal=gte.${tglMulai}&tanggal=lte.${tglSelesai}`) || [];
 
                 let html = '';
                 santriList.forEach((s, idx) => {
-                    const logs = harianList.filter(log => log.santri_id === s.id || log.nama_santri === s.nama_santri);
-                    const h = logs.filter(a => a.status_hadir === 'Hadir').length;
-                    const si = logs.filter(a => a.status_hadir === 'Izin' || a.status_hadir === 'Sakit').length;
-                    const a = logs.filter(a => a.status_hadir === 'Alpa').length;
-
-                    logs.sort((x, y) => new Date(y.tanggal) - new Date(x.tanggal));
+                    const logs = harianList.filter(log => log.nama_santri === s.nama_santri);
                     
-                    let teksTahfidz = '-';
-                    const lastTahfidz = logs.find(l => l.tahfidz_juz || l.tahfidz_surat);
-                    if (lastTahfidz) teksTahfidz = `Juz ${lastTahfidz.tahfidz_juz || '-'} (${lastTahfidz.tahfidz_surat || '-'})`;
+                    const h = logs.filter(a => a.status_hadir === 'Hadir').length;
+                    const si = logs.filter(a => a.status_hadir === 'Izin' || a.status_hadir === 'Sakit' || a.status_hadir === 'S/I').length;
+                    const a = logs.filter(a => a.status_hadir === 'Alpa' || a.status_hadir === 'Alfa').length;
 
-                    let teksTahsin = '-';
-                    const lastTahsin = logs.find(l => l.tahsin_program || l.tahsin_jilid);
-                    if (lastTahsin) {
-                        if (lastTahsin.tahsin_program === "Al Qur'an") {
-                            teksTahsin = `Juz ${lastTahsin.tahsin_juz || '-'} (${lastTahsin.tahsin_surat || '-'})`;
-                        } else {
-                            teksTahsin = `${lastTahsin.tahsin_program || 'Iqro'} ${lastTahsin.tahsin_jilid || '-'} Hal. ${lastTahsin.tahsin_halaman || '-'}`;
-                        }
-                    }
+                    const capaian = parseCapaian(logs);
 
                     html += `
                         <tr>
@@ -368,8 +354,8 @@ export const initLaporan = async () => {
                             <td class="center" style="color: #059669; font-weight: 800;">${h}</td>
                             <td class="center" style="color: #D97706; font-weight: 800;">${si}</td>
                             <td class="center" style="color: #DC2626; font-weight: 800;">${a}</td>
-                            <td class="center">${teksTahfidz}</td>
-                            <td class="center">${teksTahsin}</td>
+                            <td class="center">${capaian.teksTahfidz}</td>
+                            <td class="center">${capaian.teksTahsin}</td>
                             <td class="center"></td>
                         </tr>
                     `;
@@ -377,11 +363,10 @@ export const initLaporan = async () => {
                 el.tbody.innerHTML = html;
             } catch (err) { 
                 console.error(err);
-                el.tbody.innerHTML = `<tr><td colspan="8" class="center" style="color: red;">Gagal terhubung ke database.</td></tr>`;
+                el.tbody.innerHTML = `<tr><td colspan="8" class="center" style="color: red;">Gagal memuat rekap. Cek koneksi API.</td></tr>`;
             }
         } 
         
-        // PROSES UNTUK PORTRAIT (RAPOR)
         else if (el.jenis.value === 'portrait') {
             if (kelasVal) {
                 try {
@@ -414,27 +399,12 @@ export const initLaporan = async () => {
                 const logs = await api.get('input_harian', `select=*&nama_santri=eq.${namaSantriAktif}&tanggal=gte.${tglMulai}&tanggal=lte.${tglSelesai}`) || [];
                 
                 document.getElementById('raporHadir').textContent = logs.filter(a => a.status_hadir === 'Hadir').length;
-                document.getElementById('raporSakitIzin').textContent = logs.filter(a => a.status_hadir === 'Izin' || a.status_hadir === 'Sakit').length;
-                document.getElementById('raporAlpa').textContent = logs.filter(a => a.status_hadir === 'Alpa').length;
+                document.getElementById('raporSakitIzin').textContent = logs.filter(a => a.status_hadir === 'Izin' || a.status_hadir === 'Sakit' || a.status_hadir === 'S/I').length;
+                document.getElementById('raporAlpa').textContent = logs.filter(a => a.status_hadir === 'Alpa' || a.status_hadir === 'Alfa').length;
 
-                logs.sort((x, y) => new Date(y.tanggal) - new Date(x.tanggal));
-                
-                let teksTahfidz = '-';
-                const lastTahfidz = logs.find(l => l.tahfidz_juz || l.tahfidz_surat);
-                if (lastTahfidz) teksTahfidz = `Juz ${lastTahfidz.tahfidz_juz || '-'} (Surat ${lastTahfidz.tahfidz_surat || '-'})`;
-
-                let teksTahsin = '-';
-                const lastTahsin = logs.find(l => l.tahsin_program || l.tahsin_jilid);
-                if (lastTahsin) {
-                    if (lastTahsin.tahsin_program === "Al Qur'an") {
-                        teksTahsin = `Juz ${lastTahsin.tahsin_juz || '-'} (Surat ${lastTahsin.tahsin_surat || '-'})`;
-                    } else {
-                        teksTahsin = `${lastTahsin.tahsin_program || 'Iqro'} Jilid ${lastTahsin.tahsin_jilid || '-'} Hal. ${lastTahsin.tahsin_halaman || '-'}`;
-                    }
-                }
-
-                document.getElementById('raporTahfidz').textContent = teksTahfidz;
-                document.getElementById('raporTahsin').textContent = teksTahsin;
+                const capaian = parseCapaian(logs);
+                document.getElementById('raporTahfidz').textContent = capaian.teksTahfidz;
+                document.getElementById('raporTahsin').textContent = capaian.teksTahsin;
             } catch(e) { console.error(e); }
         }
     };
@@ -444,7 +414,6 @@ export const initLaporan = async () => {
     el.santri.addEventListener('change', loadDataLaporan);
     el.bulan.addEventListener('change', loadDataLaporan);
 
-    // 6. FUNGSI GENERATE PDF
     const triggerPDF = (isWA = false) => {
         const btnId = isWA ? 'btnKirimWa' : 'btnCetakDokumen';
         const btnElement = document.getElementById(btnId);
