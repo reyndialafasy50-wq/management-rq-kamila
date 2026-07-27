@@ -1,11 +1,12 @@
 /**
  * ==================================================
- * MODUL LAPORAN & RAPOR - VERSI 4 (FIX API GLOBAL & JARAK TAB TITIK DUA)
+ * MODUL LAPORAN & RAPOR - VERSI FINAL (FIX API IMPORT & JARAK TAB)
  * File: js/laporan.js
  * ==================================================
  */
 
-// KITA HAPUS BARIS IMPORT API DI SINI AGAR TIDAK ERROR DI HOSTING
+// KITA KEMBALIKAN IMPORT API SESUAI PERMINTAAN USTADZ
+import { api } from './api.js';
 
 export const renderLaporan = () => {
     return `
@@ -45,19 +46,21 @@ export const renderLaporan = () => {
         .kop-teks p { margin: 6px 0 0; font-size: 1rem; font-weight: 700; color: #333; }
         .kop-teks small { display: block; margin-top: 2px; font-style: italic; color: #64748B; font-size: 0.85rem; }
         
-        /* FIX: GRID KHUSUS IDENTITAS AGAR ADA JARAK SEPERTI DI-TAB (KOLOM 1 DIKUNCI 180PX & 140PX) */
+        /* FIX: GRID KHUSUS IDENTITAS AGAR ADA JARAK SEPERTI DI-TAB */
+        /* Kolom 1 diperbesar dari 180px menjadi 200px, dan kolom jarak menjadi 30px */
         .info-grid-landscape {
             display: grid;
-            grid-template-columns: 180px 20px 1fr; /* 180px untuk memberi jarak jauh sebelum titik dua */
-            row-gap: 10px;
+            grid-template-columns: 200px 30px 1fr;
+            row-gap: 12px;
             font-size: 1rem;
             font-weight: 700;
             margin-bottom: 25px;
             white-space: nowrap;
         }
+        /* Kolom 1 diperbesar dari 140px menjadi 160px, jarak 30px */
         .info-grid-portrait {
             display: grid;
-            grid-template-columns: 140px 20px 1fr 80px 20px 120px; /* 140px jarak aman untuk label kiri */
+            grid-template-columns: 160px 30px 1fr 80px 30px 120px;
             row-gap: 12px;
             font-size: 1rem;
             font-weight: 700;
@@ -264,15 +267,10 @@ export const initLaporan = async () => {
     let rawKelasData = [];
     let rawSantriData = [];
 
-    // 2. Fungsi Load Daftar Kelas (Dengan pengaman menunggu API global siap)
+    // 2. Fungsi Load Daftar Kelas dengan menggunakan api dari import
     const loadDaftarKelas = async () => {
-        if (!window.api) {
-            setTimeout(loadDaftarKelas, 300); // Jika API belum siap, tunggu sebentar lalu coba lagi
-            return;
-        }
-
         try {
-            const dataKelas = await window.api.get('kelas', 'select=nama_kelas,nama_ustadz');
+            const dataKelas = await api.get('kelas', 'select=nama_kelas,nama_ustadz');
             if(dataKelas && dataKelas.length > 0) {
                 rawKelasData = dataKelas;
                 el.kelas.innerHTML = '<option value="">-- Pilih Kelas --</option>';
@@ -286,7 +284,7 @@ export const initLaporan = async () => {
             }
         } catch(e) { 
             console.error("Gagal load kelas:", e); 
-            el.kelas.innerHTML = '<option value="">-- Gagal Memuat --</option>';
+            el.kelas.innerHTML = '<option value="">-- Gagal Memuat (Cek Koneksi) --</option>';
         }
     };
     loadDaftarKelas(); // Panggil saat awal dimuat
@@ -311,7 +309,7 @@ export const initLaporan = async () => {
         loadDataLaporan();
     };
 
-    // 4. Tarik Data Utama Laporan ke dalam Tabel
+    // 4. Tarik Data Utama Laporan ke dalam Tabel menggunakan api dari import
     const loadDataLaporan = async () => {
         const kelasVal = el.kelas.value;
         const bulanVal = el.bulan.value;
@@ -326,8 +324,6 @@ export const initLaporan = async () => {
             document.getElementById('lblKertasBulan').textContent = namaBulan;
             document.getElementById('lblRaporBulan').textContent = namaBulan;
         }
-
-        if (!window.api || !window.api.get) return;
         
         const tglMulai = bulanVal + '-01';
         const tglSelesai = bulanVal + '-31';
@@ -342,13 +338,13 @@ export const initLaporan = async () => {
             el.tbody.innerHTML = `<tr><td colspan="8" class="center" style="padding: 40px;"><i class="fas fa-circle-notch fa-spin"></i> Sinkronisasi database...</td></tr>`;
             
             try {
-                const santriList = await window.api.get('dapodik_santri', `select=*&nama_kelas=eq.${kelasVal}&order=nama_santri.asc`);
+                const santriList = await api.get('dapodik_santri', `select=*&nama_kelas=eq.${kelasVal}&order=nama_santri.asc`);
                 if (!santriList || santriList.length === 0) {
                     el.tbody.innerHTML = `<tr><td colspan="8" class="center">Data santri kosong di kelas ini.</td></tr>`;
                     return;
                 }
 
-                const harianList = await window.api.get('input_harian', `select=*&nama_kelas=eq.${kelasVal}&tanggal=gte.${tglMulai}&tanggal=lte.${tglSelesai}`) || [];
+                const harianList = await api.get('input_harian', `select=*&nama_kelas=eq.${kelasVal}&tanggal=gte.${tglMulai}&tanggal=lte.${tglSelesai}`) || [];
 
                 let html = '';
                 santriList.forEach((s, idx) => {
@@ -397,7 +393,7 @@ export const initLaporan = async () => {
         else if (el.jenis.value === 'portrait') {
             if (kelasVal) {
                 try {
-                    const santriKelas = await window.api.get('dapodik_santri', `select=*&nama_kelas=eq.${kelasVal}&order=nama_santri.asc`);
+                    const santriKelas = await api.get('dapodik_santri', `select=*&nama_kelas=eq.${kelasVal}&order=nama_santri.asc`);
                     rawSantriData = santriKelas || [];
                     const curr = el.santri.value;
                     el.santri.innerHTML = '<option value="">-- Pilih Santri --</option>';
@@ -423,7 +419,7 @@ export const initLaporan = async () => {
             document.getElementById('lblRaporNis').textContent = aktifSantri?.nisn || aktifSantri?.nis || '-';
 
             try {
-                const logs = await window.api.get('input_harian', `select=*&nama_santri=eq.${namaSantriAktif}&tanggal=gte.${tglMulai}&tanggal=lte.${tglSelesai}`) || [];
+                const logs = await api.get('input_harian', `select=*&nama_santri=eq.${namaSantriAktif}&tanggal=gte.${tglMulai}&tanggal=lte.${tglSelesai}`) || [];
                 
                 document.getElementById('raporHadir').textContent = logs.filter(a => a.status_hadir === 'Hadir').length;
                 document.getElementById('raporSakitIzin').textContent = logs.filter(a => a.status_hadir === 'Izin' || a.status_hadir === 'Sakit').length;
@@ -457,7 +453,7 @@ export const initLaporan = async () => {
     el.santri.addEventListener('change', loadDataLaporan);
     el.bulan.addEventListener('change', loadDataLaporan);
 
-    // 6. FUNGSI GENERATE PDF (Dengan Fallback Pengaman)
+    // 6. FUNGSI GENERATE PDF
     const triggerPDF = (isWA = false) => {
         const btnId = isWA ? 'btnKirimWa' : 'btnCetakDokumen';
         const btnElement = document.getElementById(btnId);
