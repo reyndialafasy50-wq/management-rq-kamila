@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * MODUL LAPORAN & RAPOR - VERSI 2 (PREMIUM UI + DB FIX + PDF AKTIF)
+ * MODUL LAPORAN & RAPOR - VERSI 2 (PREMIUM UI + DB + KOP CENTER)
  * File: js/laporan.js
  * ==================================================
  */
@@ -32,21 +32,26 @@ export const renderLaporan = () => {
         .preview-header { font-size: 1.1rem; font-weight: 800; color: var(--text-main); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
         .petunjuk-geser { font-size: 0.75rem; font-weight: 700; color: #D97706; background: #FEF3C7; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 15px; }
         .meja-virtual { width: 100%; overflow-x: auto; background: #CBD5E1; padding: 20px; border-radius: 12px; box-shadow: inset 0 3px 6px rgba(0,0,0,0.1); }
+        
         .kertas-laporan { background: #FFFFFF !important; color: #000000 !important; margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.15); position: relative; box-sizing: border-box; width: 794px; min-height: 1218px; padding: 50px; display: flex; flex-direction: column; transition: all 0.3s ease; }
         .kertas-laporan.landscape { width: 1218px; min-height: 794px; }
 
-        /* 5. ELEMEN KERTAS */
-        .kop-surat { display: flex; align-items: center; border-bottom: 4px solid #1E3A8A; padding-bottom: 15px; margin-bottom: 25px; }
-        .kop-logo { width: 85px; height: 85px; object-fit: contain; margin-right: 20px; }
+        /* 5. ELEMEN KERTAS (KOP SURAT RATA TENGAH) */
+        .kop-surat { position: relative; display: flex; justify-content: center; align-items: center; border-bottom: 4px solid #1E3A8A; padding-bottom: 15px; margin-bottom: 25px; }
+        .kop-logo { position: absolute; left: 0; top: 0; width: 90px; height: 90px; object-fit: contain; }
+        .kop-teks { text-align: center; width: 100%; padding: 0 100px; /* Memberi ruang agar teks tidak menabrak logo */ }
         .kop-teks h2 { margin: 0; font-size: 1.8rem; font-weight: 900; color: #1E3A8A; letter-spacing: 1px; }
-        .kop-teks p { margin: 4px 0 0; font-size: 1rem; font-weight: 700; color: #333; }
-        .kop-teks small { font-style: italic; color: #64748B; font-size: 0.85rem; }
+        .kop-teks p { margin: 6px 0 0; font-size: 1rem; font-weight: 700; color: #333; }
+        .kop-teks small { display: block; margin-top: 2px; font-style: italic; color: #64748B; font-size: 0.85rem; }
+        
         .info-kertas { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: 700; font-size: 1.05rem; }
+        
         .tabel-rapi { width: 100%; border-collapse: collapse; font-size: 0.95rem; margin-bottom: auto; }
         .tabel-rapi th, .tabel-rapi td { border: 1px solid #94A3B8; padding: 12px 10px; }
         .tabel-rapi th { background: #F1F5F9 !important; color: #0F172A !important; font-weight: 800; text-align: center; vertical-align: middle; }
         .tabel-rapi td.center { text-align: center; font-weight: 600; }
         .tabel-rapi td.left { text-align: left; }
+        
         .box-rekap-individu { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
         .box-nilai { padding: 20px 10px; border-radius: 10px; text-align: center; border: 2px solid transparent; }
         .box-nilai.hadir { background: #ECFDF5; border-color: #A7F3D0; }
@@ -54,6 +59,7 @@ export const renderLaporan = () => {
         .box-nilai.alpa { background: #FEF2F2; border-color: #FECACA; }
         .box-nilai h4 { margin: 0; font-size: 0.9rem; color: #475569; text-transform: uppercase; font-weight: 800; }
         .box-nilai span { display: block; font-size: 2rem; font-weight: 900; margin-top: 8px; }
+        
         .ttd-area { margin-top: 50px; display: flex; justify-content: space-between; font-size: 0.95rem; }
         .ttd-box { text-align: center; width: 220px; color: black; }
         .ttd-box.hide { display: none; }
@@ -97,8 +103,10 @@ export const renderLaporan = () => {
 
             <div class="meja-virtual">
                 <div class="kertas-laporan landscape" id="areaKertas">
+                    
+                    <!-- KOP SURAT (Rata Tengah) -->
                     <div class="kop-surat">
-                        <img src="Logo Rq Kamila.jpg" alt="Logo RQ Kamila" class="kop-logo" onerror="this.style.display='none'">
+                        <img src="logo_kamila.jpg" alt="Logo RQ Kamila" class="kop-logo" onerror="this.style.display='none'">
                         <div class="kop-teks">
                             <h2>RUMAH QUR'AN KAMILA</h2>
                             <p>Pusat Pendidikan & Tahfidz Al-Qur'an Anak dan Remaja</p>
@@ -207,7 +215,7 @@ export const renderLaporan = () => {
 };
 
 export const initLaporan = async () => {
-    // 1. Suntik Library html2pdf ke dalam HTML
+    // 1. Suntik Library html2pdf
     if (!window.html2pdf) {
         const script = document.createElement('script');
         script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
@@ -222,18 +230,16 @@ export const initLaporan = async () => {
         bulan: document.getElementById('laporanBulan'),
         kertas: document.getElementById('areaKertas'),
         petunjuk: document.getElementById('petunjukGeser'),
-        
         landscape: document.getElementById('kontenLandscape'),
         portrait: document.getElementById('kontenPortrait'),
         infoLand: document.getElementById('infoKertasLandscape'),
         infoPort: document.getElementById('infoKertasPortrait'),
-        
         ttdOrtu: document.getElementById('ttdOrtu'),
         labelTtd: document.getElementById('labelTtd'),
         tbody: document.getElementById('tbodyKertas')
     };
 
-    // 2. Load Daftar Kelas 
+    // 2. Load Daftar Kelas
     try {
         const dataKelas = await api.get('kelas', 'select=nama_kelas');
         if(dataKelas && dataKelas.length > 0) {
@@ -242,27 +248,22 @@ export const initLaporan = async () => {
         }
     } catch(e) { console.error("Gagal load kelas:", e); }
 
-    // 3. Fungsi Ubah Orientasi & Visibilitas
+    // 3. Fungsi Ubah Orientasi
     const switchMode = () => {
         const isPortrait = el.jenis.value === 'portrait';
-        
         el.kertas.classList.toggle('landscape', !isPortrait);
-        
         el.santriGroup.style.display = isPortrait ? 'block' : 'none';
         el.portrait.style.display = isPortrait ? 'block' : 'none';
         el.infoPort.style.display = isPortrait ? 'flex' : 'none';
         el.ttdOrtu.classList.toggle('hide', !isPortrait);
-        
         el.landscape.style.display = isPortrait ? 'none' : 'block';
         el.infoLand.style.display = isPortrait ? 'none' : 'flex';
         el.petunjuk.style.display = isPortrait ? 'none' : 'block';
-        
         el.labelTtd.textContent = isPortrait ? 'Wali Kelas / Ustadz' : 'Kepala Madrasah / Owner';
-        
         loadDataLaporan();
     };
 
-    // 4. Fungsi Utama Tarik Data DB
+    // 4. Tarik Data Database
     const loadDataLaporan = async () => {
         const kelasVal = el.kelas.value;
         const bulanVal = el.bulan.value;
@@ -299,7 +300,6 @@ export const initLaporan = async () => {
                 let html = '';
                 santriList.forEach((s, idx) => {
                     const logs = harianList.filter(log => log.santri_id === s.id || log.nama_santri === s.nama_santri);
-                    
                     const h = logs.filter(a => a.status_hadir === 'Hadir').length;
                     const si = logs.filter(a => a.status_hadir === 'Izin' || a.status_hadir === 'Sakit').length;
                     const a = logs.filter(a => a.status_hadir === 'Alpa').length;
@@ -395,50 +395,55 @@ export const initLaporan = async () => {
     el.santri.addEventListener('change', loadDataLaporan);
     el.bulan.addEventListener('change', loadDataLaporan);
 
-    // 6. FUNGSI GENERATE PDF DENGAN LOADING & ANTI-BLOCK
-    const triggerPDF = async (isWA = false) => {
+    // 6. FUNGSI GENERATE PDF (ANTI-BLOCK BROWSER KETAT)
+    const triggerPDF = (isWA = false) => {
         const btnId = isWA ? 'btnKirimWa' : 'btnCetakDokumen';
         const btnElement = document.getElementById(btnId);
         const oriText = btnElement.innerHTML;
         
-        // 6a. Kasih efek loading ke tombol
         btnElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
         btnElement.disabled = true;
 
-        try {
-            // 6b. Cek jika library belum selesai didownload
-            if (!window.html2pdf) {
-                alert('Sistem sedang memuat modul pencetak PDF. Mohon tunggu beberapa detik lalu coba lagi.');
-                return;
-            }
+        const isLandscape = el.jenis.value === 'landscape';
+        const namaFile = isLandscape ? `Rekap_Kelas_${el.kelas.value || 'Kosong'}` : `Rapor_${document.getElementById('lblRaporNama').textContent.replace(/ /g, '_')}`;
+        
+        const opt = {
+            margin:       [5, 5, 5, 5],
+            filename:     `${namaFile}_${el.bulan.value}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true, allowTaint: true }, 
+            jsPDF:        { unit: 'mm', format: 'f4', orientation: isLandscape ? 'landscape' : 'portrait' }
+        };
 
-            const isLandscape = el.jenis.value === 'landscape';
-            const namaFile = isLandscape ? `Rekap_Kelas_${el.kelas.value || 'Kosong'}` : `Rapor_${document.getElementById('lblRaporNama').textContent.replace(/ /g, '_')}`;
-            
-            const opt = {
-                margin:       [5, 5, 5, 5],
-                filename:     `${namaFile}_${el.bulan.value}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true, letterRendering: true, scrollY: 0 },
-                jsPDF:        { unit: 'mm', format: 'f4', orientation: isLandscape ? 'landscape' : 'portrait' }
-            };
-
-            // 6c. Jalankan proses pembuatan PDF
-            await window.html2pdf().from(el.kertas).set(opt).save();
-
-            // 6d. Redirect ke WhatsApp jika tombol WA yang ditekan
+        const prosesLanjut = () => {
             if(isWA) {
-                const msg = `Assalamu'alaikum,\n\nBerikut terlampir file PDF Laporan Perkembangan Rumah Qur'an Kamila.\n* Jenis: ${isLandscape ? 'Rekap Absensi Kelas' : 'Rapor Individu'}\n* Bulan: ${el.bulan.value}\n\n*(Catatan: File PDF telah otomatis diunduh ke HP Anda. Silakan lampirkan/kirimkan file tersebut ke ruang obrolan ini).*`;
-                // Menggunakan location.href agar tidak diblokir oleh browser HP
+                const msg = `Assalamu'alaikum,\n\nBerikut terlampir file PDF Laporan Perkembangan Rumah Qur'an Kamila.\n* Jenis: ${isLandscape ? 'Rekap Absensi Kelas' : 'Rapor Individu'}\n* Bulan: ${el.bulan.value}\n\n*(Catatan: File PDF telah diunduh ke HP Anda. Silakan klik logo penjepit kertas/lampiran untuk mengirimkan file tersebut ke ruang obrolan ini).*`;
                 window.location.href = `https://wa.me/?text=${encodeURIComponent(msg)}`;
             }
-        } catch (error) {
-            console.error(error);
-            alert("Maaf, terjadi kesalahan saat membuat file PDF.");
-        } finally {
-            // 6e. Kembalikan kondisi tombol seperti semula
             btnElement.innerHTML = oriText;
             btnElement.disabled = false;
+        };
+
+        try {
+            if (window.html2pdf) {
+                window.html2pdf().from(el.kertas).set(opt).save()
+                .then(prosesLanjut)
+                .catch((err) => {
+                    console.error("PDF Engine Blocked:", err);
+                    alert("Browser Anda memblokir unduhan otomatis. Kami alihkan ke menu cetak bawaan HP.");
+                    window.print();
+                    prosesLanjut();
+                });
+            } else {
+                alert("Modul PDF belum termuat sempurna. Kami alihkan ke menu cetak bawaan HP.");
+                window.print();
+                prosesLanjut();
+            }
+        } catch (error) {
+            console.error("Execution Error:", error);
+            alert("Gagal menggunakan alat PDF. Mengalihkan ke menu cetak...");
+            window.print();
+            prosesLanjut();
         }
     };
 
