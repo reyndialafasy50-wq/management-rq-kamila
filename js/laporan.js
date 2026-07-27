@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * MODUL LAPORAN & RAPOR - VERSI 2 (PREMIUM UI + DB + KOP CENTER)
+ * MODUL LAPORAN & RAPOR - VERSI 2 (PREMIUM UI + DB + LOGO PNG FIXED)
  * File: js/laporan.js
  * ==================================================
  */
@@ -36,10 +36,10 @@ export const renderLaporan = () => {
         .kertas-laporan { background: #FFFFFF !important; color: #000000 !important; margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.15); position: relative; box-sizing: border-box; width: 794px; min-height: 1218px; padding: 50px; display: flex; flex-direction: column; transition: all 0.3s ease; }
         .kertas-laporan.landscape { width: 1218px; min-height: 794px; }
 
-        /* 5. ELEMEN KERTAS (KOP SURAT RATA TENGAH) */
-        .kop-surat { position: relative; display: flex; justify-content: center; align-items: center; border-bottom: 4px solid #1E3A8A; padding-bottom: 15px; margin-bottom: 25px; }
-        .kop-logo { position: absolute; left: 0; top: 0; width: 90px; height: 90px; object-fit: contain; }
-        .kop-teks { text-align: center; width: 100%; padding: 0 100px; /* Memberi ruang agar teks tidak menabrak logo */ }
+        /* 5. ELEMEN KERTAS (KOP SURAT PRESISI TENGAH) */
+        .kop-surat { position: relative; display: flex; justify-content: center; align-items: center; border-bottom: 4px solid #1E3A8A; padding-bottom: 15px; margin-bottom: 25px; min-height: 100px; }
+        .kop-logo { position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 90px; height: 90px; object-fit: contain; }
+        .kop-teks { text-align: center; width: 100%; padding: 0 100px; /* Ruang agar teks tidak nabrak logo */ }
         .kop-teks h2 { margin: 0; font-size: 1.8rem; font-weight: 900; color: #1E3A8A; letter-spacing: 1px; }
         .kop-teks p { margin: 6px 0 0; font-size: 1rem; font-weight: 700; color: #333; }
         .kop-teks small { display: block; margin-top: 2px; font-style: italic; color: #64748B; font-size: 0.85rem; }
@@ -104,9 +104,10 @@ export const renderLaporan = () => {
             <div class="meja-virtual">
                 <div class="kertas-laporan landscape" id="areaKertas">
                     
-                    <!-- KOP SURAT (Rata Tengah) -->
+                    <!-- KOP SURAT BERSAMA (Landscape & Portrait) -->
                     <div class="kop-surat">
-                        <img src="logo_kamila.jpg" alt="Logo RQ Kamila" class="kop-logo" onerror="this.style.display='none'">
+                        <!-- Menggunakan file .png Ustadz -->
+                        <img src="logo_kamila.png" alt="Logo RQ Kamila" class="kop-logo" onerror="this.style.display='none'">
                         <div class="kop-teks">
                             <h2>RUMAH QUR'AN KAMILA</h2>
                             <p>Pusat Pendidikan & Tahfidz Al-Qur'an Anak dan Remaja</p>
