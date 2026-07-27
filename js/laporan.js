@@ -1,9 +1,11 @@
 /**
  * ==================================================
- * MODUL LAPORAN & RAPOR - VERSI 3 (FIX GRID LAYOUT & WINDOW.API)
+ * MODUL LAPORAN & RAPOR - VERSI 4 (FIX API GLOBAL & JARAK TAB TITIK DUA)
  * File: js/laporan.js
  * ==================================================
  */
+
+// KITA HAPUS BARIS IMPORT API DI SINI AGAR TIDAK ERROR DI HOSTING
 
 export const renderLaporan = () => {
     return `
@@ -35,7 +37,7 @@ export const renderLaporan = () => {
         .kertas-laporan { background: #FFFFFF !important; color: #000000 !important; margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.15); position: relative; box-sizing: border-box; width: 794px; min-height: 1218px; padding: 50px; display: flex; flex-direction: column; transition: all 0.3s ease; }
         .kertas-laporan.landscape { width: 1218px; min-height: 794px; }
 
-        /* 5. ELEMEN KERTAS (KOP SURAT PRESISI TENGAH) */
+        /* 5. ELEMEN KERTAS (KOP SURAT) */
         .kop-surat { position: relative; display: flex; justify-content: center; align-items: center; border-bottom: 4px solid #1E3A8A; padding-bottom: 15px; margin-bottom: 25px; min-height: 100px; }
         .kop-logo { position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 90px; height: 90px; object-fit: contain; }
         .kop-teks { text-align: center; width: 100%; padding: 0 100px; }
@@ -43,25 +45,25 @@ export const renderLaporan = () => {
         .kop-teks p { margin: 6px 0 0; font-size: 1rem; font-weight: 700; color: #333; }
         .kop-teks small { display: block; margin-top: 2px; font-style: italic; color: #64748B; font-size: 0.85rem; }
         
-        /* FIX: GRID KHUSUS IDENTITAS (max-content & nowrap) */
+        /* FIX: GRID KHUSUS IDENTITAS AGAR ADA JARAK SEPERTI DI-TAB (KOLOM 1 DIKUNCI 180PX & 140PX) */
         .info-grid-landscape {
             display: grid;
-            grid-template-columns: max-content 15px 1fr;
-            row-gap: 8px;
+            grid-template-columns: 180px 20px 1fr; /* 180px untuk memberi jarak jauh sebelum titik dua */
+            row-gap: 10px;
             font-size: 1rem;
             font-weight: 700;
             margin-bottom: 25px;
-            white-space: nowrap; /* Mencegah teks turun baris */
+            white-space: nowrap;
         }
         .info-grid-portrait {
             display: grid;
-            grid-template-columns: max-content 15px 1fr max-content 15px 1fr;
+            grid-template-columns: 140px 20px 1fr 80px 20px 120px; /* 140px jarak aman untuk label kiri */
             row-gap: 12px;
             font-size: 1rem;
             font-weight: 700;
             margin-bottom: 25px;
             align-items: center;
-            white-space: nowrap; /* Mencegah teks turun baris */
+            white-space: nowrap;
         }
         
         .tabel-rapi { width: 100%; border-collapse: collapse; font-size: 0.95rem; margin-bottom: auto; white-space: normal; }
@@ -100,7 +102,7 @@ export const renderLaporan = () => {
             <div class="form-group">
                 <label>Pilih Kelas</label>
                 <select class="form-control-laporan" id="laporanPilihKelas">
-                    <option value="">-- Pilih Kelas --</option>
+                    <option value="">-- Sedang memuat... --</option>
                 </select>
             </div>
             <div class="form-group" id="groupPilihSantri" style="display: none;">
@@ -133,18 +135,18 @@ export const renderLaporan = () => {
                     
                     <!-- INFO KELAS LANDSCAPE -->
                     <div class="info-grid-landscape" id="infoKertasLandscape">
-                        <div>Nama Kelas</div><div>:</div><div id="lblKertasKelas" style="white-space: normal;">Belum dipilih</div>
-                        <div>Ustadz Pengampu</div><div>:</div><div id="lblKertasUstadz" style="white-space: normal;">-</div>
-                        <div>Bulan Laporan</div><div>:</div><div id="lblKertasBulan" style="white-space: normal;">...</div>
+                        <div>Nama Kelas</div><div class="center">:</div><div id="lblKertasKelas" style="white-space: normal;">Belum dipilih</div>
+                        <div>Ustadz Pengampu</div><div class="center">:</div><div id="lblKertasUstadz" style="white-space: normal;">-</div>
+                        <div>Bulan Laporan</div><div class="center">:</div><div id="lblKertasBulan" style="white-space: normal;">...</div>
                     </div>
                     
                     <!-- INFO SANTRI PORTRAIT -->
                     <div class="info-grid-portrait" id="infoKertasPortrait" style="display: none;">
-                        <div>Nama Santri</div><div>:</div><div id="lblRaporNama" style="font-weight: 900; font-size: 1.1rem; text-decoration: underline; white-space: normal; padding-right: 10px;">Belum dipilih</div>
-                        <div>Kelas</div><div>:</div><div id="lblRaporKelas" style="white-space: normal;">...</div>
+                        <div>Nama Santri</div><div class="center">:</div><div id="lblRaporNama" style="font-weight: 900; font-size: 1.1rem; text-decoration: underline; white-space: normal; padding-right: 10px;">Belum dipilih</div>
+                        <div>Kelas</div><div class="center">:</div><div id="lblRaporKelas" style="white-space: normal;">...</div>
 
-                        <div>NIS</div><div>:</div><div id="lblRaporNis" style="font-family: monospace; font-size: 1.1rem;">-</div>
-                        <div>Bulan</div><div>:</div><div id="lblRaporBulan">...</div>
+                        <div>NIS</div><div class="center">:</div><div id="lblRaporNis" style="font-family: monospace; font-size: 1.1rem;">-</div>
+                        <div>Bulan</div><div class="center">:</div><div id="lblRaporBulan">...</div>
                     </div>
 
                     <!-- KONTEN LANDSCAPE -->
@@ -259,14 +261,18 @@ export const initLaporan = async () => {
         tbody: document.getElementById('tbodyKertas')
     };
 
-    // FIX: Menggunakan window.api yang sudah berjalan lancar
-    const db = window.api;
-
-    // 2. Load Daftar Kelas & Ustadz
     let rawKelasData = [];
-    try {
-        if(db && db.get) {
-            const dataKelas = await db.get('kelas', 'select=nama_kelas,nama_ustadz');
+    let rawSantriData = [];
+
+    // 2. Fungsi Load Daftar Kelas (Dengan pengaman menunggu API global siap)
+    const loadDaftarKelas = async () => {
+        if (!window.api) {
+            setTimeout(loadDaftarKelas, 300); // Jika API belum siap, tunggu sebentar lalu coba lagi
+            return;
+        }
+
+        try {
+            const dataKelas = await window.api.get('kelas', 'select=nama_kelas,nama_ustadz');
             if(dataKelas && dataKelas.length > 0) {
                 rawKelasData = dataKelas;
                 el.kelas.innerHTML = '<option value="">-- Pilih Kelas --</option>';
@@ -275,11 +281,17 @@ export const initLaporan = async () => {
                     opt.dataset.ustadz = k.nama_ustadz || '-';
                     el.kelas.add(opt);
                 });
+            } else {
+                el.kelas.innerHTML = '<option value="">-- Data Kelas Kosong --</option>';
             }
+        } catch(e) { 
+            console.error("Gagal load kelas:", e); 
+            el.kelas.innerHTML = '<option value="">-- Gagal Memuat --</option>';
         }
-    } catch(e) { console.error("Gagal load kelas:", e); }
+    };
+    loadDaftarKelas(); // Panggil saat awal dimuat
 
-    // 3. Fungsi Ubah Orientasi
+    // 3. Fungsi Ubah Orientasi Kertas
     const switchMode = () => {
         const isPortrait = el.jenis.value === 'portrait';
         el.kertas.classList.toggle('landscape', !isPortrait);
@@ -299,8 +311,7 @@ export const initLaporan = async () => {
         loadDataLaporan();
     };
 
-    // 4. Tarik Data Database
-    let rawSantriData = [];
+    // 4. Tarik Data Utama Laporan ke dalam Tabel
     const loadDataLaporan = async () => {
         const kelasVal = el.kelas.value;
         const bulanVal = el.bulan.value;
@@ -316,10 +327,12 @@ export const initLaporan = async () => {
             document.getElementById('lblRaporBulan').textContent = namaBulan;
         }
 
-        if (!db || !db.get) return;
+        if (!window.api || !window.api.get) return;
+        
         const tglMulai = bulanVal + '-01';
         const tglSelesai = bulanVal + '-31';
 
+        // PROSES UNTUK LANDSCAPE (REKAP KELAS)
         if (el.jenis.value === 'landscape') {
             if (!kelasVal) {
                 el.tbody.innerHTML = `<tr><td colspan="8" class="center" style="padding: 40px; color: #94A3B8;">Pilih kelas untuk memuat data.</td></tr>`;
@@ -329,13 +342,13 @@ export const initLaporan = async () => {
             el.tbody.innerHTML = `<tr><td colspan="8" class="center" style="padding: 40px;"><i class="fas fa-circle-notch fa-spin"></i> Sinkronisasi database...</td></tr>`;
             
             try {
-                const santriList = await db.get('dapodik_santri', `select=*&nama_kelas=eq.${kelasVal}&order=nama_santri.asc`);
+                const santriList = await window.api.get('dapodik_santri', `select=*&nama_kelas=eq.${kelasVal}&order=nama_santri.asc`);
                 if (!santriList || santriList.length === 0) {
                     el.tbody.innerHTML = `<tr><td colspan="8" class="center">Data santri kosong di kelas ini.</td></tr>`;
                     return;
                 }
 
-                const harianList = await db.get('input_harian', `select=*&nama_kelas=eq.${kelasVal}&tanggal=gte.${tglMulai}&tanggal=lte.${tglSelesai}`) || [];
+                const harianList = await window.api.get('input_harian', `select=*&nama_kelas=eq.${kelasVal}&tanggal=gte.${tglMulai}&tanggal=lte.${tglSelesai}`) || [];
 
                 let html = '';
                 santriList.forEach((s, idx) => {
@@ -379,10 +392,12 @@ export const initLaporan = async () => {
                 el.tbody.innerHTML = `<tr><td colspan="8" class="center" style="color: red;">Gagal terhubung ke database.</td></tr>`;
             }
         } 
+        
+        // PROSES UNTUK PORTRAIT (RAPOR)
         else if (el.jenis.value === 'portrait') {
             if (kelasVal) {
                 try {
-                    const santriKelas = await db.get('dapodik_santri', `select=*&nama_kelas=eq.${kelasVal}&order=nama_santri.asc`);
+                    const santriKelas = await window.api.get('dapodik_santri', `select=*&nama_kelas=eq.${kelasVal}&order=nama_santri.asc`);
                     rawSantriData = santriKelas || [];
                     const curr = el.santri.value;
                     el.santri.innerHTML = '<option value="">-- Pilih Santri --</option>';
@@ -408,7 +423,7 @@ export const initLaporan = async () => {
             document.getElementById('lblRaporNis').textContent = aktifSantri?.nisn || aktifSantri?.nis || '-';
 
             try {
-                const logs = await db.get('input_harian', `select=*&nama_santri=eq.${namaSantriAktif}&tanggal=gte.${tglMulai}&tanggal=lte.${tglSelesai}`) || [];
+                const logs = await window.api.get('input_harian', `select=*&nama_santri=eq.${namaSantriAktif}&tanggal=gte.${tglMulai}&tanggal=lte.${tglSelesai}`) || [];
                 
                 document.getElementById('raporHadir').textContent = logs.filter(a => a.status_hadir === 'Hadir').length;
                 document.getElementById('raporSakitIzin').textContent = logs.filter(a => a.status_hadir === 'Izin' || a.status_hadir === 'Sakit').length;
@@ -436,12 +451,13 @@ export const initLaporan = async () => {
         }
     };
 
+    // 5. Event Listeners pada Filter
     el.jenis.addEventListener('change', switchMode);
     el.kelas.addEventListener('change', loadDataLaporan);
     el.santri.addEventListener('change', loadDataLaporan);
     el.bulan.addEventListener('change', loadDataLaporan);
 
-    // 6. FUNGSI GENERATE PDF
+    // 6. FUNGSI GENERATE PDF (Dengan Fallback Pengaman)
     const triggerPDF = (isWA = false) => {
         const btnId = isWA ? 'btnKirimWa' : 'btnCetakDokumen';
         const btnElement = document.getElementById(btnId);
@@ -496,5 +512,6 @@ export const initLaporan = async () => {
     document.getElementById('btnCetakDokumen')?.addEventListener('click', () => triggerPDF(false));
     document.getElementById('btnKirimWa')?.addEventListener('click', () => triggerPDF(true));
 
+    // Jalankan tampilan awal
     switchMode();
 };
