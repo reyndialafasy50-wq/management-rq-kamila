@@ -1,9 +1,10 @@
 /**
  * ==================================================
- * MODUL LAPORAN & RAPOR - VERSI 2 (PREMIUM UI + DB)
+ * MODUL LAPORAN & RAPOR - VERSI 2 (PREMIUM UI + DB FIX)
  * File: js/laporan.js
  * ==================================================
  */
+import { api } from './api.js'; // <-- INI KUNCI UTAMANYA YANG KETINGGALAN
 
 export const renderLaporan = () => {
     return `
@@ -105,13 +106,12 @@ export const renderLaporan = () => {
         .meja-virtual {
             width: 100%;
             overflow-x: auto;
-            background: #CBD5E1; /* Warna meja */
+            background: #CBD5E1; 
             padding: 20px;
             border-radius: 12px;
             box-shadow: inset 0 3px 6px rgba(0,0,0,0.1);
         }
         
-        /* Ukuran Kertas F4 Aktual (215 x 330 mm disimulasikan ke pixel) */
         .kertas-laporan {
             background: #FFFFFF !important;
             color: #000000 !important;
@@ -119,7 +119,6 @@ export const renderLaporan = () => {
             box-shadow: 0 10px 30px rgba(0,0,0,0.15);
             position: relative;
             box-sizing: border-box;
-            /* Default Portrait */
             width: 794px; 
             min-height: 1218px; 
             padding: 50px;
@@ -162,7 +161,7 @@ export const renderLaporan = () => {
             width: 100%;
             border-collapse: collapse;
             font-size: 0.95rem;
-            margin-bottom: auto; /* Mendorong TTD ke bawah */
+            margin-bottom: auto; 
         }
         .tabel-rapi th, .tabel-rapi td {
             border: 1px solid #94A3B8;
@@ -207,14 +206,11 @@ export const renderLaporan = () => {
     </style>
 
     <div class="laporan-wrapper">
-        
-        <!-- 1. Tombol Aksi -->
         <div class="action-grid">
             <button class="btn-action btn-cetak" id="btnCetakDokumen"><i class="fas fa-file-pdf"></i> Cetak / PDF</button>
             <button class="btn-action btn-unduh" id="btnKirimWa"><i class="fab fa-whatsapp"></i> Unduh & WA</button>
         </div>
 
-        <!-- 2. Kartu Filter -->
         <div class="filter-card">
             <div class="form-group">
                 <label>Jenis Laporan</label>
@@ -229,30 +225,24 @@ export const renderLaporan = () => {
                     <option value="">-- Pilih Kelas --</option>
                 </select>
             </div>
-            
             <div class="form-group" id="groupPilihSantri" style="display: none;">
                 <label>Pilih Santri</label>
                 <select class="form-control-laporan" id="laporanPilihSantri">
                     <option value="">-- Pilih Santri --</option>
                 </select>
             </div>
-            
             <div class="form-group">
                 <label>Bulan Laporan</label>
                 <input type="month" class="form-control-laporan" id="laporanBulan" value="${new Date().toISOString().slice(0,7)}">
             </div>
         </div>
 
-        <!-- 3. Area Preview -->
         <div>
             <div class="preview-header"><i class="fas fa-file-signature"></i> Lembar Pratinjau Kertas F4</div>
             <div class="petunjuk-geser" id="petunjukGeser"><i class="fas fa-arrows-alt-h"></i> Geser kertas ke kiri/kanan untuk melihat tabel utuh</div>
 
             <div class="meja-virtual">
-                <!-- Kertas Default (Landscape) -->
                 <div class="kertas-laporan landscape" id="areaKertas">
-                    
-                    <!-- Kop Surat -->
                     <div class="kop-surat">
                         <img src="Logo Rq Kamila.jpg" alt="Logo RQ Kamila" class="kop-logo" onerror="this.style.display='none'">
                         <div class="kop-teks">
@@ -262,13 +252,11 @@ export const renderLaporan = () => {
                         </div>
                     </div>
                     
-                    <!-- Identitas Landscape -->
                     <div class="info-kertas" id="infoKertasLandscape">
                         <div>Kelas: <span id="lblKertasKelas">Belum dipilih</span></div>
                         <div>Bulan: <span id="lblKertasBulan">...</span></div>
                     </div>
                     
-                    <!-- Identitas Portrait -->
                     <div class="info-kertas" id="infoKertasPortrait" style="display: none; flex-direction: column; gap: 8px;">
                         <div>Nama: <span id="lblRaporNama" style="font-weight: 800; font-size: 1.2rem; text-decoration: underline;">Belum dipilih</span></div>
                         <div style="display: flex; justify-content: space-between;">
@@ -277,7 +265,7 @@ export const renderLaporan = () => {
                         </div>
                     </div>
 
-                    <!-- KONTEN LANDSCAPE (Tabel Rekap) -->
+                    <!-- KONTEN LANDSCAPE -->
                     <div id="kontenLandscape">
                         <table class="tabel-rapi">
                             <thead>
@@ -302,7 +290,7 @@ export const renderLaporan = () => {
                         </table>
                     </div>
                     
-                    <!-- KONTEN PORTRAIT (Rapor) -->
+                    <!-- KONTEN PORTRAIT -->
                     <div id="kontenPortrait" style="display: none; flex-grow: 1;">
                         <h3 style="text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 10px; margin-bottom: 20px;">A. REKAPITULASI KEHADIRAN</h3>
                         <div class="box-rekap-individu">
@@ -346,7 +334,6 @@ export const renderLaporan = () => {
                         </div>
                     </div>
                     
-                    <!-- Tanda Tangan Bawah -->
                     <div class="ttd-area">
                         <div class="ttd-box hide" id="ttdOrtu">
                             <p style="margin-bottom: 80px;">Mengetahui,<br><b>Wali Santri</b></p>
@@ -366,14 +353,13 @@ export const renderLaporan = () => {
 };
 
 export const initLaporan = async () => {
-    // 1. Injeksi Library PDF jika belum ada
+    // 1. Injeksi Library PDF
     if (!window.html2pdf) {
         const script = document.createElement('script');
         script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
         document.head.appendChild(script);
     }
 
-    // Deklarasi Elemen
     const el = {
         jenis: document.getElementById('jenisLaporan'),
         kelas: document.getElementById('laporanPilihKelas'),
@@ -393,15 +379,12 @@ export const initLaporan = async () => {
         tbody: document.getElementById('tbodyKertas')
     };
 
-    // 2. Load Daftar Kelas
+    // 2. Load Daftar Kelas (Berdasarkan tabel kelas dari database Supabase Anda)
     try {
-        if(window.api && window.api.get) {
-            const dataSantri = await window.api.get('dapodik_santri', 'select=kelas');
-            if(dataSantri && dataSantri.length > 0) {
-                const kelasUnik = [...new Set(dataSantri.map(item => item.kelas))].filter(Boolean).sort();
-                el.kelas.innerHTML = '<option value="">-- Pilih Kelas --</option>';
-                kelasUnik.forEach(k => el.kelas.add(new Option(k, k)));
-            }
+        const dataKelas = await api.get('kelas', 'select=nama_kelas');
+        if(dataKelas && dataKelas.length > 0) {
+            el.kelas.innerHTML = '<option value="">-- Pilih Kelas --</option>';
+            dataKelas.forEach(k => el.kelas.add(new Option(k.nama_kelas, k.nama_kelas)));
         }
     } catch(e) { console.error("Gagal load kelas:", e); }
 
@@ -430,7 +413,6 @@ export const initLaporan = async () => {
         const kelasVal = el.kelas.value;
         const bulanVal = el.bulan.value;
         
-        // Update Label
         document.getElementById('lblKertasKelas').textContent = kelasVal || 'Belum dipilih';
         document.getElementById('lblRaporKelas').textContent = kelasVal || 'Belum dipilih';
 
@@ -440,7 +422,6 @@ export const initLaporan = async () => {
             document.getElementById('lblRaporBulan').textContent = namaBulan;
         }
 
-        if (!window.api || !window.api.get) return;
         const tglMulai = bulanVal + '-01';
         const tglSelesai = bulanVal + '-31';
 
@@ -454,24 +435,39 @@ export const initLaporan = async () => {
             el.tbody.innerHTML = `<tr><td colspan="8" class="center" style="padding: 40px;"><i class="fas fa-circle-notch fa-spin"></i> Sinkronisasi database...</td></tr>`;
             
             try {
-                const santriList = await window.api.get('dapodik_santri', `select=id,nama_santri&kelas=eq.${kelasVal}&order=nama_santri.asc`);
+                // Gunakan dapodik_santri & input_harian persis seperti di dashboard.js!
+                const santriList = await api.get('dapodik_santri', `select=id,nama_santri,nama_kelas&nama_kelas=eq.${kelasVal}&order=nama_santri.asc`);
                 if (!santriList || santriList.length === 0) {
                     el.tbody.innerHTML = `<tr><td colspan="8" class="center">Data santri kosong di kelas ini.</td></tr>`;
                     return;
                 }
 
-                let absensiList = await window.api.get('absensi_harian', `select=santri_id,status&tanggal=gte.${tglMulai}&tanggal=lte.${tglSelesai}`).catch(() => []);
-                let mutabaahList = await window.api.get('mutabaah', `select=santri_id,materi,jilid_juz,halaman_surat&tanggal=gte.${tglMulai}&tanggal=lte.${tglSelesai}&order=tanggal.desc`).catch(() => []);
+                const harianList = await api.get('input_harian', `select=*&nama_kelas=eq.${kelasVal}&tanggal=gte.${tglMulai}&tanggal=lte.${tglSelesai}`) || [];
 
                 let html = '';
                 santriList.forEach((s, idx) => {
-                    const abs = absensiList.filter(a => a.santri_id == s.id);
-                    const h = abs.filter(a => ['Hadir', 'H'].includes(a.status)).length;
-                    const si = abs.filter(a => ['Sakit', 'Izin', 'S/I'].includes(a.status)).length;
-                    const a = abs.filter(a => ['Alpa', 'A'].includes(a.status)).length;
+                    const logs = harianList.filter(log => log.santri_id === s.id || log.nama_santri === s.nama_santri);
+                    
+                    const h = logs.filter(a => a.status_hadir === 'Hadir').length;
+                    const si = logs.filter(a => a.status_hadir === 'Izin' || a.status_hadir === 'Sakit').length;
+                    const a = logs.filter(a => a.status_hadir === 'Alpa').length;
 
-                    const mTahfidz = mutabaahList.find(m => m.santri_id == s.id && m.materi === 'Tahfidz');
-                    const mTahsin = mutabaahList.find(m => m.santri_id == s.id && m.materi === 'Tahsin');
+                    // Mengambil riwayat mutakhir (terbaru)
+                    logs.sort((x, y) => new Date(y.tanggal) - new Date(x.tanggal));
+                    
+                    let teksTahfidz = '-';
+                    const lastTahfidz = logs.find(l => l.tahfidz_juz || l.tahfidz_surat);
+                    if (lastTahfidz) teksTahfidz = `Juz ${lastTahfidz.tahfidz_juz || '-'} (${lastTahfidz.tahfidz_surat || '-'})`;
+
+                    let teksTahsin = '-';
+                    const lastTahsin = logs.find(l => l.tahsin_program || l.tahsin_jilid);
+                    if (lastTahsin) {
+                        if (lastTahsin.tahsin_program === "Al Qur'an") {
+                            teksTahsin = `Juz ${lastTahsin.tahsin_juz || '-'} (${lastTahsin.tahsin_surat || '-'})`;
+                        } else {
+                            teksTahsin = `${lastTahsin.tahsin_program || 'Iqro'} ${lastTahsin.tahsin_jilid || '-'} Hal. ${lastTahsin.tahsin_halaman || '-'}`;
+                        }
+                    }
 
                     html += `
                         <tr>
@@ -480,8 +476,8 @@ export const initLaporan = async () => {
                             <td class="center" style="color: #059669; font-weight: 800;">${h}</td>
                             <td class="center" style="color: #D97706; font-weight: 800;">${si}</td>
                             <td class="center" style="color: #DC2626; font-weight: 800;">${a}</td>
-                            <td class="center">${mTahfidz ? `${mTahfidz.jilid_juz} - ${mTahfidz.halaman_surat}` : '-'}</td>
-                            <td class="center">${mTahsin ? `${mTahsin.jilid_juz} - ${mTahsin.halaman_surat}` : '-'}</td>
+                            <td class="center">${teksTahfidz}</td>
+                            <td class="center">${teksTahsin}</td>
                             <td class="center"></td>
                         </tr>
                     `;
@@ -497,7 +493,7 @@ export const initLaporan = async () => {
         else if (el.jenis.value === 'portrait') {
             if (kelasVal) {
                 try {
-                    const santriKelas = await window.api.get('dapodik_santri', `select=id,nama_santri&kelas=eq.${kelasVal}&order=nama_santri.asc`);
+                    const santriKelas = await api.get('dapodik_santri', `select=id,nama_santri&nama_kelas=eq.${kelasVal}&order=nama_santri.asc`);
                     const curr = el.santri.value;
                     el.santri.innerHTML = '<option value="">-- Pilih Santri --</option>';
                     (santriKelas || []).forEach(s => {
@@ -513,20 +509,35 @@ export const initLaporan = async () => {
                 document.getElementById('lblRaporNama').textContent = 'Pilih Santri Dulu';
                 return;
             }
-            document.getElementById('lblRaporNama').textContent = el.santri.options[el.santri.selectedIndex].text;
+            const namaSantriAktif = el.santri.options[el.santri.selectedIndex].text;
+            document.getElementById('lblRaporNama').textContent = namaSantriAktif;
 
             try {
-                const absensi = await window.api.get('absensi_harian', `select=status&santri_id=eq.${sId}&tanggal=gte.${tglMulai}&tanggal=lte.${tglSelesai}`).catch(() => []);
-                document.getElementById('raporHadir').textContent = absensi.filter(a => ['Hadir', 'H'].includes(a.status)).length;
-                document.getElementById('raporSakitIzin').textContent = absensi.filter(a => ['Sakit', 'Izin', 'S/I'].includes(a.status)).length;
-                document.getElementById('raporAlpa').textContent = absensi.filter(a => ['Alpa', 'A'].includes(a.status)).length;
+                const logs = await api.get('input_harian', `select=*&nama_santri=eq.${namaSantriAktif}&tanggal=gte.${tglMulai}&tanggal=lte.${tglSelesai}`) || [];
+                
+                document.getElementById('raporHadir').textContent = logs.filter(a => a.status_hadir === 'Hadir').length;
+                document.getElementById('raporSakitIzin').textContent = logs.filter(a => a.status_hadir === 'Izin' || a.status_hadir === 'Sakit').length;
+                document.getElementById('raporAlpa').textContent = logs.filter(a => a.status_hadir === 'Alpa').length;
 
-                const mutabaah = await window.api.get('mutabaah', `select=materi,jilid_juz,halaman_surat&santri_id=eq.${sId}&tanggal=gte.${tglMulai}&tanggal=lte.${tglSelesai}&order=tanggal.desc`).catch(() => []);
-                const mTahfidz = mutabaah.find(m => m.materi === 'Tahfidz');
-                const mTahsin = mutabaah.find(m => m.materi === 'Tahsin');
+                // Mengambil riwayat mutakhir
+                logs.sort((x, y) => new Date(y.tanggal) - new Date(x.tanggal));
+                
+                let teksTahfidz = '-';
+                const lastTahfidz = logs.find(l => l.tahfidz_juz || l.tahfidz_surat);
+                if (lastTahfidz) teksTahfidz = `Juz ${lastTahfidz.tahfidz_juz || '-'} (Surat ${lastTahfidz.tahfidz_surat || '-'})`;
 
-                document.getElementById('raporTahfidz').textContent = mTahfidz ? `${mTahfidz.jilid_juz} - ${mTahfidz.halaman_surat}` : 'Belum Ada Penilaian';
-                document.getElementById('raporTahsin').textContent = mTahsin ? `${mTahsin.jilid_juz} - ${mTahsin.halaman_surat}` : 'Belum Ada Penilaian';
+                let teksTahsin = '-';
+                const lastTahsin = logs.find(l => l.tahsin_program || l.tahsin_jilid);
+                if (lastTahsin) {
+                    if (lastTahsin.tahsin_program === "Al Qur'an") {
+                        teksTahsin = `Juz ${lastTahsin.tahsin_juz || '-'} (Surat ${lastTahsin.tahsin_surat || '-'})`;
+                    } else {
+                        teksTahsin = `${lastTahsin.tahsin_program || 'Iqro'} Jilid ${lastTahsin.tahsin_jilid || '-'} Hal. ${lastTahsin.tahsin_halaman || '-'}`;
+                    }
+                }
+
+                document.getElementById('raporTahfidz').textContent = teksTahfidz;
+                document.getElementById('raporTahsin').textContent = teksTahsin;
             } catch(e) { console.error(e); }
         }
     };
