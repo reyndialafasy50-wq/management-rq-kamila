@@ -9,6 +9,7 @@ import { renderSantri, initSantri } from './santri.js';
 import { renderInputHarian, initInputHarian } from './input_harian.js';
 import { renderLaporan, initLaporan } from './laporan.js'; // <-- INI YANG BIKIN LAPORAN MUNCUL
 import { api } from './api.js';
+import { renderSetting, initSetting } from './setting.js';
 
 // ==========================================
 // FUNGSI LONCENG GLOBAL (ANTI-MELESET)
