@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * MODUL LAPORAN & RAPOR - VERSI 2 (PREMIUM UI + DB + LOGO PNG FIXED)
+ * MODUL LAPORAN & RAPOR - VERSI 2 (PREMIUM UI + DB + KOP & TABEL PRESISI)
  * File: js/laporan.js
  * ==================================================
  */
@@ -36,15 +36,32 @@ export const renderLaporan = () => {
         .kertas-laporan { background: #FFFFFF !important; color: #000000 !important; margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.15); position: relative; box-sizing: border-box; width: 794px; min-height: 1218px; padding: 50px; display: flex; flex-direction: column; transition: all 0.3s ease; }
         .kertas-laporan.landscape { width: 1218px; min-height: 794px; }
 
-        /* 5. ELEMEN KERTAS (KOP SURAT PRESISI TENGAH) */
+        /* 5. ELEMEN KERTAS */
         .kop-surat { position: relative; display: flex; justify-content: center; align-items: center; border-bottom: 4px solid #1E3A8A; padding-bottom: 15px; margin-bottom: 25px; min-height: 100px; }
         .kop-logo { position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 90px; height: 90px; object-fit: contain; }
-        .kop-teks { text-align: center; width: 100%; padding: 0 100px; /* Ruang agar teks tidak nabrak logo */ }
+        .kop-teks { text-align: center; width: 100%; padding: 0 100px; }
         .kop-teks h2 { margin: 0; font-size: 1.8rem; font-weight: 900; color: #1E3A8A; letter-spacing: 1px; }
         .kop-teks p { margin: 6px 0 0; font-size: 1rem; font-weight: 700; color: #333; }
         .kop-teks small { display: block; margin-top: 2px; font-style: italic; color: #64748B; font-size: 0.85rem; }
         
-        .info-kertas { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: 700; font-size: 1.05rem; }
+        /* GRID KHUSUS IDENTITAS AGAR TITIK DUA (:) LURUS SEMPURNA */
+        .info-grid-landscape {
+            display: grid;
+            grid-template-columns: 140px 15px 1fr;
+            row-gap: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+        }
+        .info-grid-portrait {
+            display: grid;
+            grid-template-columns: 100px 15px 1fr 60px 15px 120px;
+            row-gap: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+            align-items: center;
+        }
         
         .tabel-rapi { width: 100%; border-collapse: collapse; font-size: 0.95rem; margin-bottom: auto; }
         .tabel-rapi th, .tabel-rapi td { border: 1px solid #94A3B8; padding: 12px 10px; }
@@ -104,9 +121,8 @@ export const renderLaporan = () => {
             <div class="meja-virtual">
                 <div class="kertas-laporan landscape" id="areaKertas">
                     
-                    <!-- KOP SURAT BERSAMA (Landscape & Portrait) -->
+                    <!-- KOP SURAT (Rata Tengah) -->
                     <div class="kop-surat">
-                        <!-- Menggunakan file .png Ustadz -->
                         <img src="logo_kamila.png" alt="Logo RQ Kamila" class="kop-logo" onerror="this.style.display='none'">
                         <div class="kop-teks">
                             <h2>RUMAH QUR'AN KAMILA</h2>
@@ -115,17 +131,20 @@ export const renderLaporan = () => {
                         </div>
                     </div>
                     
-                    <div class="info-kertas" id="infoKertasLandscape">
-                        <div>Kelas: <span id="lblKertasKelas">Belum dipilih</span></div>
-                        <div>Bulan: <span id="lblKertasBulan">...</span></div>
+                    <!-- INFO KELAS LANDSCAPE (CSS Grid Titik Dua Lurus) -->
+                    <div class="info-grid-landscape" id="infoKertasLandscape">
+                        <div>Nama Kelas</div><div>:</div><div id="lblKertasKelas">Belum dipilih</div>
+                        <div>Ustadz Pengampu</div><div>:</div><div id="lblKertasUstadz">-</div>
+                        <div>Bulan Laporan</div><div>:</div><div id="lblKertasBulan">...</div>
                     </div>
                     
-                    <div class="info-kertas" id="infoKertasPortrait" style="display: none; flex-direction: column; gap: 8px;">
-                        <div>Nama: <span id="lblRaporNama" style="font-weight: 800; font-size: 1.2rem; text-decoration: underline;">Belum dipilih</span></div>
-                        <div style="display: flex; justify-content: space-between;">
-                           <div>Kelas: <span id="lblRaporKelas">...</span></div>
-                           <div>Bulan: <span id="lblRaporBulan">...</span></div>
-                        </div>
+                    <!-- INFO SANTRI PORTRAIT (CSS Grid Titik Dua Lurus & Sejajar) -->
+                    <div class="info-grid-portrait" id="infoKertasPortrait" style="display: none;">
+                        <div>Nama Santri</div><div>:</div><div id="lblRaporNama" style="font-weight: 900; font-size: 1.1rem; text-decoration: underline;">Belum dipilih</div>
+                        <div>Kelas</div><div>:</div><div id="lblRaporKelas">...</div>
+
+                        <div>NIS</div><div>:</div><div id="lblRaporNis" style="font-family: monospace; font-size: 1.1rem;">-</div>
+                        <div>Bulan</div><div>:</div><div id="lblRaporBulan">...</div>
                     </div>
 
                     <!-- KONTEN LANDSCAPE -->
@@ -240,12 +259,18 @@ export const initLaporan = async () => {
         tbody: document.getElementById('tbodyKertas')
     };
 
-    // 2. Load Daftar Kelas
+    // 2. Load Daftar Kelas & Ustadz
+    let rawKelasData = [];
     try {
-        const dataKelas = await api.get('kelas', 'select=nama_kelas');
+        const dataKelas = await api.get('kelas', 'select=nama_kelas,nama_ustadz');
         if(dataKelas && dataKelas.length > 0) {
+            rawKelasData = dataKelas;
             el.kelas.innerHTML = '<option value="">-- Pilih Kelas --</option>';
-            dataKelas.forEach(k => el.kelas.add(new Option(k.nama_kelas, k.nama_kelas)));
+            dataKelas.forEach(k => {
+                const opt = new Option(k.nama_kelas, k.nama_kelas);
+                opt.dataset.ustadz = k.nama_ustadz || '-'; // Menyimpan nama ustadz
+                el.kelas.add(opt);
+            });
         }
     } catch(e) { console.error("Gagal load kelas:", e); }
 
@@ -253,23 +278,31 @@ export const initLaporan = async () => {
     const switchMode = () => {
         const isPortrait = el.jenis.value === 'portrait';
         el.kertas.classList.toggle('landscape', !isPortrait);
+        
         el.santriGroup.style.display = isPortrait ? 'block' : 'none';
+        
         el.portrait.style.display = isPortrait ? 'block' : 'none';
-        el.infoPort.style.display = isPortrait ? 'flex' : 'none';
-        el.ttdOrtu.classList.toggle('hide', !isPortrait);
+        el.infoPort.style.display = isPortrait ? 'grid' : 'none'; // Pakai GRID
+        
         el.landscape.style.display = isPortrait ? 'none' : 'block';
-        el.infoLand.style.display = isPortrait ? 'none' : 'flex';
+        el.infoLand.style.display = isPortrait ? 'none' : 'grid'; // Pakai GRID
+        
+        el.ttdOrtu.classList.toggle('hide', !isPortrait);
         el.petunjuk.style.display = isPortrait ? 'none' : 'block';
         el.labelTtd.textContent = isPortrait ? 'Wali Kelas / Ustadz' : 'Kepala Madrasah / Owner';
+        
         loadDataLaporan();
     };
 
     // 4. Tarik Data Database
+    let rawSantriData = [];
     const loadDataLaporan = async () => {
         const kelasVal = el.kelas.value;
         const bulanVal = el.bulan.value;
+        const ustadzVal = el.kelas.options[el.kelas.selectedIndex]?.dataset.ustadz || '-';
         
         document.getElementById('lblKertasKelas').textContent = kelasVal || 'Belum dipilih';
+        document.getElementById('lblKertasUstadz').textContent = ustadzVal;
         document.getElementById('lblRaporKelas').textContent = kelasVal || 'Belum dipilih';
 
         if (bulanVal) {
@@ -290,7 +323,7 @@ export const initLaporan = async () => {
             el.tbody.innerHTML = `<tr><td colspan="8" class="center" style="padding: 40px;"><i class="fas fa-circle-notch fa-spin"></i> Sinkronisasi database...</td></tr>`;
             
             try {
-                const santriList = await api.get('dapodik_santri', `select=id,nama_santri,nama_kelas&nama_kelas=eq.${kelasVal}&order=nama_santri.asc`);
+                const santriList = await api.get('dapodik_santri', `select=*&nama_kelas=eq.${kelasVal}&order=nama_santri.asc`);
                 if (!santriList || santriList.length === 0) {
                     el.tbody.innerHTML = `<tr><td colspan="8" class="center">Data santri kosong di kelas ini.</td></tr>`;
                     return;
@@ -343,10 +376,11 @@ export const initLaporan = async () => {
         else if (el.jenis.value === 'portrait') {
             if (kelasVal) {
                 try {
-                    const santriKelas = await api.get('dapodik_santri', `select=id,nama_santri&nama_kelas=eq.${kelasVal}&order=nama_santri.asc`);
+                    const santriKelas = await api.get('dapodik_santri', `select=*&nama_kelas=eq.${kelasVal}&order=nama_santri.asc`);
+                    rawSantriData = santriKelas || [];
                     const curr = el.santri.value;
                     el.santri.innerHTML = '<option value="">-- Pilih Santri --</option>';
-                    (santriKelas || []).forEach(s => {
+                    rawSantriData.forEach(s => {
                         const opt = new Option(s.nama_santri, s.id);
                         if (s.id == curr) opt.selected = true;
                         el.santri.add(opt);
@@ -357,10 +391,16 @@ export const initLaporan = async () => {
             const sId = el.santri.value;
             if (!sId) {
                 document.getElementById('lblRaporNama').textContent = 'Pilih Santri Dulu';
+                document.getElementById('lblRaporNis').textContent = '-';
                 return;
             }
-            const namaSantriAktif = el.santri.options[el.santri.selectedIndex].text;
+            
+            // Mencari data NIS dari array santri yang di-load
+            const aktifSantri = rawSantriData.find(s => s.id == sId);
+            const namaSantriAktif = aktifSantri ? aktifSantri.nama_santri : el.santri.options[el.santri.selectedIndex].text;
+            
             document.getElementById('lblRaporNama').textContent = namaSantriAktif;
+            document.getElementById('lblRaporNis').textContent = aktifSantri?.nisn || aktifSantri?.nis || '-'; // Jika kolom nis/nisn ada di DB
 
             try {
                 const logs = await api.get('input_harian', `select=*&nama_santri=eq.${namaSantriAktif}&tanggal=gte.${tglMulai}&tanggal=lte.${tglSelesai}`) || [];
