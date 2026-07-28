@@ -7,9 +7,9 @@
 import { renderDashboard, initDashboard } from './dashboard.js';
 import { renderSantri, initSantri } from './santri.js';
 import { renderInputHarian, initInputHarian } from './input_harian.js';
-import { renderLaporan, initLaporan } from './laporan.js'; // <-- INI YANG BIKIN LAPORAN MUNCUL
+import { renderLaporan, initLaporan } from './laporan.js'; 
 import { api } from './api.js';
-import { renderSetting, initSetting } from './setting.js';
+import { renderSetting, initSetting } from './setting.js'; // <-- IMPORT SETTING SUDAH ADA
 
 // ==========================================
 // FUNGSI LONCENG GLOBAL (ANTI-MELESET)
@@ -186,13 +186,14 @@ document.addEventListener('DOMContentLoaded', () => {
             mainContent.innerHTML = renderInputHarian();
             initInputHarian();
         } else if (hash === '#laporan') {
-            // 🔥 INI DIA KUNCI LAPORANNYA 🔥
             pageTitle.textContent = 'Laporan & Rapor Bulanan';
             mainContent.innerHTML = renderLaporan();
             initLaporan();
         } else if (hash === '#setting') {
+            // 🔥 UPDATE: Router Pengaturan Sudah Tersambung 🔥
             pageTitle.textContent = 'Pengaturan Sistem';
-            mainContent.innerHTML = `<div class="card" style="padding:40px; text-align:center;"><h2>Fitur Pengaturan segera hadir!</h2></div>`;
+            mainContent.innerHTML = renderSetting();
+            initSetting();
         } else {
             pageTitle.textContent = 'Halaman Tidak Ditemukan';
             mainContent.innerHTML = `<div class="card" style="padding:40px; text-align:center; color: red;"><h2>404 Not Found</h2></div>`;
