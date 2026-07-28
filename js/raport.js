@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * MODUL RAPORT - INPUT & CETAK (TAHSIN, TAHFIDZ & ABSENSI)
+ * MODUL RAPORT - INPUT & CETAK (AUTO-FILL DARI DATABASE)
  * File: js/raport.js
  * ==================================================
  */
@@ -141,11 +141,11 @@ export const renderRaport = () => {
                 <div class="filter-grid" style="padding: 0; gap: 15px;">
                     <div>
                         <label class="form-label">Capaian Tahsin (Qiro'ah)</label>
-                        <input type="text" id="inputTahsin" class="form-input" placeholder="Contoh: Jilid 4 (Halaman 25)">
+                        <input type="text" id="inputTahsin" class="form-input" placeholder="Menunggu pilihan santri...">
                     </div>
                     <div>
                         <label class="form-label">Capaian Tahfidz Qur'an</label>
-                        <input type="text" id="inputTahfidz" class="form-input" placeholder="Contoh: Juz 30 (Surat An-Naba)">
+                        <input type="text" id="inputTahfidz" class="form-input" placeholder="Menunggu pilihan santri...">
                     </div>
                 </div>
             </div>
@@ -154,7 +154,7 @@ export const renderRaport = () => {
         <!-- REKAP KEHADIRAN -->
         <section class="glass-card">
             <div class="table-header">
-                <h3><i class="fas fa-calendar-check" style="color: #002452; margin-right: 8px;"></i> 3. Rekap Kehadiran (1 Semester)</h3>
+                <h3><i class="fas fa-calendar-check" style="color: #002452; margin-right: 8px;"></i> 3. Rekap Kehadiran (Otomatis)</h3>
             </div>
             <div class="table-container">
                 <table class="raport-table">
@@ -204,6 +204,7 @@ export const initRaport = async () => {
     const inputTahsin = document.getElementById('inputTahsin');
     const inputTahfidz = document.getElementById('inputTahfidz');
     
+    const filterTahun = document.getElementById('filterTahun');
     const filterSemester = document.getElementById('filterSemester');
     const filterKelas = document.getElementById('filterKelas');
     const filterSantri = document.getElementById('filterSantri');
@@ -300,10 +301,15 @@ export const initRaport = async () => {
             `;
         });
         tabelKehadiranBody.innerHTML = html;
+        // Panggil penarikan data ulang jika santri sudah dipilih
+        if(filterSantri.value) triggerTarikDataOtomatis();
     };
     
     filterSemester.addEventListener('change', renderTabelKehadiran);
-    renderTabelKehadiran(); // Render pertama kali
+    filterTahun.addEventListener('change', () => {
+        if(filterSantri.value) triggerTarikDataOtomatis();
+    });
+    renderTabelKehadiran();
 
     // -----------------------------------------------------
     // 3. MENGAMBIL DATA GURU & SANTRI DARI DATABASE
@@ -356,13 +362,104 @@ export const initRaport = async () => {
     });
 
     // -----------------------------------------------------
-    // 4. MENGUMPULKAN DATA UNTUK DISIMPAN / DICETAK
+    // 4. MESIN PENARIK DATA OTOMATIS (AJAIB)
+    // -----------------------------------------------------
+    const triggerTarikDataOtomatis = async () => {
+        const santriId = filterSantri.value;
+        if (!santriId) return;
+
+        // Tampilkan indikator memuat data
+        inputTahsin.value = 'Memuat dari database...';
+        inputTahfidz.value = 'Memuat dari database...';
+        document.querySelectorAll('.input-hadir').forEach(el => el.value = '');
+        document.querySelectorAll('.input-total').forEach(el => el.value = '');
+
+        const tahunAjaran = filterTahun.value; // cth: "2026/2027"
+        const semester = filterSemester.value; // cth: "Ganjil (Odd)"
+        const [tahun1, tahun2] = tahunAjaran.split('/');
+        
+        let startDate, endDate, bulanMapping;
+        if (semester.includes('Ganjil')) {
+            startDate = `${tahun1}-07-01`; endDate = `${tahun1}-12-31`;
+            bulanMapping = { '07': 'Juli', '08': 'Agustus', '09': 'September', '10': 'Oktober', '11': 'November', '12': 'Desember' };
+        } else {
+            startDate = `${tahun2}-01-01`; endDate = `${tahun2}-06-30`;
+            bulanMapping = { '01': 'Januari', '02': 'Februari', '03': 'Maret', '04': 'April', '05': 'Mei', '06': 'Juni' };
+        }
+
+        try {
+            // Ambil semua data histori harian santri ini di semester yang dipilih
+            const rekapan = await api.get('input_harian', `select=*&santri_id=eq.${santriId}&tanggal=gte.${startDate}&tanggal=lte.${endDate}&order=tanggal.asc`);
+            
+            if (rekapan && rekapan.length > 0) {
+                let rekapBulan = {};
+                let lastTahsin = '';
+                let lastTahfidz = '';
+
+                rekapan.forEach(rekord => {
+                    // MENGHITUNG ABSENSI
+                    const tgl = rekord.tanggal; 
+                    if (tgl) {
+                        const bln = tgl.substring(5, 7); 
+                        const namaBln = bulanMapping[bln];
+                        if (namaBln) {
+                            if (!rekapBulan[namaBln]) rekapBulan[namaBln] = { hadir: 0, total: 0 };
+                            rekapBulan[namaBln].total += 1;
+                            if (rekord.status_hadir === 'Hadir') rekapBulan[namaBln].hadir += 1;
+                        }
+                    }
+
+                    // MENCARI CAPAIAN TERAKHIR TAHFIDZ & TAHSIN
+                    // (Menggunakan deteksi kata kunci pada kolom yang biasa dipakai untuk catatan setoran)
+                    const jenis = (rekord.jenis_setoran || rekord.kategori || rekord.materi || '').toLowerCase();
+                    const capaian = rekord.jilid_surah || rekord.halaman_ayat || rekord.keterangan || '';
+                    
+                    if (jenis.includes('tahsin') || jenis.includes('jilid') || jenis.includes('qiroah')) {
+                        lastTahsin = capaian;
+                    } 
+                    if (jenis.includes('tahfidz') || jenis.includes('surat') || jenis.includes('hafalan')) {
+                        lastTahfidz = capaian;
+                    }
+                });
+
+                // TEMPELKAN HASIL HITUNGAN KE DALAM FORM ABSENSI
+                document.querySelectorAll('.baris-kehadiran').forEach(tr => {
+                    const blnUI = tr.querySelector('.input-bulan').value;
+                    if (rekapBulan[blnUI]) {
+                        tr.querySelector('.input-hadir').value = rekapBulan[blnUI].hadir;
+                        tr.querySelector('.input-total').value = rekapBulan[blnUI].total;
+                    } else {
+                        tr.querySelector('.input-hadir').value = 0;
+                        tr.querySelector('.input-total').value = 0;
+                    }
+                });
+
+                // TEMPELKAN CAPAIAN TERBARU
+                inputTahsin.value = lastTahsin || 'Belum ada setoran';
+                inputTahfidz.value = lastTahfidz || 'Belum ada setoran';
+
+            } else {
+                inputTahsin.value = 'Data kosong di semester ini';
+                inputTahfidz.value = 'Data kosong di semester ini';
+                document.querySelectorAll('.input-hadir').forEach(el => el.value = 0);
+                document.querySelectorAll('.input-total').forEach(el => el.value = 0);
+            }
+        } catch (err) {
+            console.error("Gagal menarik data otomatis:", err);
+            inputTahsin.value = ''; inputTahfidz.value = '';
+        }
+    };
+
+    filterSantri.addEventListener('change', triggerTarikDataOtomatis);
+
+
+    // -----------------------------------------------------
+    // 5. MENGUMPULKAN DATA UNTUK DISIMPAN / DICETAK
     // -----------------------------------------------------
     const kumpulkanDataForm = () => {
         const sId = filterSantri.value;
         if (!sId) return null;
 
-        // Ambil Data Akademik
         const dataAkademik = [];
         document.querySelectorAll('.baris-nilai').forEach(tr => {
             const materi = tr.querySelector('.input-materi').value;
@@ -378,7 +475,6 @@ export const initRaport = async () => {
             }
         });
 
-        // Ambil Data Kehadiran
         const dataKehadiran = [];
         document.querySelectorAll('.baris-kehadiran').forEach(tr => {
             const hadir = tr.querySelector('.input-hadir').value;
@@ -392,7 +488,6 @@ export const initRaport = async () => {
             }
         });
 
-        // Kemas dalam objek detail_nilai (JSONB)
         const detail_nilai = {
             akademik: dataAkademik,
             kehadiran: dataKehadiran,
@@ -403,8 +498,8 @@ export const initRaport = async () => {
         return {
             santri_id: sId,
             guru_id: loggedInGuruId,
-            tahun_ajaran: document.getElementById('filterTahun').value,
-            semester: document.getElementById('filterSemester').value,
+            tahun_ajaran: filterTahun.value,
+            semester: filterSemester.value,
             rata_rata: parseFloat(teksRataRata.textContent),
             predikat: teksPredikatAkhir.textContent,
             catatan: inputCatatan.value,
@@ -413,7 +508,7 @@ export const initRaport = async () => {
     };
 
     // -----------------------------------------------------
-    // 5. TOMBOL SIMPAN KE DATABASE
+    // 6. TOMBOL SIMPAN & PREVIEW (CETAK)
     // -----------------------------------------------------
     document.getElementById('btnSimpanRaport').addEventListener('click', async () => {
         const data = kumpulkanDataForm();
@@ -436,9 +531,6 @@ export const initRaport = async () => {
         btn.disabled = false;
     });
 
-    // -----------------------------------------------------
-    // 6. TOMBOL PREVIEW (CETAK PDF RAPORT)
-    // -----------------------------------------------------
     document.getElementById('btnPreviewRaport').addEventListener('click', () => {
         const data = kumpulkanDataForm();
         if (!data) return alert("Pilih Nama Santri terlebih dahulu untuk melihat Raport!");
@@ -446,7 +538,6 @@ export const initRaport = async () => {
         const santri = dataSantriCache.find(s => s.id === data.santri_id);
         const guru = dataGuruCache || { nama: 'Wali Kelas', ttd_digital: '' };
         
-        // Render Baris Akademik
         let htmlBarisNilai = '';
         data.detail_nilai.akademik.forEach((n, idx) => {
             htmlBarisNilai += `
@@ -460,7 +551,6 @@ export const initRaport = async () => {
             `;
         });
 
-        // Render Header Kolom Kehadiran
         let headerKehadiran = '';
         let nilaiKehadiran = '';
         data.detail_nilai.kehadiran.forEach(k => {
@@ -468,13 +558,11 @@ export const initRaport = async () => {
             nilaiKehadiran += `<td style="padding:8px; border:1px solid #000; text-align:center; font-weight:bold;">${k.hadir} / ${k.total}</td>`;
         });
         
-        // Jika kehadiran kosong, beri baris kosong
         if(data.detail_nilai.kehadiran.length === 0) {
             headerKehadiran = `<th style="padding:8px; border:1px solid #000; background:#f0f0f0;">Data Kehadiran</th>`;
             nilaiKehadiran = `<td style="padding:8px; border:1px solid #000; text-align:center;">Belum ada data</td>`;
         }
 
-        // Template HTML Kertas A4/F4 (Meniru persis format di screenshot Ustadz)
         const htmlCetak = `
             <html>
             <head>
