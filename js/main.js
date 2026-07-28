@@ -9,8 +9,8 @@ import { renderSantri, initSantri } from './santri.js';
 import { renderInputHarian, initInputHarian } from './input_harian.js';
 import { renderLaporan, initLaporan } from './laporan.js'; 
 import { api } from './api.js';
-import { renderSetting, initSetting } from './setting.js'; // <-- IMPORT SETTING SUDAH ADA
-import { renderRaport, initRaport } from './raport.js';
+import { renderSetting, initSetting } from './setting.js';
+import { renderRaport, initRaport } from './raport.js'; // <-- IMPORT RAPORT
 
 // ==========================================
 // FUNGSI LONCENG GLOBAL (ANTI-MELESET)
@@ -187,11 +187,15 @@ document.addEventListener('DOMContentLoaded', () => {
             mainContent.innerHTML = renderInputHarian();
             initInputHarian();
         } else if (hash === '#laporan') {
-            pageTitle.textContent = 'Laporan & Rapor Bulanan';
+            pageTitle.textContent = 'Laporan Statistik';
             mainContent.innerHTML = renderLaporan();
             initLaporan();
+        } else if (hash === '#raport') {
+            // 🔥 UPDATE: Router Raport Sudah Ditambahkan 🔥
+            pageTitle.textContent = 'Cetak Raport Santri';
+            mainContent.innerHTML = renderRaport();
+            initRaport();
         } else if (hash === '#setting') {
-            // 🔥 UPDATE: Router Pengaturan Sudah Tersambung 🔥
             pageTitle.textContent = 'Pengaturan Sistem';
             mainContent.innerHTML = renderSetting();
             initSetting();
