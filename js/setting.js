@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * MODUL PENGATURAN USTADZ - VERSI 4 (FITUR TANDA TANGAN DIGITAL)
+ * MODUL PENGATURAN USTADZ - VERSI 5 (FITUR BANK CATATAN & WA)
  * File: js/setting.js
  * ==================================================
  */
@@ -15,13 +15,11 @@ export const renderSetting = () => {
         .header-title { font-size: 1.2rem; font-weight: 800; color: var(--text-main); margin-bottom: 5px; display: flex; align-items: center; gap: 8px; }
         .header-subtitle { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px; }
 
-        /* TAB NAVIGATION SCROLLABLE */
         .tab-container { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; border-bottom: 2px solid var(--border); margin-bottom: 10px; scrollbar-width: none; }
         .tab-container::-webkit-scrollbar { display: none; }
         .tab-btn { background: var(--surface); border: 1px solid var(--border); padding: 10px 15px; border-radius: 10px; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); cursor: pointer; transition: all 0.2s; white-space: nowrap; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
         .tab-btn.active { background: #3B82F6; color: white; border-color: #3B82F6; box-shadow: 0 4px 10px rgba(59,130,246,0.3); }
         
-        /* CARD & FORM */
         .setting-card { background: var(--surface); border-radius: 16px; padding: 22px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); border: 1px solid var(--border); margin-bottom: 20px; animation: fadeIn 0.3s ease-out; }
         .card-title { font-size: 1.05rem; font-weight: 800; color: var(--text-main); margin-top: 0; margin-bottom: 15px; border-bottom: 2px solid #F1F5F9; padding-bottom: 10px; display: flex; align-items: center; gap: 8px; }
         
@@ -34,12 +32,10 @@ export const renderSetting = () => {
         .btn-simpan { width: 100%; padding: 14px; background: linear-gradient(135deg, #3B82F6, #2563EB); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 0.95rem; cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(37,99,235,0.2); }
         .btn-simpan:active { transform: scale(0.97); }
 
-        /* KANVAS TANDA TANGAN */
         .canvas-container { border: 2px dashed #CBD5E1; border-radius: 12px; background: #F8FAFC; overflow: hidden; margin-bottom: 15px; position: relative; }
         #canvasTtd { width: 100%; height: 200px; cursor: crosshair; touch-action: none; }
         .btn-clear { position: absolute; top: 10px; right: 10px; background: #FEE2E2; color: #DC2626; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer; z-index: 10; }
 
-        /* TABS PILL LIBUR */
         .pill-tabs { display: flex; background: #f1f5f9; border-radius: 12px; padding: 4px; gap: 4px; width: 100%; margin-bottom: 8px;}
         .pill-tabs label { padding: 10px 15px; font-size: 0.85rem; font-weight: 700; color: #64748b; cursor: pointer; border-radius: 8px; transition: 0.2s; flex: 1; text-align: center; }
         .pill-tabs input { display: none; }
@@ -93,40 +89,41 @@ export const renderSetting = () => {
             </div>
         </div>
 
-        <!-- ===================================== -->
-        <!-- 2. PANEL TANDA TANGAN DIGITAL (AKTIF) -->
-        <!-- ===================================== -->
+        <!-- 2. PANEL TANDA TANGAN DIGITAL -->
         <div id="panelTtd" class="panel-setting" style="display: none;">
             <div class="setting-card">
                 <h3 class="card-title"><i class="fas fa-pen-nib"></i> Tanda Tangan Digital</h3>
                 <p style="font-size: 0.85rem; color: #64748B; margin-bottom: 15px;">Tanda tangan di bawah ini otomatis ditempelkan pada file Rapor/Laporan PDF.</p>
                 <div class="canvas-container">
                     <button class="btn-clear" id="btnClearTtd"><i class="fas fa-eraser"></i> Hapus</button>
-                    <!-- Kanvas Tanda Tangan -->
                     <canvas id="canvasTtd"></canvas>
                 </div>
-                <!-- Tambah ID btnSimpanTtd -->
                 <button class="btn-simpan" id="btnSimpanTtd" style="background: linear-gradient(135deg, #10B981, #059669);"><i class="fas fa-cloud-upload-alt"></i> Simpan Tanda Tangan</button>
             </div>
         </div>
 
-        <!-- 3. PANEL BANK CATATAN & TEMPLATE -->
+        <!-- ============================================== -->
+        <!-- 3. PANEL BANK CATATAN & TEMPLATE (AKTIF)       -->
+        <!-- ============================================== -->
         <div id="panelTemplate" class="panel-setting" style="display: none;">
             <div class="setting-card">
                 <h3 class="card-title"><i class="fas fa-book-open"></i> Template Catatan Rapor</h3>
+                <p style="font-size: 0.85rem; color: #64748B; margin-bottom: 15px;">Catatan ini akan menjadi teks awal saat Anda mengisi form evaluasi rapor.</p>
                 <div class="form-group">
                     <label>Kalimat Default Evaluasi</label>
-                    <textarea class="form-control" placeholder="Ketik kalimat evaluasi standar di sini..."></textarea>
+                    <textarea id="inputTemplateRapor" class="form-control" placeholder="Ketik kalimat evaluasi standar di sini...">Ananda telah mengikuti kegiatan belajar dengan baik.</textarea>
                 </div>
-                <button class="btn-simpan"><i class="fas fa-save"></i> Simpan Template Rapor</button>
+                <button class="btn-simpan" id="btnSimpanTemplateRapor"><i class="fas fa-save"></i> Simpan Template Rapor</button>
             </div>
+            
             <div class="setting-card">
                 <h3 class="card-title" style="color: #059669; border-bottom-color: #D1FAE5;"><i class="fab fa-whatsapp"></i> Template Pesan Pengantar</h3>
+                <p style="font-size: 0.85rem; color: #64748B; margin-bottom: 15px;">Pesan ini akan otomatis disalin saat membagikan rapor santri via WA.</p>
                 <div class="form-group">
                     <label>Pesan WhatsApp Default</label>
-                    <textarea class="form-control">Assalamu'alaikum Warahmatullahi Wabarakatuh.&#10;&#10;Ayah/Bunda, berikut kami lampirkan file Laporan Perkembangan (Rapor) Ananda bulan ini. Mohon berkenan untuk ditinjau.&#10;&#10;Jazakumullah Khairan.</textarea>
+                    <textarea id="inputTemplateWa" class="form-control">Assalamu'alaikum Warahmatullahi Wabarakatuh.&#10;&#10;Ayah/Bunda, berikut kami lampirkan file Laporan Perkembangan (Rapor) Ananda bulan ini. Mohon berkenan untuk ditinjau.&#10;&#10;Jazakumullah Khairan.</textarea>
                 </div>
-                <button class="btn-simpan" style="background: linear-gradient(135deg, #10B981, #059669);"><i class="fas fa-save"></i> Simpan Template WA</button>
+                <button class="btn-simpan" id="btnSimpanTemplateWa" style="background: linear-gradient(135deg, #10B981, #059669); box-shadow: 0 4px 12px rgba(16,185,129,0.2);"><i class="fas fa-save"></i> Simpan Template WA</button>
             </div>
         </div>
 
@@ -177,33 +174,26 @@ export const initSetting = async () => {
         btn.addEventListener('click', () => {
             tabBtns.forEach(b => b.classList.remove('active'));
             panels.forEach(p => p.style.display = 'none');
-            
             btn.classList.add('active');
             const targetId = btn.getAttribute('data-target');
             document.getElementById(targetId).style.display = 'block';
-
             if (targetId === 'panelTtd') resizeCanvas();
         });
     });
 
-    // ==========================================
-    // DEKLARASI GLOBAL UNTUK KANVAS TTD
-    // ==========================================
     const canvas = document.getElementById('canvasTtd');
     const ctx = canvas.getContext('2d');
     let isDrawing = false;
-    let ttdSudahAda = ''; // Menyimpan data TTD dari database
+    let ttdSudahAda = ''; 
 
     const resizeCanvas = () => {
         const rect = canvas.parentElement.getBoundingClientRect();
         canvas.width = rect.width;
         canvas.height = 200; 
-        ctx.strokeStyle = "#1E3A8A"; // Warna tinta biru dongker agar terlihat natural
+        ctx.strokeStyle = "#1E3A8A"; 
         ctx.lineWidth = 3;
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
-
-        // Jika sudah ada ttd dari database, gambar ulang saat di-resize
         if (ttdSudahAda) {
             const img = new Image();
             img.onload = () => ctx.drawImage(img, 0, 0);
@@ -211,20 +201,24 @@ export const initSetting = async () => {
         }
     };
 
-    // ==========================================
-    // LOGIKA PROFIL, GANTI PASSWORD, & LOAD TTD
-    // ==========================================
+    // DEKLARASI ELEMEN 
     const inputNamaProfil = document.getElementById('inputNamaProfil');
     const inputWaProfil = document.getElementById('inputWaProfil');
     const btnSimpanProfil = document.getElementById('btnSimpanProfil');
-    
     const inputPasswordBaru = document.getElementById('inputPasswordBaru');
     const inputPasswordKonfirm = document.getElementById('inputPasswordKonfirm');
     const btnGantiPassword = document.getElementById('btnGantiPassword');
+    const inputTemplateRapor = document.getElementById('inputTemplateRapor');
+    const inputTemplateWa = document.getElementById('inputTemplateWa');
+    const btnSimpanTemplateRapor = document.getElementById('btnSimpanTemplateRapor');
+    const btnSimpanTemplateWa = document.getElementById('btnSimpanTemplateWa');
 
     let loggedInGuruId = localStorage.getItem('guru_id');
 
-    const loadProfil = async () => {
+    // ==========================================
+    // LOAD SEMUA DATA DARI DATABASE
+    // ==========================================
+    const loadDataGuru = async () => {
         try {
             if (!loggedInGuruId) {
                 const dataGuru = await api.get('guru', 'select=*&limit=1');
@@ -237,15 +231,21 @@ export const initSetting = async () => {
             if (loggedInGuruId) {
                 const profileData = await api.get('guru', `select=*&id=eq.${loggedInGuruId}`);
                 if (profileData && profileData.length > 0) {
-                    inputNamaProfil.value = profileData[0].nama || '';
-                    inputWaProfil.value = profileData[0].no_hp || '';
+                    const guru = profileData[0];
                     
+                    // Isi Profil
+                    inputNamaProfil.value = guru.nama || '';
+                    inputWaProfil.value = guru.no_hp || '';
                     document.getElementById('alertSimulasiLogin').style.display = 'flex';
-                    document.getElementById('namaLoginSimulasi').textContent = profileData[0].nama || 'Anonim';
+                    document.getElementById('namaLoginSimulasi').textContent = guru.nama || 'Anonim';
 
-                    // LOAD TTD JIKA ADA
-                    if (profileData[0].ttd_digital) {
-                        ttdSudahAda = profileData[0].ttd_digital;
+                    // Isi Template
+                    if (guru.template_rapor) inputTemplateRapor.value = guru.template_rapor;
+                    if (guru.template_wa) inputTemplateWa.value = guru.template_wa;
+
+                    // Isi Tanda Tangan
+                    if (guru.ttd_digital) {
+                        ttdSudahAda = guru.ttd_digital;
                         const img = new Image();
                         img.onload = () => {
                             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -256,90 +256,94 @@ export const initSetting = async () => {
                 }
             }
         } catch (e) {
-            console.error("Gagal memuat profil:", e);
+            console.error("Gagal memuat data guru:", e);
         }
     };
     
-    await loadProfil(); 
+    await loadDataGuru(); 
 
-    // AKSI SIMPAN PROFIL
+    // ==========================================
+    // AKSI TOMBOL SIMPAN
+    // ==========================================
+    
+    // Simpan Profil
     btnSimpanProfil.addEventListener('click', async () => {
         if (!loggedInGuruId) return alert('Sesi login tidak ditemukan.');
         const namaBaru = inputNamaProfil.value;
         const waBaru = inputWaProfil.value;
         if (!namaBaru) return alert('Nama tidak boleh kosong!');
-
         const oriText = btnSimpanProfil.innerHTML;
         btnSimpanProfil.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
         btnSimpanProfil.disabled = true;
-
         try {
             await api.update('guru', loggedInGuruId, { nama: namaBaru, no_hp: waBaru });
             alert('Alhamdulillah, profil berhasil diperbarui!');
             document.getElementById('namaLoginSimulasi').textContent = namaBaru;
-        } catch (e) {
-            alert('Gagal memperbarui profil. Cek koneksi.');
-        }
-
+        } catch (e) { alert('Gagal memperbarui profil. Cek koneksi.'); }
         btnSimpanProfil.innerHTML = oriText;
         btnSimpanProfil.disabled = false;
     });
 
-    // AKSI GANTI PASSWORD
+    // Ganti Password
     btnGantiPassword.addEventListener('click', async () => {
         if (!loggedInGuruId) return alert('Sesi login tidak ditemukan.');
         const pw1 = inputPasswordBaru.value;
         const pw2 = inputPasswordKonfirm.value;
-
         if (!pw1 || !pw2) return alert('Password baru tidak boleh kosong!');
         if (pw1 !== pw2) return alert('Konfirmasi password tidak cocok!');
         if (pw1.length < 6) return alert('Untuk keamanan, password minimal 6 karakter!');
-
         const oriText = btnGantiPassword.innerHTML;
         btnGantiPassword.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
         btnGantiPassword.disabled = true;
-
         try {
             await api.update('guru', loggedInGuruId, { password: pw1 });
             alert('Password berhasil diganti! Harap ingat password baru Anda.');
-            inputPasswordBaru.value = '';
-            inputPasswordKonfirm.value = '';
-        } catch (e) {
-            alert('Gagal mengganti password. Cek koneksi.');
-        }
-
+            inputPasswordBaru.value = ''; inputPasswordKonfirm.value = '';
+        } catch (e) { alert('Gagal mengganti password. Cek koneksi.'); }
         btnGantiPassword.innerHTML = oriText;
         btnGantiPassword.disabled = false;
     });
 
+    // Simpan Template Rapor
+    btnSimpanTemplateRapor.addEventListener('click', async () => {
+        if (!loggedInGuruId) return alert('Sesi login tidak ditemukan.');
+        const oriText = btnSimpanTemplateRapor.innerHTML;
+        btnSimpanTemplateRapor.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+        btnSimpanTemplateRapor.disabled = true;
+        try {
+            await api.update('guru', loggedInGuruId, { template_rapor: inputTemplateRapor.value });
+            alert('Template Catatan Rapor berhasil tersimpan!');
+        } catch(e) { alert('Gagal menyimpan template Rapor.'); console.error(e); }
+        btnSimpanTemplateRapor.innerHTML = oriText;
+        btnSimpanTemplateRapor.disabled = false;
+    });
 
-    // ==========================================
-    // AKSI SIMPAN TANDA TANGAN DIGITAL
-    // ==========================================
+    // Simpan Template WA
+    btnSimpanTemplateWa.addEventListener('click', async () => {
+        if (!loggedInGuruId) return alert('Sesi login tidak ditemukan.');
+        const oriText = btnSimpanTemplateWa.innerHTML;
+        btnSimpanTemplateWa.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+        btnSimpanTemplateWa.disabled = true;
+        try {
+            await api.update('guru', loggedInGuruId, { template_wa: inputTemplateWa.value });
+            alert('Template Pesan WA berhasil tersimpan!');
+        } catch(e) { alert('Gagal menyimpan template WA.'); console.error(e); }
+        btnSimpanTemplateWa.innerHTML = oriText;
+        btnSimpanTemplateWa.disabled = false;
+    });
+
+    // Simpan Tanda Tangan
     canvas.addEventListener('mousedown', (e) => { isDrawing = true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY); });
     canvas.addEventListener('mousemove', (e) => { if (isDrawing) { ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); } });
     canvas.addEventListener('mouseup', () => isDrawing = false);
     canvas.addEventListener('mouseout', () => isDrawing = false);
-
-    canvas.addEventListener('touchstart', (e) => {
-        e.preventDefault(); isDrawing = true;
-        const touch = e.touches[0];
-        const rect = canvas.getBoundingClientRect();
-        ctx.beginPath();
-        ctx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
-    });
-    canvas.addEventListener('touchmove', (e) => {
-        e.preventDefault(); if (!isDrawing) return;
-        const touch = e.touches[0];
-        const rect = canvas.getBoundingClientRect();
-        ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
-        ctx.stroke();
-    });
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); isDrawing = true; const touch = e.touches[0]; const rect = canvas.getBoundingClientRect(); ctx.beginPath(); ctx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top); });
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); if (!isDrawing) return; const touch = e.touches[0]; const rect = canvas.getBoundingClientRect(); ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top); ctx.stroke(); });
     canvas.addEventListener('touchend', () => isDrawing = false);
 
     document.getElementById('btnClearTtd').addEventListener('click', () => { 
         ctx.clearRect(0, 0, canvas.width, canvas.height); 
-        ttdSudahAda = ''; // Hapus dari memori juga
+        ttdSudahAda = ''; 
     });
 
     window.addEventListener('resize', () => {
@@ -349,26 +353,17 @@ export const initSetting = async () => {
     const btnSimpanTtd = document.getElementById('btnSimpanTtd');
     btnSimpanTtd.addEventListener('click', async () => {
         if (!loggedInGuruId) return alert('Sesi login tidak ditemukan.');
-        
         const oriText = btnSimpanTtd.innerHTML;
         btnSimpanTtd.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
         btnSimpanTtd.disabled = true;
-
         try {
-            // Ubah coretan kanvas menjadi data gambar (Base64)
             const dataTtdBase64 = canvas.toDataURL("image/png");
-            
-            await api.update('guru', loggedInGuruId, { 
-                ttd_digital: dataTtdBase64 
-            });
-            
-            ttdSudahAda = dataTtdBase64; // Simpan ke memori
-            alert('Tanda tangan berhasil disimpan! Tanda tangan ini akan otomatis terlampir di file Laporan PDF.');
+            await api.update('guru', loggedInGuruId, { ttd_digital: dataTtdBase64 });
+            ttdSudahAda = dataTtdBase64;
+            alert('Tanda tangan berhasil disimpan!');
         } catch (e) {
-            console.error("Error Simpan TTD:", e);
-            alert('Gagal menyimpan. Pastikan kolom "ttd_digital" dengan tipe "text" sudah dibuat di Supabase.');
+            alert('Gagal menyimpan tanda tangan.');
         }
-
         btnSimpanTtd.innerHTML = oriText;
         btnSimpanTtd.disabled = false;
     });
@@ -382,10 +377,7 @@ export const initSetting = async () => {
     const radioPilih = document.getElementById('udzur_pilih');
     const wadahPilihanKelas = document.getElementById('udzurPilihanKelas');
 
-    udzurAlasan.addEventListener('change', (e) => {
-        udzurAlasanManual.style.display = e.target.value === 'Lainnya' ? 'block' : 'none';
-    });
-
+    udzurAlasan.addEventListener('change', (e) => { udzurAlasanManual.style.display = e.target.value === 'Lainnya' ? 'block' : 'none'; });
     const togglePilihanKelas = () => { wadahPilihanKelas.style.display = radioPilih.checked ? 'block' : 'none'; };
     radioSemua.addEventListener('change', togglePilihanKelas);
     radioPilih.addEventListener('change', togglePilihanKelas);
@@ -400,7 +392,5 @@ export const initSetting = async () => {
             });
             wadahPilihanKelas.innerHTML = htmlCheckbox;
         }
-    } catch (e) {
-        console.error("Gagal load kelas libur:", e);
-    }
+    } catch (e) { console.error("Gagal load kelas libur:", e); }
 };
