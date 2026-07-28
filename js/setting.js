@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * MODUL PENGATURAN USTADZ - VERSI 5 (FITUR BANK CATATAN & WA)
+ * MODUL PENGATURAN USTADZ - VERSI 6 (FINAL ALL FITUR)
  * File: js/setting.js
  * ==================================================
  */
@@ -102,9 +102,7 @@ export const renderSetting = () => {
             </div>
         </div>
 
-        <!-- ============================================== -->
-        <!-- 3. PANEL BANK CATATAN & TEMPLATE (AKTIF)       -->
-        <!-- ============================================== -->
+        <!-- 3. PANEL BANK CATATAN & TEMPLATE -->
         <div id="panelTemplate" class="panel-setting" style="display: none;">
             <div class="setting-card">
                 <h3 class="card-title"><i class="fas fa-book-open"></i> Template Catatan Rapor</h3>
@@ -123,11 +121,13 @@ export const renderSetting = () => {
                     <label>Pesan WhatsApp Default</label>
                     <textarea id="inputTemplateWa" class="form-control">Assalamu'alaikum Warahmatullahi Wabarakatuh.&#10;&#10;Ayah/Bunda, berikut kami lampirkan file Laporan Perkembangan (Rapor) Ananda bulan ini. Mohon berkenan untuk ditinjau.&#10;&#10;Jazakumullah Khairan.</textarea>
                 </div>
-                <button class="btn-simpan" id="btnSimpanTemplateWa" style="background: linear-gradient(135deg, #10B981, #059669); box-shadow: 0 4px 12px rgba(16,185,129,0.2);"><i class="fas fa-save"></i> Simpan Template WA</button>
+                <button class="btn-simpan" id="btnSimpanTemplateWa" style="background: linear-gradient(135deg, #10B981, #059669);"><i class="fas fa-save"></i> Simpan Template WA</button>
             </div>
         </div>
 
-        <!-- 4. PANEL ATUR LIBUR -->
+        <!-- ============================================== -->
+        <!-- 4. PANEL ATUR LIBUR (AKTIF DATABASE)           -->
+        <!-- ============================================== -->
         <div id="panelLibur" class="panel-setting" style="display: none;">
             <div class="setting-card" style="border-top: 4px solid #F59E0B;">
                 <h3 class="card-title" style="color: #D97706; border-bottom-color: #FEF3C7; padding-top:5px;"><i class="fas fa-calendar-times"></i> Atur Libur Kelas</h3>
@@ -201,7 +201,6 @@ export const initSetting = async () => {
         }
     };
 
-    // DEKLARASI ELEMEN 
     const inputNamaProfil = document.getElementById('inputNamaProfil');
     const inputWaProfil = document.getElementById('inputWaProfil');
     const btnSimpanProfil = document.getElementById('btnSimpanProfil');
@@ -215,9 +214,7 @@ export const initSetting = async () => {
 
     let loggedInGuruId = localStorage.getItem('guru_id');
 
-    // ==========================================
-    // LOAD SEMUA DATA DARI DATABASE
-    // ==========================================
+    // LOAD DATA GURU
     const loadDataGuru = async () => {
         try {
             if (!loggedInGuruId) {
@@ -232,18 +229,12 @@ export const initSetting = async () => {
                 const profileData = await api.get('guru', `select=*&id=eq.${loggedInGuruId}`);
                 if (profileData && profileData.length > 0) {
                     const guru = profileData[0];
-                    
-                    // Isi Profil
                     inputNamaProfil.value = guru.nama || '';
                     inputWaProfil.value = guru.no_hp || '';
                     document.getElementById('alertSimulasiLogin').style.display = 'flex';
                     document.getElementById('namaLoginSimulasi').textContent = guru.nama || 'Anonim';
-
-                    // Isi Template
                     if (guru.template_rapor) inputTemplateRapor.value = guru.template_rapor;
                     if (guru.template_wa) inputTemplateWa.value = guru.template_wa;
-
-                    // Isi Tanda Tangan
                     if (guru.ttd_digital) {
                         ttdSudahAda = guru.ttd_digital;
                         const img = new Image();
@@ -255,18 +246,11 @@ export const initSetting = async () => {
                     }
                 }
             }
-        } catch (e) {
-            console.error("Gagal memuat data guru:", e);
-        }
+        } catch (e) { console.error("Gagal memuat data guru:", e); }
     };
-    
     await loadDataGuru(); 
 
-    // ==========================================
-    // AKSI TOMBOL SIMPAN
-    // ==========================================
-    
-    // Simpan Profil
+    // SIMPAN PROFIL
     btnSimpanProfil.addEventListener('click', async () => {
         if (!loggedInGuruId) return alert('Sesi login tidak ditemukan.');
         const namaBaru = inputNamaProfil.value;
@@ -284,7 +268,7 @@ export const initSetting = async () => {
         btnSimpanProfil.disabled = false;
     });
 
-    // Ganti Password
+    // GANTI PASSWORD
     btnGantiPassword.addEventListener('click', async () => {
         if (!loggedInGuruId) return alert('Sesi login tidak ditemukan.');
         const pw1 = inputPasswordBaru.value;
@@ -304,7 +288,7 @@ export const initSetting = async () => {
         btnGantiPassword.disabled = false;
     });
 
-    // Simpan Template Rapor
+    // SIMPAN TEMPLATE RAPOR & WA
     btnSimpanTemplateRapor.addEventListener('click', async () => {
         if (!loggedInGuruId) return alert('Sesi login tidak ditemukan.');
         const oriText = btnSimpanTemplateRapor.innerHTML;
@@ -313,12 +297,11 @@ export const initSetting = async () => {
         try {
             await api.update('guru', loggedInGuruId, { template_rapor: inputTemplateRapor.value });
             alert('Template Catatan Rapor berhasil tersimpan!');
-        } catch(e) { alert('Gagal menyimpan template Rapor.'); console.error(e); }
+        } catch(e) { alert('Gagal menyimpan template Rapor.'); }
         btnSimpanTemplateRapor.innerHTML = oriText;
         btnSimpanTemplateRapor.disabled = false;
     });
 
-    // Simpan Template WA
     btnSimpanTemplateWa.addEventListener('click', async () => {
         if (!loggedInGuruId) return alert('Sesi login tidak ditemukan.');
         const oriText = btnSimpanTemplateWa.innerHTML;
@@ -327,12 +310,12 @@ export const initSetting = async () => {
         try {
             await api.update('guru', loggedInGuruId, { template_wa: inputTemplateWa.value });
             alert('Template Pesan WA berhasil tersimpan!');
-        } catch(e) { alert('Gagal menyimpan template WA.'); console.error(e); }
+        } catch(e) { alert('Gagal menyimpan template WA.'); }
         btnSimpanTemplateWa.innerHTML = oriText;
         btnSimpanTemplateWa.disabled = false;
     });
 
-    // Simpan Tanda Tangan
+    // SIMPAN TTD
     canvas.addEventListener('mousedown', (e) => { isDrawing = true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY); });
     canvas.addEventListener('mousemove', (e) => { if (isDrawing) { ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); } });
     canvas.addEventListener('mouseup', () => isDrawing = false);
@@ -341,14 +324,8 @@ export const initSetting = async () => {
     canvas.addEventListener('touchmove', (e) => { e.preventDefault(); if (!isDrawing) return; const touch = e.touches[0]; const rect = canvas.getBoundingClientRect(); ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top); ctx.stroke(); });
     canvas.addEventListener('touchend', () => isDrawing = false);
 
-    document.getElementById('btnClearTtd').addEventListener('click', () => { 
-        ctx.clearRect(0, 0, canvas.width, canvas.height); 
-        ttdSudahAda = ''; 
-    });
-
-    window.addEventListener('resize', () => {
-        if (document.getElementById('panelTtd').style.display === 'block') resizeCanvas();
-    });
+    document.getElementById('btnClearTtd').addEventListener('click', () => { ctx.clearRect(0, 0, canvas.width, canvas.height); ttdSudahAda = ''; });
+    window.addEventListener('resize', () => { if (document.getElementById('panelTtd').style.display === 'block') resizeCanvas(); });
 
     const btnSimpanTtd = document.getElementById('btnSimpanTtd');
     btnSimpanTtd.addEventListener('click', async () => {
@@ -361,27 +338,28 @@ export const initSetting = async () => {
             await api.update('guru', loggedInGuruId, { ttd_digital: dataTtdBase64 });
             ttdSudahAda = dataTtdBase64;
             alert('Tanda tangan berhasil disimpan!');
-        } catch (e) {
-            alert('Gagal menyimpan tanda tangan.');
-        }
+        } catch (e) { alert('Gagal menyimpan tanda tangan.'); }
         btnSimpanTtd.innerHTML = oriText;
         btnSimpanTtd.disabled = false;
     });
 
     // ==========================================
-    // LOGIKA FORM ATUR LIBUR (UI SAJA DULU)
+    // LOGIKA FITUR ATUR LIBUR KELAS
     // ==========================================
+    const udzurTanggal = document.getElementById('udzurTanggal');
     const udzurAlasan = document.getElementById('udzurAlasan');
     const udzurAlasanManual = document.getElementById('udzurAlasanManual');
     const radioSemua = document.getElementById('udzur_semua');
     const radioPilih = document.getElementById('udzur_pilih');
     const wadahPilihanKelas = document.getElementById('udzurPilihanKelas');
+    const btnSimpanLibur = document.getElementById('btnSimpanLibur');
 
     udzurAlasan.addEventListener('change', (e) => { udzurAlasanManual.style.display = e.target.value === 'Lainnya' ? 'block' : 'none'; });
     const togglePilihanKelas = () => { wadahPilihanKelas.style.display = radioPilih.checked ? 'block' : 'none'; };
     radioSemua.addEventListener('change', togglePilihanKelas);
     radioPilih.addEventListener('change', togglePilihanKelas);
 
+    // Ambil daftar kelas dari dapodik
     try {
         const dataSantri = await api.get('dapodik_santri', 'select=nama_kelas');
         if (dataSantri && dataSantri.length > 0) {
@@ -391,6 +369,60 @@ export const initSetting = async () => {
                 htmlCheckbox += `<label class="checkbox-kelas"><input type="checkbox" name="chk_kelas_libur" value="${k}"> ${k}</label>`;
             });
             wadahPilihanKelas.innerHTML = htmlCheckbox;
+        } else {
+            wadahPilihanKelas.innerHTML = '<div style="text-align:center; font-size:0.85rem; color:#94a3b8;">Belum ada data kelas.</div>';
         }
     } catch (e) { console.error("Gagal load kelas libur:", e); }
+
+    // AKSI SIMPAN STATUS LIBUR KE TABEL `libur_kelas`
+    btnSimpanLibur.addEventListener('click', async () => {
+        if (!loggedInGuruId) return alert('Sesi login tidak ditemukan.');
+        
+        const tgl = udzurTanggal.value;
+        let alasan = udzurAlasan.value;
+        if (alasan === 'Lainnya') alasan = udzurAlasanManual.value;
+
+        if (!tgl || !alasan.trim()) return alert('Mohon lengkapi tanggal dan alasan libur!');
+
+        const cakupan = radioSemua.checked ? 'Semua Kelas' : 'Pilih Kelas';
+        let kelasTerpilih = 'Semua';
+
+        if (cakupan === 'Pilih Kelas') {
+            const checkedBoxes = document.querySelectorAll('input[name="chk_kelas_libur"]:checked');
+            if (checkedBoxes.length === 0) return alert('Pilih minimal satu kelas yang diliburkan!');
+            kelasTerpilih = Array.from(checkedBoxes).map(cb => cb.value).join(', ');
+        }
+
+        const oriText = btnSimpanLibur.innerHTML;
+        btnSimpanLibur.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+        btnSimpanLibur.disabled = true;
+
+        try {
+            // Mengirim data ke tabel libur_kelas menggunakan api post
+            await api.post('libur_kelas', {
+                guru_id: loggedInGuruId,
+                tanggal: tgl,
+                alasan: alasan,
+                cakupan: cakupan,
+                kelas_terpilih: kelasTerpilih
+            });
+
+            alert('Alhamdulillah, status libur kelas berhasil disimpan!');
+            
+            // Reset form kembali ke kondisi awal
+            udzurAlasan.value = 'Ustadz Izin (Ada Keperluan)';
+            udzurAlasanManual.style.display = 'none';
+            udzurAlasanManual.value = '';
+            radioSemua.checked = true;
+            wadahPilihanKelas.style.display = 'none';
+            document.querySelectorAll('input[name="chk_kelas_libur"]').forEach(cb => cb.checked = false);
+
+        } catch (e) {
+            console.error("Gagal menyimpan libur:", e);
+            alert('Gagal menyimpan jadwal libur. Cek koneksi internet Anda.');
+        }
+
+        btnSimpanLibur.innerHTML = oriText;
+        btnSimpanLibur.disabled = false;
+    });
 };
