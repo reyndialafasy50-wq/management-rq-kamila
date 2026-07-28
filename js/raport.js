@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * MODUL RAPORT - INPUT PENILAIAN DINIYAH
+ * MODUL RAPORT - INPUT PENILAIAN DINIYAH (REVISI UI & LOGIKA)
  * File: js/raport.js
  * ==================================================
  */
@@ -10,7 +10,6 @@ import { api } from './api.js';
 export const renderRaport = () => {
     return `
     <style>
-        /* Menggunakan variabel warna agar selaras dengan desain sistem kita */
         .raport-wrapper { font-family: 'Inter', sans-serif; color: var(--text-main); animation: fadeIn 0.4s ease-out; }
         .raport-header { margin-bottom: 24px; }
         .raport-title { font-size: 1.5rem; font-weight: 700; color: #002452; margin-bottom: 4px; font-family: 'Libre Caslon Text', serif; }
@@ -51,8 +50,9 @@ export const renderRaport = () => {
         .catatan-textarea { width: 100%; min-height: 120px; padding: 16px; border: 1px solid #c4c6d1; border-radius: 8px; background: #f8f9fb; resize: vertical; font-size: 0.9rem; line-height: 1.5; outline: none; }
         .catatan-textarea:focus { border-color: #002452; }
         
-        .action-bar { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; padding-top: 24px; border-top: 1px solid #e1e2e4; margin-bottom: 40px; }
-        .btn-action { padding: 12px 24px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; border: 1px solid transparent; transition: 0.2s; }
+        /* DESAIN BARU TOMBOL AKSI (RESPONSIF & RAPI) */
+        .action-bar { display: flex; justify-content: flex-end; gap: 12px; padding-top: 24px; border-top: 1px solid #e1e2e4; margin-bottom: 40px; }
+        .btn-action { padding: 12px 24px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; border: 1px solid transparent; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-outline { border-color: #747781; color: #191c1e; background: transparent; }
         .btn-outline:hover { background: #e1e2e4; }
         .btn-reset { border-color: #ba1a1a; color: #ba1a1a; background: transparent; }
@@ -61,6 +61,18 @@ export const renderRaport = () => {
         .btn-preview:hover { background: #fed65b; color: #241a00; }
         .btn-primary { background: #002452; color: white; }
         .btn-primary:hover { background: #003a77; }
+
+        /* Media Query Khusus Layar HP */
+        @media (max-width: 768px) {
+            .action-bar { 
+                display: grid; 
+                grid-template-columns: 1fr 1fr; /* Membagi jadi 2 kolom */
+                width: 100%;
+            }
+            .btn-preview, .btn-primary {
+                grid-column: 1 / -1; /* Mengambil lebar penuh (full width) */
+            }
+        }
     </style>
 
     <div class="raport-wrapper">
@@ -94,8 +106,8 @@ export const renderRaport = () => {
                 </div>
                 <div>
                     <label class="form-label">Nama Santri</label>
-                    <select id="filterSantri" class="form-select">
-                        <option value="">Pilih Santri...</option>
+                    <select id="filterSantri" class="form-select" disabled>
+                        <option value="">Pilih Kelas Dahulu...</option>
                     </select>
                 </div>
             </div>
@@ -166,7 +178,7 @@ export const initRaport = async () => {
     const inputCatatan = document.getElementById('inputCatatan');
     const btnTambahBaris = document.getElementById('btnTambahBaris');
     
-    // 1. LOGIKA MENGHITUNG PREDIKAT (Misal: >90 A, >80 B, >70 C)
+    // 1. LOGIKA MENGHITUNG PREDIKAT
     const hitungPredikat = (nilai) => {
         if (nilai === '' || isNaN(nilai)) return '-';
         const n = parseFloat(nilai);
@@ -188,7 +200,6 @@ export const initRaport = async () => {
             if (!isNaN(val)) {
                 total += val;
                 count++;
-                // Update predikat per baris otomatis
                 const tdPredikat = input.closest('tr').querySelector('.predikat-badge');
                 tdPredikat.textContent = hitungPredikat(val);
             } else {
@@ -230,26 +241,14 @@ export const initRaport = async () => {
             </td>
         `;
         tabelBody.appendChild(tr);
-
-        // Event listener saat nilai diketik
-        const inputAngka = tr.querySelector('.input-nilai');
-        inputAngka.addEventListener('input', kalkulasiTotal);
-
-        // Event listener hapus baris
-        const btnHapus = tr.querySelector('.btn-delete');
-        btnHapus.addEventListener('click', () => {
-            tr.remove();
-            kalkulasiTotal();
-        });
+        tr.querySelector('.input-nilai').addEventListener('input', kalkulasiTotal);
+        tr.querySelector('.btn-delete').addEventListener('click', () => { tr.remove(); kalkulasiTotal(); });
     };
 
-    // Tambah Baris Manual via Tombol
     btnTambahBaris.addEventListener('click', () => tambahBarisHTML());
-
-    // Berikan 2 baris default saat pertama kali buka
     tambahBarisHTML('Hafalan Juz 30', 'Al-Qur\'an', '92', 'Makhroj sangat baik');
     tambahBarisHTML('Rukun Iman & Islam', 'Aqidah', '88', 'Perlu pengulangan rukun ke-4');
-    kalkulasiTotal(); // Hitung awal
+    kalkulasiTotal();
 
     // 4. AMBIL TEMPLATE CATATAN DARI DATABASE GURU
     const loadTemplateCatatan = async () => {
@@ -260,15 +259,15 @@ export const initRaport = async () => {
                 if (dataGuru && dataGuru.length > 0 && dataGuru[0].template_rapor) {
                     inputCatatan.value = dataGuru[0].template_rapor;
                 }
-            } catch (e) {
-                console.error("Gagal load template catatan:", e);
-            }
+            } catch (e) { console.error("Gagal load template catatan:", e); }
         }
     };
     loadTemplateCatatan();
 
-    // 5. ISI FILTER KELAS DARI DATABASE (Tiru logika input harian)
+    // 5. ISI FILTER KELAS DARI DATABASE
     const filterKelas = document.getElementById('filterKelas');
+    const filterSantri = document.getElementById('filterSantri');
+
     try {
         const dataSantri = await api.get('dapodik_santri', 'select=nama_kelas');
         if (dataSantri && dataSantri.length > 0) {
@@ -280,6 +279,44 @@ export const initRaport = async () => {
             });
         }
     } catch (e) { console.error("Gagal load kelas:", e); }
+
+    // 6. LOGIKA OTOMATIS: KETIKA KELAS DIPILIH, TARIK NAMA SANTRI
+    filterKelas.addEventListener('change', async (e) => {
+        const kelasPilihan = e.target.value;
+        
+        // Reset pilihan santri
+        filterSantri.innerHTML = '<option value="">Memuat data santri...</option>';
+        filterSantri.disabled = true;
+
+        if (!kelasPilihan) {
+            filterSantri.innerHTML = '<option value="">Pilih Kelas Dahulu...</option>';
+            return;
+        }
+
+        try {
+            // Tarik santri khusus dari kelas yang dipilih
+            const dataSantri = await api.get('dapodik_santri', `select=id,nama_santri&nama_kelas=eq.${kelasPilihan}`);
+            
+            filterSantri.innerHTML = '<option value="">Pilih Santri...</option>';
+            filterSantri.disabled = false; // Buka kunci dropdown
+
+            if (dataSantri && dataSantri.length > 0) {
+                // Urutkan nama abjad
+                dataSantri.sort((a, b) => a.nama_santri.localeCompare(b.nama_santri));
+                dataSantri.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.id; 
+                    opt.textContent = s.nama_santri;
+                    filterSantri.appendChild(opt);
+                });
+            } else {
+                filterSantri.innerHTML = '<option value="">(Tidak ada santri di kelas ini)</option>';
+            }
+        } catch (err) {
+            console.error("Gagal load santri:", err);
+            filterSantri.innerHTML = '<option value="">Gagal memuat data</option>';
+        }
+    });
 
     // Tombol Reset
     document.getElementById('btnResetNilai').addEventListener('click', () => {
