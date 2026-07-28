@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * MODUL RAPORT - INPUT & CETAK (FINAL FULL FITUR)
+ * MODUL RAPORT - INPUT & CETAK (TAHSIN, TAHFIDZ & ABSENSI)
  * File: js/raport.js
  * ==================================================
  */
@@ -29,7 +29,7 @@ export const renderRaport = () => {
         .btn-add:hover { background: #003a77; }
         
         .table-container { width: 100%; overflow-x: auto; }
-        .raport-table { width: 100%; text-align: left; border-collapse: collapse; min-width: 800px; }
+        .raport-table { width: 100%; text-align: left; border-collapse: collapse; min-width: 600px; }
         .raport-table th { background: #002452; color: white; padding: 12px 16px; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; }
         .raport-table td { padding: 12px 16px; border-bottom: 1px solid #e1e2e4; }
         .raport-table tr:hover { background: #f8f9fb; }
@@ -47,19 +47,15 @@ export const renderRaport = () => {
         
         .catatan-box { padding: 24px; }
         .catatan-box h3 { font-size: 0.9rem; font-weight: 700; color: #002452; text-transform: uppercase; margin-top: 0; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-        .catatan-textarea { width: 100%; min-height: 120px; padding: 16px; border: 1px solid #c4c6d1; border-radius: 8px; background: #f8f9fb; resize: vertical; font-size: 0.9rem; line-height: 1.5; outline: none; }
-        .catatan-textarea:focus { border-color: #002452; }
+        .catatan-textarea { width: 100%; min-height: 100px; padding: 16px; border: 1px solid #c4c6d1; border-radius: 8px; background: #f8f9fb; resize: vertical; font-size: 0.9rem; line-height: 1.5; outline: none; }
         
         .action-bar { display: flex; justify-content: flex-end; gap: 12px; padding-top: 24px; border-top: 1px solid #e1e2e4; margin-bottom: 40px; }
         .btn-action { padding: 12px 24px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; border: 1px solid transparent; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-outline { border-color: #747781; color: #191c1e; background: transparent; }
-        .btn-outline:hover { background: #e1e2e4; }
         .btn-reset { border-color: #ba1a1a; color: #ba1a1a; background: transparent; }
-        .btn-reset:hover { background: #ffdad6; }
         .btn-preview { border-color: #735c00; color: #735c00; background: transparent; }
         .btn-preview:hover { background: #fed65b; color: #241a00; }
         .btn-primary { background: #002452; color: white; }
-        .btn-primary:hover { background: #003a77; }
 
         @media (max-width: 768px) {
             .action-bar { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
@@ -70,9 +66,10 @@ export const renderRaport = () => {
     <div class="raport-wrapper">
         <div class="raport-header">
             <h2 class="raport-title">Input Penilaian Diniyah</h2>
-            <p class="raport-subtitle">Masukkan data evaluasi akademik untuk rapor santri.</p>
+            <p class="raport-subtitle">Masukkan data evaluasi akademik, hafalan, dan absensi santri.</p>
         </div>
 
+        <!-- FILTER SECTION -->
         <section class="glass-card">
             <div class="filter-grid">
                 <div>
@@ -104,12 +101,11 @@ export const renderRaport = () => {
             </div>
         </section>
 
+        <!-- TABLE AKADEMIK -->
         <section class="glass-card" style="overflow: visible;">
             <div class="table-header">
-                <h3>Nilai Akademik</h3>
-                <button class="btn-add" id="btnTambahBaris">
-                    <i class="fas fa-plus"></i> Tambah Baris
-                </button>
+                <h3>1. Nilai Akademik</h3>
+                <button class="btn-add" id="btnTambahBaris"><i class="fas fa-plus"></i> Tambah Baris</button>
             </div>
             <div class="table-container">
                 <table class="raport-table">
@@ -138,13 +134,53 @@ export const renderRaport = () => {
             </div>
         </section>
 
+        <!-- TAHFIDZ & TAHSIN -->
         <section class="glass-card">
             <div class="catatan-box">
-                <h3><i class="fas fa-edit" style="color: #735c00;"></i> Catatan Pengampu (Wali Kelas)</h3>
-                <textarea id="inputCatatan" class="catatan-textarea" placeholder="Masukkan catatan atau nasehat untuk santri (otomatis terisi dari template)..."></textarea>
+                <h3><i class="fas fa-book-open" style="color: #735c00;"></i> 2. Capaian Tahsin & Tahfidz</h3>
+                <div class="filter-grid" style="padding: 0; gap: 15px;">
+                    <div>
+                        <label class="form-label">Capaian Tahsin (Qiro'ah)</label>
+                        <input type="text" id="inputTahsin" class="form-input" placeholder="Contoh: Jilid 4 (Halaman 25)">
+                    </div>
+                    <div>
+                        <label class="form-label">Capaian Tahfidz Qur'an</label>
+                        <input type="text" id="inputTahfidz" class="form-input" placeholder="Contoh: Juz 30 (Surat An-Naba)">
+                    </div>
+                </div>
             </div>
         </section>
 
+        <!-- REKAP KEHADIRAN -->
+        <section class="glass-card">
+            <div class="table-header">
+                <h3><i class="fas fa-calendar-check" style="color: #002452; margin-right: 8px;"></i> 3. Rekap Kehadiran (1 Semester)</h3>
+            </div>
+            <div class="table-container">
+                <table class="raport-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 40%;">Bulan</th>
+                            <th style="width: 30%; text-align: center;">Jumlah Hadir (Hari)</th>
+                            <th style="width: 30%; text-align: center;">Total Hari Efektif</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelKehadiranBody">
+                        <!-- Akan diisi otomatis oleh JS berdasarkan Semester -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- CATATAN PENGAMPU -->
+        <section class="glass-card">
+            <div class="catatan-box">
+                <h3><i class="fas fa-edit" style="color: #735c00;"></i> 4. Catatan Pengampu (Wali Kelas)</h3>
+                <textarea id="inputCatatan" class="catatan-textarea" placeholder="Masukkan catatan atau nasehat untuk santri..."></textarea>
+            </div>
+        </section>
+
+        <!-- ACTIONS -->
         <div class="action-bar">
             <button class="btn-action btn-outline" onclick="window.history.back()">Kembali</button>
             <button class="btn-action btn-reset" id="btnResetNilai">Reset</button>
@@ -156,16 +192,30 @@ export const renderRaport = () => {
 };
 
 export const initRaport = async () => {
+    // -----------------------------------------------------
+    // DEKLARASI ELEMEN
+    // -----------------------------------------------------
     const tabelBody = document.getElementById('tabelNilaiBody');
+    const tabelKehadiranBody = document.getElementById('tabelKehadiranBody');
     const teksRataRata = document.getElementById('teksRataRata');
     const teksPredikatAkhir = document.getElementById('teksPredikatAkhir');
+    
     const inputCatatan = document.getElementById('inputCatatan');
+    const inputTahsin = document.getElementById('inputTahsin');
+    const inputTahfidz = document.getElementById('inputTahfidz');
+    
+    const filterSemester = document.getElementById('filterSemester');
+    const filterKelas = document.getElementById('filterKelas');
+    const filterSantri = document.getElementById('filterSantri');
     const btnTambahBaris = document.getElementById('btnTambahBaris');
     
     let loggedInGuruId = localStorage.getItem('guru_id');
     let dataGuruCache = null;
+    let dataSantriCache = [];
 
-    // FUNGSI PREDIKAT & KALKULASI
+    // -----------------------------------------------------
+    // 1. LOGIKA RATA-RATA & PREDIKAT
+    // -----------------------------------------------------
     const hitungPredikat = (nilai) => {
         if (nilai === '' || isNaN(nilai)) return '-';
         const n = parseFloat(nilai);
@@ -198,7 +248,6 @@ export const initRaport = async () => {
         }
     };
 
-    // MANAJEMEN BARIS TABEL
     const tambahBarisHTML = (materi = '', kategori = 'Al-Qur\'an', nilai = '', ket = '') => {
         const tr = document.createElement('tr');
         tr.className = 'baris-nilai';
@@ -228,7 +277,37 @@ export const initRaport = async () => {
     tambahBarisHTML('Rukun Iman & Islam', 'Aqidah', '88', 'Perlu pengulangan');
     kalkulasiTotal();
 
-    // LOAD DATA GURU
+    // -----------------------------------------------------
+    // 2. LOGIKA TABEL KEHADIRAN (BERUBAH SESUAI SEMESTER)
+    // -----------------------------------------------------
+    const renderTabelKehadiran = () => {
+        const isGanjil = filterSemester.value.includes('Ganjil');
+        const bulanList = isGanjil 
+            ? ['Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
+            : ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni'];
+        
+        let html = '';
+        bulanList.forEach(bulan => {
+            html += `
+                <tr class="baris-kehadiran">
+                    <td style="font-weight: 600;">
+                        <input type="hidden" class="input-bulan" value="${bulan}">
+                        ${bulan}
+                    </td>
+                    <td style="text-align:center;"><input type="number" class="form-input input-hadir" style="text-align:center;" placeholder="Cth: 25"></td>
+                    <td style="text-align:center;"><input type="number" class="form-input input-total" style="text-align:center;" placeholder="Cth: 30"></td>
+                </tr>
+            `;
+        });
+        tabelKehadiranBody.innerHTML = html;
+    };
+    
+    filterSemester.addEventListener('change', renderTabelKehadiran);
+    renderTabelKehadiran(); // Render pertama kali
+
+    // -----------------------------------------------------
+    // 3. MENGAMBIL DATA GURU & SANTRI DARI DATABASE
+    // -----------------------------------------------------
     const loadGuru = async () => {
         if (!loggedInGuruId) {
             const dataG = await api.get('guru', 'select=*&limit=1');
@@ -248,11 +327,6 @@ export const initRaport = async () => {
         }
     };
     loadGuru();
-
-    // FILTER KELAS & SANTRI
-    const filterKelas = document.getElementById('filterKelas');
-    const filterSantri = document.getElementById('filterSantri');
-    let dataSantriCache = []; // Simpan data santri yg diload
 
     try {
         const ds = await api.get('dapodik_santri', 'select=*');
@@ -281,22 +355,50 @@ export const initRaport = async () => {
         });
     });
 
-    // MENGAMBIL DATA FORM UNTUK DISIMPAN / DICETAK
+    // -----------------------------------------------------
+    // 4. MENGUMPULKAN DATA UNTUK DISIMPAN / DICETAK
+    // -----------------------------------------------------
     const kumpulkanDataForm = () => {
         const sId = filterSantri.value;
         if (!sId) return null;
 
-        const detail_nilai = [];
+        // Ambil Data Akademik
+        const dataAkademik = [];
         document.querySelectorAll('.baris-nilai').forEach(tr => {
             const materi = tr.querySelector('.input-materi').value;
-            const kategori = tr.querySelector('.input-kategori').value;
             const nilai = tr.querySelector('.input-nilai').value;
-            const predikat = tr.querySelector('.predikat-badge').textContent;
-            const ket = tr.querySelector('.input-ket').value;
             if(materi || nilai) {
-                detail_nilai.push({ materi, kategori, nilai, predikat, ket });
+                dataAkademik.push({
+                    materi: materi,
+                    kategori: tr.querySelector('.input-kategori').value,
+                    nilai: nilai,
+                    predikat: tr.querySelector('.predikat-badge').textContent,
+                    ket: tr.querySelector('.input-ket').value
+                });
             }
         });
+
+        // Ambil Data Kehadiran
+        const dataKehadiran = [];
+        document.querySelectorAll('.baris-kehadiran').forEach(tr => {
+            const hadir = tr.querySelector('.input-hadir').value;
+            const total = tr.querySelector('.input-total').value;
+            if(hadir || total) {
+                dataKehadiran.push({
+                    bulan: tr.querySelector('.input-bulan').value,
+                    hadir: hadir || '-',
+                    total: total || '-'
+                });
+            }
+        });
+
+        // Kemas dalam objek detail_nilai (JSONB)
+        const detail_nilai = {
+            akademik: dataAkademik,
+            kehadiran: dataKehadiran,
+            tahsin: inputTahsin.value || '-',
+            tahfidz: inputTahfidz.value || '-'
+        };
 
         return {
             santri_id: sId,
@@ -310,12 +412,13 @@ export const initRaport = async () => {
         };
     };
 
-    // AKSI 1: SIMPAN PERMANEN
+    // -----------------------------------------------------
+    // 5. TOMBOL SIMPAN KE DATABASE
+    // -----------------------------------------------------
     document.getElementById('btnSimpanRaport').addEventListener('click', async () => {
         const data = kumpulkanDataForm();
         if (!data) return alert("Pilih Nama Santri terlebih dahulu!");
-        if (data.detail_nilai.length === 0) return alert("Tabel nilai tidak boleh kosong!");
-
+        
         const btn = document.getElementById('btnSimpanRaport');
         const ori = btn.innerHTML;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
@@ -323,17 +426,19 @@ export const initRaport = async () => {
 
         try {
             await api.post('raport_data', data);
-            alert("Alhamdulillah, Data Raport berhasil disimpan permanen ke database!");
+            alert("Alhamdulillah, Data Raport berhasil disimpan permanen!");
         } catch (e) {
             console.error(e);
-            alert("Gagal menyimpan data raport. Pastikan tabel raport_data sudah dibuat di Supabase.");
+            alert("Gagal menyimpan data raport. Cek koneksi Anda.");
         }
         
         btn.innerHTML = ori;
         btn.disabled = false;
     });
 
-    // AKSI 2: PREVIEW RAPORT (Buka Jendela Cetak)
+    // -----------------------------------------------------
+    // 6. TOMBOL PREVIEW (CETAK PDF RAPORT)
+    // -----------------------------------------------------
     document.getElementById('btnPreviewRaport').addEventListener('click', () => {
         const data = kumpulkanDataForm();
         if (!data) return alert("Pilih Nama Santri terlebih dahulu untuk melihat Raport!");
@@ -341,41 +446,63 @@ export const initRaport = async () => {
         const santri = dataSantriCache.find(s => s.id === data.santri_id);
         const guru = dataGuruCache || { nama: 'Wali Kelas', ttd_digital: '' };
         
-        // Merakit baris tabel HTML
+        // Render Baris Akademik
         let htmlBarisNilai = '';
-        data.detail_nilai.forEach((n, idx) => {
+        data.detail_nilai.akademik.forEach((n, idx) => {
             htmlBarisNilai += `
                 <tr>
-                    <td style="text-align:center; padding:8px; border:1px solid #333;">${idx + 1}</td>
-                    <td style="padding:8px; border:1px solid #333;"><b>${n.materi}</b><br><small style="color:#555;">${n.kategori}</small></td>
-                    <td style="text-align:center; padding:8px; border:1px solid #333;">${n.nilai}</td>
-                    <td style="text-align:center; padding:8px; border:1px solid #333; font-weight:bold;">${n.predikat}</td>
-                    <td style="padding:8px; border:1px solid #333;">${n.ket}</td>
+                    <td style="text-align:center; padding:8px; border:1px solid #000;">${idx + 1}</td>
+                    <td style="padding:8px; border:1px solid #000;"><b>${n.materi}</b><br><small style="color:#555;">${n.kategori}</small></td>
+                    <td style="text-align:center; padding:8px; border:1px solid #000;">${n.nilai}</td>
+                    <td style="text-align:center; padding:8px; border:1px solid #000; font-weight:bold;">${n.predikat}</td>
+                    <td style="padding:8px; border:1px solid #000;">${n.ket}</td>
                 </tr>
             `;
         });
 
-        // Template HTML untuk Kertas Print A4/F4
+        // Render Header Kolom Kehadiran
+        let headerKehadiran = '';
+        let nilaiKehadiran = '';
+        data.detail_nilai.kehadiran.forEach(k => {
+            headerKehadiran += `<th style="padding:8px; border:1px solid #000; text-align:center; background:#f0f0f0;">${k.bulan}</th>`;
+            nilaiKehadiran += `<td style="padding:8px; border:1px solid #000; text-align:center; font-weight:bold;">${k.hadir} / ${k.total}</td>`;
+        });
+        
+        // Jika kehadiran kosong, beri baris kosong
+        if(data.detail_nilai.kehadiran.length === 0) {
+            headerKehadiran = `<th style="padding:8px; border:1px solid #000; background:#f0f0f0;">Data Kehadiran</th>`;
+            nilaiKehadiran = `<td style="padding:8px; border:1px solid #000; text-align:center;">Belum ada data</td>`;
+        }
+
+        // Template HTML Kertas A4/F4 (Meniru persis format di screenshot Ustadz)
         const htmlCetak = `
             <html>
             <head>
                 <title>Raport Diniyah - ${santri.nama_santri}</title>
                 <style>
-                    body { font-family: 'Times New Roman', serif; color: #000; line-height: 1.4; padding: 20px 40px; }
-                    .kop-surat { text-align: center; border-bottom: 3px solid #000; padding-bottom: 15px; margin-bottom: 25px; }
-                    .kop-surat h1 { margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 1px; }
-                    .kop-surat h2 { margin: 5px 0 0 0; font-size: 18px; font-weight: normal; }
-                    .info-grid { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 14px; }
-                    .info-grid table td { padding: 3px 10px 3px 0; }
-                    .tabel-utama { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px; }
-                    .tabel-utama th { background: #f0f0f0; padding: 10px; border: 1px solid #000; text-transform: uppercase; }
+                    body { font-family: 'Times New Roman', serif; color: #000; line-height: 1.4; padding: 20px 40px; font-size: 14px; }
+                    .kop-surat { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
+                    .kop-surat h1 { margin: 0; font-size: 20px; font-weight: bold; letter-spacing: 1px; }
+                    .kop-surat h2 { margin: 5px 0 0 0; font-size: 14px; font-weight: normal; }
+                    
+                    .info-grid { display: flex; justify-content: space-between; margin-bottom: 15px; }
+                    .info-grid table { font-size: 13px; font-weight: bold; }
+                    .info-grid table td { padding: 2px 10px 2px 0; }
+                    
+                    .tabel-utama { width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 13px; }
+                    .tabel-utama th { background: #f9f9f9; padding: 10px; border: 1px solid #000; text-transform: uppercase; }
                     .tabel-utama td { border: 1px solid #000; }
-                    .catatan-box { border: 1px solid #000; padding: 15px; min-height: 80px; margin-bottom: 30px; font-style: italic; }
-                    .ttd-area { display: flex; justify-content: space-between; margin-top: 40px; text-align: center; }
-                    .ttd-box { width: 250px; }
-                    .img-ttd { height: 80px; object-fit: contain; margin: 10px 0; }
+                    
+                    .section-title { font-weight: bold; font-size: 14px; margin-bottom: 8px; margin-top: 15px; }
+                    
+                    .catatan-box { border: 1px solid #000; padding: 15px; min-height: 80px; margin-bottom: 40px; font-style: italic; font-size: 13px; }
+                    
+                    .ttd-area { display: flex; justify-content: space-between; padding: 0 20px; text-align: center; font-size: 13px; }
+                    .ttd-box { width: 220px; }
+                    .img-ttd { height: 70px; object-fit: contain; margin: 5px 0; }
+                    
                     @media print {
-                        @page { margin: 1.5cm; }
+                        @page { margin: 1cm; size: A4 portrait; }
                         body { padding: 0; }
                     }
                 </style>
@@ -388,45 +515,68 @@ export const initRaport = async () => {
 
                 <div class="info-grid">
                     <table style="border:none;">
-                        <tr><td><b>Nama Santri</b></td><td>:</td><td>${santri.nama_santri.toUpperCase()}</td></tr>
-                        <tr><td><b>Kelas</b></td><td>:</td><td>${santri.nama_kelas}</td></tr>
+                        <tr><td>Nama Santri</td><td>:</td><td>${santri.nama_santri.toUpperCase()}</td></tr>
+                        <tr><td>Kelas</td><td>:</td><td>${santri.nama_kelas}</td></tr>
                     </table>
                     <table style="border:none;">
-                        <tr><td><b>Tahun Ajaran</b></td><td>:</td><td>${data.tahun_ajaran}</td></tr>
-                        <tr><td><b>Semester</b></td><td>:</td><td>${data.semester}</td></tr>
+                        <tr><td>Tahun Ajaran</td><td>:</td><td>${data.tahun_ajaran}</td></tr>
+                        <tr><td>Semester</td><td>:</td><td>${data.semester}</td></tr>
                     </table>
                 </div>
 
+                <!-- TABEL 1: AKADEMIK -->
                 <table class="tabel-utama">
                     <thead>
                         <tr>
                             <th style="width: 5%;">No</th>
-                            <th style="width: 30%;">Materi / Kategori</th>
+                            <th style="width: 35%;">Materi / Kategori</th>
                             <th style="width: 10%;">Nilai</th>
                             <th style="width: 10%;">Predikat</th>
-                            <th style="width: 45%;">Keterangan & Catatan</th>
+                            <th style="width: 40%;">Keterangan & Catatan</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${htmlBarisNilai}
                         <tr>
                             <td colspan="2" style="text-align:right; padding:10px; border:1px solid #000;"><b>RATA-RATA:</b></td>
-                            <td style="text-align:center; font-weight:bold; font-size:16px; border:1px solid #000;">${data.rata_rata}</td>
-                            <td style="text-align:center; font-weight:bold; font-size:16px; border:1px solid #000;">${data.predikat}</td>
+                            <td style="text-align:center; font-weight:bold; font-size:15px; border:1px solid #000;">${data.rata_rata}</td>
+                            <td style="text-align:center; font-weight:bold; font-size:15px; border:1px solid #000;">${data.predikat}</td>
                             <td style="background:#f9f9f9; border:1px solid #000;"></td>
                         </tr>
                     </tbody>
                 </table>
 
-                <p style="font-weight:bold; margin-bottom:5px;">Catatan Pengampu / Wali Kelas:</p>
+                <!-- TABEL 2: TAHSIN & TAHFIDZ -->
+                <div class="section-title">Capaian Tahsin & Tahfidz:</div>
+                <table class="tabel-utama" style="margin-bottom: 25px;">
+                    <tr>
+                        <td style="padding:10px; width:30%; background:#f9f9f9;"><b>Tahsin (Qiro'ah)</b></td>
+                        <td style="padding:10px;">${data.detail_nilai.tahsin}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:10px; background:#f9f9f9;"><b>Tahfidz Qur'an</b></td>
+                        <td style="padding:10px;">${data.detail_nilai.tahfidz}</td>
+                    </tr>
+                </table>
+
+                <!-- TABEL 3: KEHADIRAN -->
+                <div class="section-title">Rekapitulasi Kehadiran:</div>
+                <table class="tabel-utama" style="margin-bottom: 25px;">
+                    <tr>${headerKehadiran}</tr>
+                    <tr>${nilaiKehadiran}</tr>
+                </table>
+
+                <!-- CATATAN WALI KELAS -->
+                <div class="section-title">Catatan Pengampu / Wali Kelas:</div>
                 <div class="catatan-box">
                     "${data.catatan}"
                 </div>
 
+                <!-- TANDA TANGAN -->
                 <div class="ttd-area">
                     <div class="ttd-box">
                         Mengetahui,<br>Orang Tua / Wali<br><br><br><br><br>
-                        <b>( ......................................... )</b>
+                        <b>( ........................................ )</b>
                     </div>
                     <div class="ttd-box">
                         Wali Kelas Diniyah,<br>
@@ -438,16 +588,12 @@ export const initRaport = async () => {
             </html>
         `;
 
-        // Membuka Jendela Baru untuk Print PDF
         const printWindow = window.open('', '_blank');
         printWindow.document.write(htmlCetak);
         printWindow.document.close();
         printWindow.focus();
         
-        // Kasih jeda sedikit agar gambar TTD selesai dimuat sebelum window.print terpanggil
-        setTimeout(() => {
-            printWindow.print();
-        }, 500);
+        setTimeout(() => { printWindow.print(); }, 500);
     });
 
     document.getElementById('btnResetNilai').addEventListener('click', () => {
