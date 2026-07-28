@@ -10,6 +10,7 @@ import { renderInputHarian, initInputHarian } from './input_harian.js';
 import { renderLaporan, initLaporan } from './laporan.js'; 
 import { api } from './api.js';
 import { renderSetting, initSetting } from './setting.js'; // <-- IMPORT SETTING SUDAH ADA
+import { renderRaport, initRaport } from './raport.js';
 
 // ==========================================
 // FUNGSI LONCENG GLOBAL (ANTI-MELESET)
