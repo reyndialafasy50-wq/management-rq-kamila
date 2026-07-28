@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * MODUL PENGATURAN USTADZ - VERSI 3.1 (FIX SKEMA DATABASE)
+ * MODUL PENGATURAN USTADZ - VERSI 4 (FITUR TANDA TANGAN DIGITAL)
  * File: js/setting.js
  * ==================================================
  */
@@ -37,7 +37,7 @@ export const renderSetting = () => {
         /* KANVAS TANDA TANGAN */
         .canvas-container { border: 2px dashed #CBD5E1; border-radius: 12px; background: #F8FAFC; overflow: hidden; margin-bottom: 15px; position: relative; }
         #canvasTtd { width: 100%; height: 200px; cursor: crosshair; touch-action: none; }
-        .btn-clear { position: absolute; top: 10px; right: 10px; background: #FEE2E2; color: #DC2626; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
+        .btn-clear { position: absolute; top: 10px; right: 10px; background: #FEE2E2; color: #DC2626; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer; z-index: 10; }
 
         /* TABS PILL LIBUR */
         .pill-tabs { display: flex; background: #f1f5f9; border-radius: 12px; padding: 4px; gap: 4px; width: 100%; margin-bottom: 8px;}
@@ -62,20 +62,15 @@ export const renderSetting = () => {
             <button class="tab-btn" data-target="panelLibur"><i class="fas fa-calendar-times"></i> Atur Libur</button>
         </div>
 
-        <!-- ===================================== -->
-        <!-- 1. PANEL PROFIL & KEAMANAN            -->
-        <!-- ===================================== -->
+        <!-- 1. PANEL PROFIL & KEAMANAN -->
         <div id="panelProfil" class="panel-setting">
-            <!-- Alert Simulasi Login -->
             <div id="alertSimulasiLogin" style="background: #E0F2FE; color: #0284C7; padding: 10px 15px; border-radius: 10px; font-size: 0.85rem; font-weight: 600; margin-bottom: 15px; display: none; align-items: center; gap: 10px;">
                 <i class="fas fa-info-circle"></i> <span>Anda sedang login sebagai: <b id="namaLoginSimulasi">...</b></span>
             </div>
-
             <div class="setting-card">
                 <h3 class="card-title"><i class="fas fa-id-card"></i> Data Diri</h3>
                 <div class="form-group">
                     <label>Nama Lengkap (Sesuai Rapor)</label>
-                    <!-- Menggunakan kolom 'nama' -->
                     <input type="text" id="inputNamaProfil" class="form-control" placeholder="Contoh: Ust. Fulan, S.Pd.I">
                 </div>
                 <div class="form-group">
@@ -84,7 +79,6 @@ export const renderSetting = () => {
                 </div>
                 <button class="btn-simpan" id="btnSimpanProfil"><i class="fas fa-save"></i> Perbarui Profil</button>
             </div>
-
             <div class="setting-card">
                 <h3 class="card-title" style="color: #DC2626; border-bottom-color: #FEE2E2;"><i class="fas fa-lock"></i> Keamanan Akun</h3>
                 <div class="form-group">
@@ -99,16 +93,20 @@ export const renderSetting = () => {
             </div>
         </div>
 
-        <!-- 2. PANEL TANDA TANGAN DIGITAL -->
+        <!-- ===================================== -->
+        <!-- 2. PANEL TANDA TANGAN DIGITAL (AKTIF) -->
+        <!-- ===================================== -->
         <div id="panelTtd" class="panel-setting" style="display: none;">
             <div class="setting-card">
                 <h3 class="card-title"><i class="fas fa-pen-nib"></i> Tanda Tangan Digital</h3>
                 <p style="font-size: 0.85rem; color: #64748B; margin-bottom: 15px;">Tanda tangan di bawah ini otomatis ditempelkan pada file Rapor/Laporan PDF.</p>
                 <div class="canvas-container">
                     <button class="btn-clear" id="btnClearTtd"><i class="fas fa-eraser"></i> Hapus</button>
+                    <!-- Kanvas Tanda Tangan -->
                     <canvas id="canvasTtd"></canvas>
                 </div>
-                <button class="btn-simpan" style="background: linear-gradient(135deg, #10B981, #059669);"><i class="fas fa-cloud-upload-alt"></i> Simpan Tanda Tangan</button>
+                <!-- Tambah ID btnSimpanTtd -->
+                <button class="btn-simpan" id="btnSimpanTtd" style="background: linear-gradient(135deg, #10B981, #059669);"><i class="fas fa-cloud-upload-alt"></i> Simpan Tanda Tangan</button>
             </div>
         </div>
 
@@ -189,7 +187,32 @@ export const initSetting = async () => {
     });
 
     // ==========================================
-    // LOGIKA PROFIL & GANTI PASSWORD
+    // DEKLARASI GLOBAL UNTUK KANVAS TTD
+    // ==========================================
+    const canvas = document.getElementById('canvasTtd');
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+    let ttdSudahAda = ''; // Menyimpan data TTD dari database
+
+    const resizeCanvas = () => {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = 200; 
+        ctx.strokeStyle = "#1E3A8A"; // Warna tinta biru dongker agar terlihat natural
+        ctx.lineWidth = 3;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+
+        // Jika sudah ada ttd dari database, gambar ulang saat di-resize
+        if (ttdSudahAda) {
+            const img = new Image();
+            img.onload = () => ctx.drawImage(img, 0, 0);
+            img.src = ttdSudahAda;
+        }
+    };
+
+    // ==========================================
+    // LOGIKA PROFIL, GANTI PASSWORD, & LOAD TTD
     // ==========================================
     const inputNamaProfil = document.getElementById('inputNamaProfil');
     const inputWaProfil = document.getElementById('inputWaProfil');
@@ -214,12 +237,22 @@ export const initSetting = async () => {
             if (loggedInGuruId) {
                 const profileData = await api.get('guru', `select=*&id=eq.${loggedInGuruId}`);
                 if (profileData && profileData.length > 0) {
-                    // Update: Menggunakan properti 'nama', bukan 'nama_guru'
                     inputNamaProfil.value = profileData[0].nama || '';
                     inputWaProfil.value = profileData[0].no_hp || '';
                     
                     document.getElementById('alertSimulasiLogin').style.display = 'flex';
                     document.getElementById('namaLoginSimulasi').textContent = profileData[0].nama || 'Anonim';
+
+                    // LOAD TTD JIKA ADA
+                    if (profileData[0].ttd_digital) {
+                        ttdSudahAda = profileData[0].ttd_digital;
+                        const img = new Image();
+                        img.onload = () => {
+                            ctx.clearRect(0, 0, canvas.width, canvas.height);
+                            ctx.drawImage(img, 0, 0);
+                        };
+                        img.src = ttdSudahAda;
+                    }
                 }
             }
         } catch (e) {
@@ -231,11 +264,9 @@ export const initSetting = async () => {
 
     // AKSI SIMPAN PROFIL
     btnSimpanProfil.addEventListener('click', async () => {
-        if (!loggedInGuruId) return alert('Sesi login tidak ditemukan. Pastikan ada data di tabel guru.');
-        
+        if (!loggedInGuruId) return alert('Sesi login tidak ditemukan.');
         const namaBaru = inputNamaProfil.value;
         const waBaru = inputWaProfil.value;
-        
         if (!namaBaru) return alert('Nama tidak boleh kosong!');
 
         const oriText = btnSimpanProfil.innerHTML;
@@ -243,15 +274,10 @@ export const initSetting = async () => {
         btnSimpanProfil.disabled = true;
 
         try {
-            // Update: Mengirimkan key 'nama', bukan 'nama_guru'
-            await api.update('guru', loggedInGuruId, { 
-                nama: namaBaru, 
-                no_hp: waBaru 
-            });
+            await api.update('guru', loggedInGuruId, { nama: namaBaru, no_hp: waBaru });
             alert('Alhamdulillah, profil berhasil diperbarui!');
             document.getElementById('namaLoginSimulasi').textContent = namaBaru;
         } catch (e) {
-            console.error("Error Update Profil:", e);
             alert('Gagal memperbarui profil. Cek koneksi.');
         }
 
@@ -262,12 +288,11 @@ export const initSetting = async () => {
     // AKSI GANTI PASSWORD
     btnGantiPassword.addEventListener('click', async () => {
         if (!loggedInGuruId) return alert('Sesi login tidak ditemukan.');
-        
         const pw1 = inputPasswordBaru.value;
         const pw2 = inputPasswordKonfirm.value;
 
         if (!pw1 || !pw2) return alert('Password baru tidak boleh kosong!');
-        if (pw1 !== pw2) return alert('Konfirmasi password tidak cocok! Silakan cek kembali.');
+        if (pw1 !== pw2) return alert('Konfirmasi password tidak cocok!');
         if (pw1.length < 6) return alert('Untuk keamanan, password minimal 6 karakter!');
 
         const oriText = btnGantiPassword.innerHTML;
@@ -275,14 +300,11 @@ export const initSetting = async () => {
         btnGantiPassword.disabled = true;
 
         try {
-            await api.update('guru', loggedInGuruId, { 
-                password: pw1 
-            });
+            await api.update('guru', loggedInGuruId, { password: pw1 });
             alert('Password berhasil diganti! Harap ingat password baru Anda.');
             inputPasswordBaru.value = '';
             inputPasswordKonfirm.value = '';
         } catch (e) {
-            console.error("Error Ganti Password:", e);
             alert('Gagal mengganti password. Cek koneksi.');
         }
 
@@ -290,23 +312,10 @@ export const initSetting = async () => {
         btnGantiPassword.disabled = false;
     });
 
-    // ==========================================
-    // LOGIKA KANVAS TANDA TANGAN (KODE SEMENTARA)
-    // ==========================================
-    const canvas = document.getElementById('canvasTtd');
-    const ctx = canvas.getContext('2d');
-    let isDrawing = false;
 
-    const resizeCanvas = () => {
-        const rect = canvas.parentElement.getBoundingClientRect();
-        canvas.width = rect.width;
-        canvas.height = 200; 
-        ctx.strokeStyle = "#1E293B"; 
-        ctx.lineWidth = 2.5;
-        ctx.lineCap = "round";
-        ctx.lineJoin = "round";
-    };
-
+    // ==========================================
+    // AKSI SIMPAN TANDA TANGAN DIGITAL
+    // ==========================================
     canvas.addEventListener('mousedown', (e) => { isDrawing = true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY); });
     canvas.addEventListener('mousemove', (e) => { if (isDrawing) { ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); } });
     canvas.addEventListener('mouseup', () => isDrawing = false);
@@ -328,7 +337,41 @@ export const initSetting = async () => {
     });
     canvas.addEventListener('touchend', () => isDrawing = false);
 
-    document.getElementById('btnClearTtd').addEventListener('click', () => { ctx.clearRect(0, 0, canvas.width, canvas.height); });
+    document.getElementById('btnClearTtd').addEventListener('click', () => { 
+        ctx.clearRect(0, 0, canvas.width, canvas.height); 
+        ttdSudahAda = ''; // Hapus dari memori juga
+    });
+
+    window.addEventListener('resize', () => {
+        if (document.getElementById('panelTtd').style.display === 'block') resizeCanvas();
+    });
+
+    const btnSimpanTtd = document.getElementById('btnSimpanTtd');
+    btnSimpanTtd.addEventListener('click', async () => {
+        if (!loggedInGuruId) return alert('Sesi login tidak ditemukan.');
+        
+        const oriText = btnSimpanTtd.innerHTML;
+        btnSimpanTtd.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+        btnSimpanTtd.disabled = true;
+
+        try {
+            // Ubah coretan kanvas menjadi data gambar (Base64)
+            const dataTtdBase64 = canvas.toDataURL("image/png");
+            
+            await api.update('guru', loggedInGuruId, { 
+                ttd_digital: dataTtdBase64 
+            });
+            
+            ttdSudahAda = dataTtdBase64; // Simpan ke memori
+            alert('Tanda tangan berhasil disimpan! Tanda tangan ini akan otomatis terlampir di file Laporan PDF.');
+        } catch (e) {
+            console.error("Error Simpan TTD:", e);
+            alert('Gagal menyimpan. Pastikan kolom "ttd_digital" dengan tipe "text" sudah dibuat di Supabase.');
+        }
+
+        btnSimpanTtd.innerHTML = oriText;
+        btnSimpanTtd.disabled = false;
+    });
 
     // ==========================================
     // LOGIKA FORM ATUR LIBUR (UI SAJA DULU)
