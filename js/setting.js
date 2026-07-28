@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * MODUL PENGATURAN USTADZ - VERSI 1 (RUANG PRIBADI GURU)
+ * MODUL PENGATURAN USTADZ - VERSI 2 (INTEGRASI FITUR LIBUR)
  * File: js/setting.js
  * ==================================================
  */
@@ -36,8 +36,19 @@ export const renderSetting = () => {
 
         /* KANVAS TANDA TANGAN */
         .canvas-container { border: 2px dashed #CBD5E1; border-radius: 12px; background: #F8FAFC; overflow: hidden; margin-bottom: 15px; position: relative; }
-        #canvasTtd { width: 100%; height: 200px; cursor: crosshair; touch-action: none; /* Mencegah layar ikut scroll saat ttd di HP */ }
+        #canvasTtd { width: 100%; height: 200px; cursor: crosshair; touch-action: none; }
         .btn-clear { position: absolute; top: 10px; right: 10px; background: #FEE2E2; color: #DC2626; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
+
+        /* TABS PILL UNTUK FITUR LIBUR (DIADAPTASI DARI INPUT HARIAN) */
+        .pill-tabs { display: flex; background: #f1f5f9; border-radius: 12px; padding: 4px; gap: 4px; width: 100%; margin-bottom: 8px;}
+        .pill-tabs label { padding: 10px 15px; font-size: 0.85rem; font-weight: 700; color: #64748b; cursor: pointer; border-radius: 8px; transition: 0.2s; flex: 1; text-align: center; }
+        .pill-tabs input { display: none; }
+        .pill-tabs input[value="semua"]:checked + label { background-color: #3B82F6; color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1);}
+        .pill-tabs input[value="pilih"]:checked + label { background-color: #F59E0B; color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1);}
+        
+        .checkbox-kelas { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 0.9rem; font-weight: 600; color: #334155; cursor: pointer; background: white; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; }
+        .checkbox-kelas:last-child { margin-bottom: 0; }
+        .checkbox-kelas input { width: 18px; height: 18px; cursor: pointer; accent-color: #F59E0B; }
     </style>
 
     <div class="setting-wrapper">
@@ -46,7 +57,7 @@ export const renderSetting = () => {
             <div class="header-subtitle">Kelola profil, keamanan, dan alat bantu laporan Anda.</div>
         </div>
 
-        <!-- MENU NAVIGASI (BISA DI-GESER KIRI-KANAN DI HP) -->
+        <!-- MENU NAVIGASI -->
         <div class="tab-container">
             <button class="tab-btn active" data-target="panelProfil"><i class="fas fa-user-shield"></i> Profil & Akun</button>
             <button class="tab-btn" data-target="panelTtd"><i class="fas fa-signature"></i> Tanda Tangan</button>
@@ -121,25 +132,43 @@ export const renderSetting = () => {
             </div>
         </div>
 
-        <!-- 4. PANEL ATUR LIBUR / CUTI KBM -->
+        <!-- 4. PANEL ATUR LIBUR (DIADAPTASI DARI DESAIN USTADZ) -->
         <div id="panelLibur" class="panel-setting" style="display: none;">
-            <div class="setting-card">
-                <h3 class="card-title" style="color: #D97706; border-bottom-color: #FEF3C7;"><i class="fas fa-umbrella-beach"></i> Penyesuaian Target KBM (Libur)</h3>
-                <p style="font-size: 0.85rem; color: #64748B; margin-bottom: 15px;">Jika Anda berhalangan hadir atau ada libur nasional, atur di sini agar persentase absensi santri tidak dirugikan.</p>
+            <div class="setting-card" style="border-top: 4px solid #F59E0B;">
+                <h3 class="card-title" style="color: #D97706; border-bottom-color: #FEF3C7; padding-top:5px;"><i class="fas fa-calendar-times"></i> Atur Libur Kelas</h3>
                 
                 <div class="form-group">
-                    <label>Bulan Laporan</label>
-                    <input type="month" class="form-control" value="${new Date().toISOString().slice(0,7)}">
+                    <label>Tanggal Libur</label>
+                    <input type="date" id="udzurTanggal" class="form-control" value="${new Date().toISOString().slice(0,10)}">
                 </div>
+                
                 <div class="form-group">
-                    <label>Jumlah Hari Libur / Tidak Ada KBM</label>
-                    <input type="number" class="form-control" placeholder="Contoh: 2" min="0">
+                    <label>Alasan Utama</label>
+                    <select id="udzurAlasan" class="form-control">
+                        <option value="Ustadz Izin (Ada Keperluan)">Ustadz Izin (Ada Keperluan)</option>
+                        <option value="Ustadz Sakit">Ustadz Sakit</option>
+                        <option value="Libur Nasional">Libur Nasional / Cuti Bersama</option>
+                        <option value="Lainnya">Lainnya (Ketik Manual)...</option>
+                    </select>
+                    <input type="text" id="udzurAlasanManual" placeholder="Ketik alasan spesifik..." class="form-control" style="display:none; margin-top:8px;">
                 </div>
+                
                 <div class="form-group">
-                    <label>Keterangan / Alasan</label>
-                    <input type="text" class="form-control" placeholder="Contoh: Ustadz Sakit, Libur Idul Adha, dll">
+                    <label>Cakupan Libur</label>
+                    <div class="pill-tabs">
+                        <input type="radio" name="udzur_cakupan" id="udzur_semua" value="semua" checked>
+                        <label for="udzur_semua">Semua Kelas</label>
+                        <input type="radio" name="udzur_cakupan" id="udzur_pilih" value="pilih">
+                        <label for="udzur_pilih">Pilih Kelas</label>
+                    </div>
                 </div>
-                <button class="btn-simpan" style="background: linear-gradient(135deg, #F59E0B, #D97706); box-shadow: 0 4px 12px rgba(245,158,11,0.2);"><i class="fas fa-calendar-check"></i> Ajukan Penyesuaian</button>
+                
+                <!-- WADAH CHECKBOX KELAS (DARI DATABASE) -->
+                <div id="udzurPilihanKelas" style="display:none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; max-height: 200px; overflow-y: auto; margin-bottom: 20px;">
+                    <div style="text-align:center; font-size:0.85rem; color:#94a3b8;"><i class="fas fa-spinner fa-spin"></i> Memuat daftar kelas...</div>
+                </div>
+                
+                <button class="btn-simpan" id="btnSimpanLibur" style="background: linear-gradient(135deg, #EF4444, #DC2626); box-shadow: 0 4px 12px rgba(220,38,38,0.2);"><i class="fas fa-save"></i> Simpan Status Libur</button>
             </div>
         </div>
 
@@ -148,72 +177,56 @@ export const renderSetting = () => {
 };
 
 export const initSetting = async () => {
+    // ==========================================
     // 1. LOGIKA NAVIGASI TAB
+    // ==========================================
     const tabBtns = document.querySelectorAll('.tab-btn');
     const panels = document.querySelectorAll('.panel-setting');
 
     tabBtns.forEach(btn => {
         btn.addEventListener('click', () => {
-            // Hilangkan status aktif dari semua tombol
             tabBtns.forEach(b => b.classList.remove('active'));
-            // Sembunyikan semua panel
             panels.forEach(p => p.style.display = 'none');
             
-            // Aktifkan tombol yang diklik
             btn.classList.add('active');
-            // Tampilkan panel yang sesuai
             const targetId = btn.getAttribute('data-target');
             document.getElementById(targetId).style.display = 'block';
 
-            // Jika tab tanda tangan dibuka, pastikan ukuran canvasnya pas
-            if (targetId === 'panelTtd') {
-                resizeCanvas();
-            }
+            if (targetId === 'panelTtd') resizeCanvas();
         });
     });
 
-    // 2. LOGIKA KANVAS TANDA TANGAN (BISA DI HP & LAPTOP)
+    // ==========================================
+    // 2. LOGIKA KANVAS TANDA TANGAN
+    // ==========================================
     const canvas = document.getElementById('canvasTtd');
     const ctx = canvas.getContext('2d');
     let isDrawing = false;
 
-    // Menyesuaikan resolusi canvas agar tidak buram dan pas di kontainer
     const resizeCanvas = () => {
         const rect = canvas.parentElement.getBoundingClientRect();
         canvas.width = rect.width;
-        canvas.height = 200; // Tinggi tetap 200px
-        ctx.strokeStyle = "#000000";
-        ctx.lineWidth = 3;
+        canvas.height = 200; 
+        ctx.strokeStyle = "#1E293B"; // Warna tinta hitam kebiruan (elegan)
+        ctx.lineWidth = 2.5;
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
     };
 
-    // Event Mouse (Laptop/PC)
-    canvas.addEventListener('mousedown', (e) => {
-        isDrawing = true;
-        ctx.beginPath();
-        ctx.moveTo(e.offsetX, e.offsetY);
-    });
-    canvas.addEventListener('mousemove', (e) => {
-        if (!isDrawing) return;
-        ctx.lineTo(e.offsetX, e.offsetY);
-        ctx.stroke();
-    });
+    canvas.addEventListener('mousedown', (e) => { isDrawing = true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY); });
+    canvas.addEventListener('mousemove', (e) => { if (isDrawing) { ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); } });
     canvas.addEventListener('mouseup', () => isDrawing = false);
     canvas.addEventListener('mouseout', () => isDrawing = false);
 
-    // Event Touch (HP/Tablet)
     canvas.addEventListener('touchstart', (e) => {
-        e.preventDefault(); // Mencegah layar scroll
-        isDrawing = true;
+        e.preventDefault(); isDrawing = true;
         const touch = e.touches[0];
         const rect = canvas.getBoundingClientRect();
         ctx.beginPath();
         ctx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
     });
     canvas.addEventListener('touchmove', (e) => {
-        e.preventDefault();
-        if (!isDrawing) return;
+        e.preventDefault(); if (!isDrawing) return;
         const touch = e.touches[0];
         const rect = canvas.getBoundingClientRect();
         ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
@@ -221,21 +234,70 @@ export const initSetting = async () => {
     });
     canvas.addEventListener('touchend', () => isDrawing = false);
 
-    // Tombol Hapus Kanvas
-    document.getElementById('btnClearTtd').addEventListener('click', () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-    });
-
-    // Siapkan ukuran kanvas saat awal diload
+    document.getElementById('btnClearTtd').addEventListener('click', () => { ctx.clearRect(0, 0, canvas.width, canvas.height); });
     window.addEventListener('resize', () => {
         if (document.getElementById('panelTtd').style.display === 'block') {
-            // Simpan gambar lama sebelum resize
-            const dataUrl = canvas.toDataURL(); 
-            resizeCanvas();
-            // Kembalikan gambar setelah resize
-            const img = new Image();
-            img.src = dataUrl;
-            img.onload = () => ctx.drawImage(img, 0, 0);
+            const dataUrl = canvas.toDataURL(); resizeCanvas();
+            const img = new Image(); img.src = dataUrl; img.onload = () => ctx.drawImage(img, 0, 0);
         }
+    });
+
+    // ==========================================
+    // 3. LOGIKA FORM "ATUR LIBUR"
+    // ==========================================
+    const udzurAlasan = document.getElementById('udzurAlasan');
+    const udzurAlasanManual = document.getElementById('udzurAlasanManual');
+    const radioSemua = document.getElementById('udzur_semua');
+    const radioPilih = document.getElementById('udzur_pilih');
+    const wadahPilihanKelas = document.getElementById('udzurPilihanKelas');
+
+    // Toggle Input Manual Alasan
+    udzurAlasan.addEventListener('change', (e) => {
+        udzurAlasanManual.style.display = e.target.value === 'Lainnya' ? 'block' : 'none';
+    });
+
+    // Toggle Tampilan Checkbox Kelas
+    const togglePilihanKelas = () => {
+        wadahPilihanKelas.style.display = radioPilih.checked ? 'block' : 'none';
+    };
+    radioSemua.addEventListener('change', togglePilihanKelas);
+    radioPilih.addEventListener('change', togglePilihanKelas);
+
+    // Ambil Data Kelas dari Supabase (Sama seperti halaman laporan)
+    try {
+        const dataSantri = await api.get('dapodik_santri', 'select=nama_kelas');
+        if (dataSantri && dataSantri.length > 0) {
+            const kelasUnik = [...new Set(dataSantri.map(item => item.nama_kelas))].filter(Boolean).sort();
+            let htmlCheckbox = '';
+            kelasUnik.forEach(k => {
+                htmlCheckbox += `
+                    <label class="checkbox-kelas">
+                        <input type="checkbox" name="chk_kelas_libur" value="${k}"> ${k}
+                    </label>
+                `;
+            });
+            wadahPilihanKelas.innerHTML = htmlCheckbox;
+        } else {
+            wadahPilihanKelas.innerHTML = '<div style="text-align:center; font-size:0.85rem; color:#EF4444;">Data kelas kosong di database.</div>';
+        }
+    } catch (error) {
+        console.error("Gagal load kelas untuk Atur Libur:", error);
+        wadahPilihanKelas.innerHTML = '<div style="text-align:center; font-size:0.85rem; color:#EF4444;">Gagal memuat kelas. Cek koneksi.</div>';
+    }
+
+    // Simulasi Tombol Simpan Libur
+    document.getElementById('btnSimpanLibur').addEventListener('click', () => {
+        const tgl = document.getElementById('udzurTanggal').value;
+        const alasan = udzurAlasan.value === 'Lainnya' ? udzurAlasanManual.value : udzurAlasan.value;
+        const cakupan = radioSemua.checked ? 'Semua Kelas' : 'Kelas Tertentu';
+        
+        if (!tgl || !alasan) {
+            alert('Mohon lengkapi tanggal dan alasan libur!');
+            return;
+        }
+
+        let pesan = `STATUS LIBUR TERSIMPAN!\n\nTanggal: ${tgl}\nAlasan: ${alasan}\nCakupan: ${cakupan}`;
+        alert(pesan);
+        // (Nantinya di sini kita buat fungsi Insert ke database Supabase)
     });
 };
