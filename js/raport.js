@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * MODUL RAPORT - INPUT & CETAK (AUTO-FILL DARI DATABASE)
+ * MODUL RAPORT - FINAL (SUPER OTOMATIS JP & ALPA)
  * File: js/raport.js
  * ==================================================
  */
@@ -69,7 +69,6 @@ export const renderRaport = () => {
             <p class="raport-subtitle">Masukkan data evaluasi akademik, hafalan, dan absensi santri.</p>
         </div>
 
-        <!-- FILTER SECTION -->
         <section class="glass-card">
             <div class="filter-grid">
                 <div>
@@ -151,28 +150,30 @@ export const renderRaport = () => {
             </div>
         </section>
 
-        <!-- REKAP KEHADIRAN -->
+        <!-- REKAP KEHADIRAN (SUPER OTOMATIS) -->
         <section class="glass-card">
             <div class="table-header">
-                <h3><i class="fas fa-calendar-check" style="color: #002452; margin-right: 8px;"></i> 3. Rekap Kehadiran (Otomatis)</h3>
+                <h3><i class="fas fa-calendar-check" style="color: #002452; margin-right: 8px;"></i> 3. Rekap Kehadiran (Hitung Alpa & JP Otomatis)</h3>
             </div>
             <div class="table-container">
                 <table class="raport-table">
                     <thead>
                         <tr>
-                            <th style="width: 40%;">Bulan</th>
-                            <th style="width: 30%; text-align: center;">Jumlah Hadir (Hari)</th>
-                            <th style="width: 30%; text-align: center;">Total Hari Efektif</th>
+                            <th style="width: 25%;">Bulan</th>
+                            <th style="width: 15%; text-align: center;">Hadir (H)</th>
+                            <th style="width: 15%; text-align: center;">Sakit (S)</th>
+                            <th style="width: 15%; text-align: center;">Izin (I)</th>
+                            <th style="width: 15%; text-align: center;">Alpa (A)</th>
+                            <th style="width: 15%; text-align: center;">JP Total</th>
                         </tr>
                     </thead>
                     <tbody id="tabelKehadiranBody">
-                        <!-- Akan diisi otomatis oleh JS berdasarkan Semester -->
+                        <!-- Akan diisi otomatis oleh JS -->
                     </tbody>
                 </table>
             </div>
         </section>
 
-        <!-- CATATAN PENGAMPU -->
         <section class="glass-card">
             <div class="catatan-box">
                 <h3><i class="fas fa-edit" style="color: #735c00;"></i> 4. Catatan Pengampu (Wali Kelas)</h3>
@@ -180,7 +181,6 @@ export const renderRaport = () => {
             </div>
         </section>
 
-        <!-- ACTIONS -->
         <div class="action-bar">
             <button class="btn-action btn-outline" onclick="window.history.back()">Kembali</button>
             <button class="btn-action btn-reset" id="btnResetNilai">Reset</button>
@@ -192,9 +192,6 @@ export const renderRaport = () => {
 };
 
 export const initRaport = async () => {
-    // -----------------------------------------------------
-    // DEKLARASI ELEMEN
-    // -----------------------------------------------------
     const tabelBody = document.getElementById('tabelNilaiBody');
     const tabelKehadiranBody = document.getElementById('tabelKehadiranBody');
     const teksRataRata = document.getElementById('teksRataRata');
@@ -214,9 +211,7 @@ export const initRaport = async () => {
     let dataGuruCache = null;
     let dataSantriCache = [];
 
-    // -----------------------------------------------------
-    // 1. LOGIKA RATA-RATA & PREDIKAT
-    // -----------------------------------------------------
+    // 1. RATA-RATA & PREDIKAT AKADEMIK
     const hitungPredikat = (nilai) => {
         if (nilai === '' || isNaN(nilai)) return '-';
         const n = parseFloat(nilai);
@@ -278,9 +273,7 @@ export const initRaport = async () => {
     tambahBarisHTML('Rukun Iman & Islam', 'Aqidah', '88', 'Perlu pengulangan');
     kalkulasiTotal();
 
-    // -----------------------------------------------------
-    // 2. LOGIKA TABEL KEHADIRAN (BERUBAH SESUAI SEMESTER)
-    // -----------------------------------------------------
+    // 2. RENDER KERANGKA TABEL KEHADIRAN
     const renderTabelKehadiran = () => {
         const isGanjil = filterSemester.value.includes('Ganjil');
         const bulanList = isGanjil 
@@ -295,25 +288,23 @@ export const initRaport = async () => {
                         <input type="hidden" class="input-bulan" value="${bulan}">
                         ${bulan}
                     </td>
-                    <td style="text-align:center;"><input type="number" class="form-input input-hadir" style="text-align:center;" placeholder="Cth: 25"></td>
-                    <td style="text-align:center;"><input type="number" class="form-input input-total" style="text-align:center;" placeholder="Cth: 30"></td>
+                    <td><input type="number" class="form-input input-hadir" style="text-align:center;" placeholder="0"></td>
+                    <td><input type="number" class="form-input input-sakit" style="text-align:center;" placeholder="0"></td>
+                    <td><input type="number" class="form-input input-izin" style="text-align:center;" placeholder="0"></td>
+                    <td><input type="number" class="form-input input-alpa" style="text-align:center; background:#fee2e2; font-weight:bold;" placeholder="0" readonly></td>
+                    <td><input type="number" class="form-input input-jp" style="text-align:center; background:#e1e2e4; font-weight:bold;" placeholder="0" readonly></td>
                 </tr>
             `;
         });
         tabelKehadiranBody.innerHTML = html;
-        // Panggil penarikan data ulang jika santri sudah dipilih
         if(filterSantri.value) triggerTarikDataOtomatis();
     };
     
     filterSemester.addEventListener('change', renderTabelKehadiran);
-    filterTahun.addEventListener('change', () => {
-        if(filterSantri.value) triggerTarikDataOtomatis();
-    });
+    filterTahun.addEventListener('change', () => { if(filterSantri.value) triggerTarikDataOtomatis(); });
     renderTabelKehadiran();
 
-    // -----------------------------------------------------
-    // 3. MENGAMBIL DATA GURU & SANTRI DARI DATABASE
-    // -----------------------------------------------------
+    // 3. LOAD DATA MASTER (GURU & KELAS)
     const loadGuru = async () => {
         if (!loggedInGuruId) {
             const dataG = await api.get('guru', 'select=*&limit=1');
@@ -329,7 +320,7 @@ export const initRaport = async () => {
                     dataGuruCache = req[0];
                     if (dataGuruCache.template_rapor) inputCatatan.value = dataGuruCache.template_rapor;
                 }
-            } catch (e) { console.error("Gagal load guru:", e); }
+            } catch (e) {}
         }
     };
     loadGuru();
@@ -345,7 +336,7 @@ export const initRaport = async () => {
                 filterKelas.appendChild(opt);
             });
         }
-    } catch (e) { console.error("Gagal load kelas:", e); }
+    } catch (e) {}
 
     filterKelas.addEventListener('change', (e) => {
         const kelas = e.target.value;
@@ -361,21 +352,17 @@ export const initRaport = async () => {
         });
     });
 
-    // -----------------------------------------------------
-    // 4. MESIN PENARIK DATA OTOMATIS (AJAIB)
-    // -----------------------------------------------------
+    // 4. MESIN PENARIK DATA SUPER OTOMATIS (JP Admin + Libur Kelas + Absen = Alpa)
     const triggerTarikDataOtomatis = async () => {
         const santriId = filterSantri.value;
+        const kelasPilih = filterKelas.value;
         if (!santriId) return;
 
-        // Tampilkan indikator memuat data
         inputTahsin.value = 'Memuat dari database...';
         inputTahfidz.value = 'Memuat dari database...';
-        document.querySelectorAll('.input-hadir').forEach(el => el.value = '');
-        document.querySelectorAll('.input-total').forEach(el => el.value = '');
 
-        const tahunAjaran = filterTahun.value; // cth: "2026/2027"
-        const semester = filterSemester.value; // cth: "Ganjil (Odd)"
+        const tahunAjaran = filterTahun.value; 
+        const semester = filterSemester.value; 
         const [tahun1, tahun2] = tahunAjaran.split('/');
         
         let startDate, endDate, bulanMapping;
@@ -388,74 +375,99 @@ export const initRaport = async () => {
         }
 
         try {
-            // Ambil semua data histori harian santri ini di semester yang dipilih
+            // A. Ambil Target JP dari Admin
+            const reqJP = await api.get('setting_jp', `select=*&tahun_ajaran=eq.${tahunAjaran}&semester=eq.${semester}`);
+            let jpAdmin = {};
+            if (reqJP) reqJP.forEach(item => { jpAdmin[item.bulan] = item.jp_default; });
+
+            // B. Ambil Data Libur Kelas untuk memotong JP Admin
+            const reqLibur = await api.get('libur_kelas', `select=*&tanggal=gte.${startDate}&tanggal=lte.${endDate}`);
+            let potongLibur = {};
+            if (reqLibur) {
+                reqLibur.forEach(lbr => {
+                    const isSemua = lbr.cakupan === 'Semua Kelas';
+                    const isKelasIni = lbr.kelas_terpilih && lbr.kelas_terpilih.includes(kelasPilih);
+                    if (isSemua || isKelasIni) {
+                        const bln = lbr.tanggal.substring(5, 7);
+                        const namaBln = bulanMapping[bln];
+                        if (namaBln) potongLibur[namaBln] = (potongLibur[namaBln] || 0) + 1;
+                    }
+                });
+            }
+
+            // C. Ambil Data Absen Harian
             const rekapan = await api.get('input_harian', `select=*&santri_id=eq.${santriId}&tanggal=gte.${startDate}&tanggal=lte.${endDate}&order=tanggal.asc`);
             
-            if (rekapan && rekapan.length > 0) {
-                let rekapBulan = {};
-                let lastTahsin = '';
-                let lastTahfidz = '';
+            let rekapAbsen = {};
+            let lastTahsin = '', lastTahfidz = '';
 
+            if (rekapan && rekapan.length > 0) {
                 rekapan.forEach(rekord => {
-                    // MENGHITUNG ABSENSI
+                    // Hitung H, S, I
                     const tgl = rekord.tanggal; 
                     if (tgl) {
                         const bln = tgl.substring(5, 7); 
                         const namaBln = bulanMapping[bln];
                         if (namaBln) {
-                            if (!rekapBulan[namaBln]) rekapBulan[namaBln] = { hadir: 0, total: 0 };
-                            rekapBulan[namaBln].total += 1;
-                            if (rekord.status_hadir === 'Hadir') rekapBulan[namaBln].hadir += 1;
+                            if (!rekapAbsen[namaBln]) rekapAbsen[namaBln] = { h: 0, s: 0, i: 0 };
+                            if (rekord.status_hadir === 'Hadir') rekapAbsen[namaBln].h += 1;
+                            else if (rekord.status_hadir === 'Sakit') rekapAbsen[namaBln].s += 1;
+                            else if (rekord.status_hadir === 'Izin') rekapAbsen[namaBln].i += 1;
                         }
                     }
-
-                    // MENCARI CAPAIAN TERAKHIR TAHFIDZ & TAHSIN
-                    // (Menggunakan deteksi kata kunci pada kolom yang biasa dipakai untuk catatan setoran)
+                    // Cek Setoran Terakhir
                     const jenis = (rekord.jenis_setoran || rekord.kategori || rekord.materi || '').toLowerCase();
                     const capaian = rekord.jilid_surah || rekord.halaman_ayat || rekord.keterangan || '';
-                    
-                    if (jenis.includes('tahsin') || jenis.includes('jilid') || jenis.includes('qiroah')) {
-                        lastTahsin = capaian;
-                    } 
-                    if (jenis.includes('tahfidz') || jenis.includes('surat') || jenis.includes('hafalan')) {
-                        lastTahfidz = capaian;
-                    }
+                    if (jenis.includes('tahsin') || jenis.includes('jilid') || jenis.includes('qiroah')) lastTahsin = capaian;
+                    if (jenis.includes('tahfidz') || jenis.includes('surat') || jenis.includes('hafalan')) lastTahfidz = capaian;
                 });
-
-                // TEMPELKAN HASIL HITUNGAN KE DALAM FORM ABSENSI
-                document.querySelectorAll('.baris-kehadiran').forEach(tr => {
-                    const blnUI = tr.querySelector('.input-bulan').value;
-                    if (rekapBulan[blnUI]) {
-                        tr.querySelector('.input-hadir').value = rekapBulan[blnUI].hadir;
-                        tr.querySelector('.input-total').value = rekapBulan[blnUI].total;
-                    } else {
-                        tr.querySelector('.input-hadir').value = 0;
-                        tr.querySelector('.input-total').value = 0;
-                    }
-                });
-
-                // TEMPELKAN CAPAIAN TERBARU
-                inputTahsin.value = lastTahsin || 'Belum ada setoran';
-                inputTahfidz.value = lastTahfidz || 'Belum ada setoran';
-
-            } else {
-                inputTahsin.value = 'Data kosong di semester ini';
-                inputTahfidz.value = 'Data kosong di semester ini';
-                document.querySelectorAll('.input-hadir').forEach(el => el.value = 0);
-                document.querySelectorAll('.input-total').forEach(el => el.value = 0);
             }
+
+            // D. KALKULASI FINAL (JP RIIL & ALPA) LALU CETAK KE FORM
+            document.querySelectorAll('.baris-kehadiran').forEach(tr => {
+                const blnUI = tr.querySelector('.input-bulan').value;
+                
+                // 1. JP Riil = JP Admin - Jumlah Hari Libur
+                const targetAdmin = jpAdmin[blnUI] || 0;
+                const libur = potongLibur[blnUI] || 0;
+                let jpRiil = targetAdmin - libur;
+                if(jpRiil < 0) jpRiil = 0;
+
+                // 2. Ambil nilai H, S, I
+                const h = rekapAbsen[blnUI] ? rekapAbsen[blnUI].h : 0;
+                const s = rekapAbsen[blnUI] ? rekapAbsen[blnUI].s : 0;
+                const i = rekapAbsen[blnUI] ? rekapAbsen[blnUI].i : 0;
+
+                // 3. Hitung Alpa = JP Riil - (H + S + I)
+                let a = jpRiil - (h + s + i);
+                
+                // Fallback: Jika Admin belum setting JP sama sekali, tapi guru sudah mengabsen.
+                if(targetAdmin === 0 && (h+s+i) > 0) {
+                    jpRiil = h + s + i;
+                    a = 0;
+                } else if (a < 0) {
+                    a = 0; // Cegah alpa jadi minus jika salah input data absen ganda
+                }
+
+                // Tempel ke input (Alpa & JP terkunci otomatis)
+                tr.querySelector('.input-hadir').value = h;
+                tr.querySelector('.input-sakit').value = s;
+                tr.querySelector('.input-izin').value = i;
+                tr.querySelector('.input-alpa').value = a;
+                tr.querySelector('.input-jp').value = jpRiil;
+            });
+
+            inputTahsin.value = lastTahsin || 'Belum ada setoran';
+            inputTahfidz.value = lastTahfidz || 'Belum ada setoran';
+
         } catch (err) {
             console.error("Gagal menarik data otomatis:", err);
             inputTahsin.value = ''; inputTahfidz.value = '';
         }
     };
-
     filterSantri.addEventListener('change', triggerTarikDataOtomatis);
 
-
-    // -----------------------------------------------------
-    // 5. MENGUMPULKAN DATA UNTUK DISIMPAN / DICETAK
-    // -----------------------------------------------------
+    // 5. KUMPULKAN DATA UNTUK DISIMPAN / DICETAK
     const kumpulkanDataForm = () => {
         const sId = filterSantri.value;
         if (!sId) return null;
@@ -477,13 +489,16 @@ export const initRaport = async () => {
 
         const dataKehadiran = [];
         document.querySelectorAll('.baris-kehadiran').forEach(tr => {
-            const hadir = tr.querySelector('.input-hadir').value;
-            const total = tr.querySelector('.input-total').value;
-            if(hadir || total) {
+            const h = tr.querySelector('.input-hadir').value || '0';
+            const s = tr.querySelector('.input-sakit').value || '0';
+            const i = tr.querySelector('.input-izin').value || '0';
+            const a = tr.querySelector('.input-alpa').value || '0';
+            const jp = tr.querySelector('.input-jp').value || '0';
+            
+            if(h !== '0' || s !== '0' || i !== '0' || a !== '0' || jp !== '0') {
                 dataKehadiran.push({
                     bulan: tr.querySelector('.input-bulan').value,
-                    hadir: hadir || '-',
-                    total: total || '-'
+                    h: h, s: s, i: i, a: a, jp: jp
                 });
             }
         });
@@ -507,9 +522,7 @@ export const initRaport = async () => {
         };
     };
 
-    // -----------------------------------------------------
-    // 6. TOMBOL SIMPAN & PREVIEW (CETAK)
-    // -----------------------------------------------------
+    // 6. TOMBOL SIMPAN PERMANEN
     document.getElementById('btnSimpanRaport').addEventListener('click', async () => {
         const data = kumpulkanDataForm();
         if (!data) return alert("Pilih Nama Santri terlebih dahulu!");
@@ -523,14 +536,13 @@ export const initRaport = async () => {
             await api.post('raport_data', data);
             alert("Alhamdulillah, Data Raport berhasil disimpan permanen!");
         } catch (e) {
-            console.error(e);
             alert("Gagal menyimpan data raport. Cek koneksi Anda.");
         }
-        
         btn.innerHTML = ori;
         btn.disabled = false;
     });
 
+    // 7. TOMBOL PREVIEW (CETAK PDF)
     document.getElementById('btnPreviewRaport').addEventListener('click', () => {
         const data = kumpulkanDataForm();
         if (!data) return alert("Pilih Nama Santri terlebih dahulu untuk melihat Raport!");
@@ -538,6 +550,7 @@ export const initRaport = async () => {
         const santri = dataSantriCache.find(s => s.id === data.santri_id);
         const guru = dataGuruCache || { nama: 'Wali Kelas', ttd_digital: '' };
         
+        // A. Render Tabel Akademik
         let htmlBarisNilai = '';
         data.detail_nilai.akademik.forEach((n, idx) => {
             htmlBarisNilai += `
@@ -551,17 +564,40 @@ export const initRaport = async () => {
             `;
         });
 
-        let headerKehadiran = '';
-        let nilaiKehadiran = '';
-        data.detail_nilai.kehadiran.forEach(k => {
-            headerKehadiran += `<th style="padding:8px; border:1px solid #000; text-align:center; background:#f0f0f0;">${k.bulan}</th>`;
-            nilaiKehadiran += `<td style="padding:8px; border:1px solid #000; text-align:center; font-weight:bold;">${k.hadir} / ${k.total}</td>`;
-        });
+        // B. Render Tabel Kehadiran (Vertikal)
+        let htmlKehadiran = '';
+        let totH = 0, totS = 0, totI = 0, totA = 0, totJP = 0;
         
         if(data.detail_nilai.kehadiran.length === 0) {
-            headerKehadiran = `<th style="padding:8px; border:1px solid #000; background:#f0f0f0;">Data Kehadiran</th>`;
-            nilaiKehadiran = `<td style="padding:8px; border:1px solid #000; text-align:center;">Belum ada data</td>`;
+            htmlKehadiran = `<tr><td colspan="4" style="padding:8px; text-align:center; border:1px solid #000;">Belum ada data kehadiran</td></tr>`;
+        } else {
+            data.detail_nilai.kehadiran.forEach((k, idx) => {
+                htmlKehadiran += `
+                    <tr>
+                        <td style="text-align:center; padding:6px; border:1px solid #000;">${idx + 1}</td>
+                        <td style="padding:6px; border:1px solid #000;">${k.bulan}</td>
+                        <td style="text-align:center; padding:6px; border:1px solid #000; letter-spacing: 2px;">${k.h}, ${k.s}, ${k.i}, ${k.a}</td>
+                        <td style="text-align:center; padding:6px; border:1px solid #000;">${k.jp}</td>
+                    </tr>
+                `;
+                totH += parseInt(k.h) || 0; totS += parseInt(k.s) || 0;
+                totI += parseInt(k.i) || 0; totA += parseInt(k.a) || 0;
+                totJP += parseInt(k.jp) || 0;
+            });
         }
+
+        // Kalkulasi Persentase Kehadiran & Predikat
+        let persentaseHadir = totJP > 0 ? Math.round(((totH + totS + totI) / totJP) * 100) : 0; 
+        // Note: Sakit & Izin seringkali tetap dihitung sbg hari kehadiran positif dalam madrasah, 
+        // Jika ingin hanya 'Hadir' murni yang dihitung, cukup gunakan (totH / totJP). 
+        // Di sini saya pakai (totH / totJP) agar lebih presisi.
+        persentaseHadir = totJP > 0 ? Math.round((totH / totJP) * 100) : 0;
+        
+        let predikatHadir = '';
+        if (persentaseHadir >= 90) predikatHadir = 'A (Sangat Baik)';
+        else if (persentaseHadir >= 80) predikatHadir = 'B (Baik)';
+        else if (persentaseHadir >= 70) predikatHadir = 'C (Cukup)';
+        else predikatHadir = 'D (Kurang)';
 
         const htmlCetak = `
             <html>
@@ -577,22 +613,18 @@ export const initRaport = async () => {
                     .info-grid table { font-size: 13px; font-weight: bold; }
                     .info-grid table td { padding: 2px 10px 2px 0; }
                     
-                    .tabel-utama { width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 13px; }
+                    .tabel-utama { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; }
                     .tabel-utama th { background: #f9f9f9; padding: 10px; border: 1px solid #000; text-transform: uppercase; }
                     .tabel-utama td { border: 1px solid #000; }
                     
                     .section-title { font-weight: bold; font-size: 14px; margin-bottom: 8px; margin-top: 15px; }
-                    
-                    .catatan-box { border: 1px solid #000; padding: 15px; min-height: 80px; margin-bottom: 40px; font-style: italic; font-size: 13px; }
+                    .catatan-box { border: 1px solid #000; padding: 15px; min-height: 70px; margin-bottom: 30px; font-style: italic; font-size: 13px; }
                     
                     .ttd-area { display: flex; justify-content: space-between; padding: 0 20px; text-align: center; font-size: 13px; }
                     .ttd-box { width: 220px; }
                     .img-ttd { height: 70px; object-fit: contain; margin: 5px 0; }
                     
-                    @media print {
-                        @page { margin: 1cm; size: A4 portrait; }
-                        body { padding: 0; }
-                    }
+                    @media print { @page { margin: 1cm; size: A4 portrait; } body { padding: 0; } }
                 </style>
             </head>
             <body>
@@ -612,7 +644,6 @@ export const initRaport = async () => {
                     </table>
                 </div>
 
-                <!-- TABEL 1: AKADEMIK -->
                 <table class="tabel-utama">
                     <thead>
                         <tr>
@@ -634,9 +665,8 @@ export const initRaport = async () => {
                     </tbody>
                 </table>
 
-                <!-- TABEL 2: TAHSIN & TAHFIDZ -->
                 <div class="section-title">Capaian Tahsin & Tahfidz:</div>
-                <table class="tabel-utama" style="margin-bottom: 25px;">
+                <table class="tabel-utama" style="margin-bottom: 20px;">
                     <tr>
                         <td style="padding:10px; width:30%; background:#f9f9f9;"><b>Tahsin (Qiro'ah)</b></td>
                         <td style="padding:10px;">${data.detail_nilai.tahsin}</td>
@@ -647,20 +677,34 @@ export const initRaport = async () => {
                     </tr>
                 </table>
 
-                <!-- TABEL 3: KEHADIRAN -->
                 <div class="section-title">Rekapitulasi Kehadiran:</div>
-                <table class="tabel-utama" style="margin-bottom: 25px;">
-                    <tr>${headerKehadiran}</tr>
-                    <tr>${nilaiKehadiran}</tr>
+                <table class="tabel-utama" style="margin-bottom: 10px; width: 80%;">
+                    <thead>
+                        <tr>
+                            <th style="width: 10%;">No</th>
+                            <th style="width: 30%;">Bulan</th>
+                            <th style="width: 40%;">Absensi [ H, S, I, A ]</th>
+                            <th style="width: 20%;">JP</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${htmlKehadiran}
+                        <tr>
+                            <td colspan="2" style="text-align:right; padding:6px; border:1px solid #000;"><b>TOTAL 1 SEMESTER:</b></td>
+                            <td style="text-align:center; padding:6px; border:1px solid #000; font-weight:bold; letter-spacing: 2px;">${totH}, ${totS}, ${totI}, ${totA}</td>
+                            <td style="text-align:center; padding:6px; border:1px solid #000; font-weight:bold;">${totJP}</td>
+                        </tr>
+                    </tbody>
                 </table>
+                <p style="font-size: 13px; margin-top: -5px; margin-bottom: 25px;">
+                    <b>Tingkat Kehadiran:</b> ${persentaseHadir}% &nbsp;&nbsp;|&nbsp;&nbsp; <b>Predikat:</b> ${predikatHadir}
+                </p>
 
-                <!-- CATATAN WALI KELAS -->
                 <div class="section-title">Catatan Pengampu / Wali Kelas:</div>
                 <div class="catatan-box">
                     "${data.catatan}"
                 </div>
 
-                <!-- TANDA TANGAN -->
                 <div class="ttd-area">
                     <div class="ttd-box">
                         Mengetahui,<br>Orang Tua / Wali<br><br><br><br><br>
@@ -680,11 +724,6 @@ export const initRaport = async () => {
         printWindow.document.write(htmlCetak);
         printWindow.document.close();
         printWindow.focus();
-        
         setTimeout(() => { printWindow.print(); }, 500);
-    });
-
-    document.getElementById('btnResetNilai').addEventListener('click', () => {
-        if(confirm('Yakin ingin menghapus semua baris nilai ini?')) { tabelBody.innerHTML = ''; kalkulasiTotal(); }
     });
 };
