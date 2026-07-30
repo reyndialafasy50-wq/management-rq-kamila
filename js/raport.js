@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * MODUL RAPORT - FINAL (SUPER OTOMATIS JP & ALPA)
+ * MODUL RAPORT - FINAL (SUPER OTOMATIS + REVISI TABEL PDF)
  * File: js/raport.js
  * ==================================================
  */
@@ -153,17 +153,17 @@ export const renderRaport = () => {
         <!-- REKAP KEHADIRAN (SUPER OTOMATIS) -->
         <section class="glass-card">
             <div class="table-header">
-                <h3><i class="fas fa-calendar-check" style="color: #002452; margin-right: 8px;"></i> 3. Rekap Kehadiran (Hitung Alpa & JP Otomatis)</h3>
+                <h3><i class="fas fa-calendar-check" style="color: #002452; margin-right: 8px;"></i> 3. Rekap Kehadiran (Hitung Alpha & JP Otomatis)</h3>
             </div>
             <div class="table-container">
                 <table class="raport-table">
                     <thead>
                         <tr>
                             <th style="width: 25%;">Bulan</th>
-                            <th style="width: 15%; text-align: center;">Hadir (H)</th>
-                            <th style="width: 15%; text-align: center;">Sakit (S)</th>
-                            <th style="width: 15%; text-align: center;">Izin (I)</th>
-                            <th style="width: 15%; text-align: center;">Alpa (A)</th>
+                            <th style="width: 15%; text-align: center;">Hadir</th>
+                            <th style="width: 15%; text-align: center;">Izin</th>
+                            <th style="width: 15%; text-align: center;">Sakit</th>
+                            <th style="width: 15%; text-align: center;">Alpha</th>
                             <th style="width: 15%; text-align: center;">JP Total</th>
                         </tr>
                     </thead>
@@ -273,7 +273,7 @@ export const initRaport = async () => {
     tambahBarisHTML('Rukun Iman & Islam', 'Aqidah', '88', 'Perlu pengulangan');
     kalkulasiTotal();
 
-    // 2. RENDER KERANGKA TABEL KEHADIRAN
+    // 2. RENDER KERANGKA TABEL KEHADIRAN (Urutan: Hadir, Izin, Sakit, Alpha)
     const renderTabelKehadiran = () => {
         const isGanjil = filterSemester.value.includes('Ganjil');
         const bulanList = isGanjil 
@@ -289,8 +289,8 @@ export const initRaport = async () => {
                         ${bulan}
                     </td>
                     <td><input type="number" class="form-input input-hadir" style="text-align:center;" placeholder="0"></td>
-                    <td><input type="number" class="form-input input-sakit" style="text-align:center;" placeholder="0"></td>
                     <td><input type="number" class="form-input input-izin" style="text-align:center;" placeholder="0"></td>
+                    <td><input type="number" class="form-input input-sakit" style="text-align:center;" placeholder="0"></td>
                     <td><input type="number" class="form-input input-alpa" style="text-align:center; background:#fee2e2; font-weight:bold;" placeholder="0" readonly></td>
                     <td><input type="number" class="form-input input-jp" style="text-align:center; background:#e1e2e4; font-weight:bold;" placeholder="0" readonly></td>
                 </tr>
@@ -304,7 +304,7 @@ export const initRaport = async () => {
     filterTahun.addEventListener('change', () => { if(filterSantri.value) triggerTarikDataOtomatis(); });
     renderTabelKehadiran();
 
-    // 3. LOAD DATA MASTER (GURU & KELAS)
+    // 3. LOAD DATA MASTER
     const loadGuru = async () => {
         if (!loggedInGuruId) {
             const dataG = await api.get('guru', 'select=*&limit=1');
@@ -352,7 +352,7 @@ export const initRaport = async () => {
         });
     });
 
-    // 4. MESIN PENARIK DATA SUPER OTOMATIS (JP Admin + Libur Kelas + Absen = Alpa)
+    // 4. MESIN PENARIK DATA SUPER OTOMATIS
     const triggerTarikDataOtomatis = async () => {
         const santriId = filterSantri.value;
         const kelasPilih = filterKelas.value;
@@ -375,12 +375,10 @@ export const initRaport = async () => {
         }
 
         try {
-            // A. Ambil Target JP dari Admin
             const reqJP = await api.get('setting_jp', `select=*&tahun_ajaran=eq.${tahunAjaran}&semester=eq.${semester}`);
             let jpAdmin = {};
             if (reqJP) reqJP.forEach(item => { jpAdmin[item.bulan] = item.jp_default; });
 
-            // B. Ambil Data Libur Kelas untuk memotong JP Admin
             const reqLibur = await api.get('libur_kelas', `select=*&tanggal=gte.${startDate}&tanggal=lte.${endDate}`);
             let potongLibur = {};
             if (reqLibur) {
@@ -395,7 +393,6 @@ export const initRaport = async () => {
                 });
             }
 
-            // C. Ambil Data Absen Harian
             const rekapan = await api.get('input_harian', `select=*&santri_id=eq.${santriId}&tanggal=gte.${startDate}&tanggal=lte.${endDate}&order=tanggal.asc`);
             
             let rekapAbsen = {};
@@ -403,7 +400,6 @@ export const initRaport = async () => {
 
             if (rekapan && rekapan.length > 0) {
                 rekapan.forEach(rekord => {
-                    // Hitung H, S, I
                     const tgl = rekord.tanggal; 
                     if (tgl) {
                         const bln = tgl.substring(5, 7); 
@@ -415,7 +411,6 @@ export const initRaport = async () => {
                             else if (rekord.status_hadir === 'Izin') rekapAbsen[namaBln].i += 1;
                         }
                     }
-                    // Cek Setoran Terakhir
                     const jenis = (rekord.jenis_setoran || rekord.kategori || rekord.materi || '').toLowerCase();
                     const capaian = rekord.jilid_surah || rekord.halaman_ayat || rekord.keterangan || '';
                     if (jenis.includes('tahsin') || jenis.includes('jilid') || jenis.includes('qiroah')) lastTahsin = capaian;
@@ -423,36 +418,29 @@ export const initRaport = async () => {
                 });
             }
 
-            // D. KALKULASI FINAL (JP RIIL & ALPA) LALU CETAK KE FORM
             document.querySelectorAll('.baris-kehadiran').forEach(tr => {
                 const blnUI = tr.querySelector('.input-bulan').value;
-                
-                // 1. JP Riil = JP Admin - Jumlah Hari Libur
                 const targetAdmin = jpAdmin[blnUI] || 0;
                 const libur = potongLibur[blnUI] || 0;
                 let jpRiil = targetAdmin - libur;
                 if(jpRiil < 0) jpRiil = 0;
 
-                // 2. Ambil nilai H, S, I
                 const h = rekapAbsen[blnUI] ? rekapAbsen[blnUI].h : 0;
                 const s = rekapAbsen[blnUI] ? rekapAbsen[blnUI].s : 0;
                 const i = rekapAbsen[blnUI] ? rekapAbsen[blnUI].i : 0;
 
-                // 3. Hitung Alpa = JP Riil - (H + S + I)
                 let a = jpRiil - (h + s + i);
                 
-                // Fallback: Jika Admin belum setting JP sama sekali, tapi guru sudah mengabsen.
                 if(targetAdmin === 0 && (h+s+i) > 0) {
                     jpRiil = h + s + i;
                     a = 0;
                 } else if (a < 0) {
-                    a = 0; // Cegah alpa jadi minus jika salah input data absen ganda
+                    a = 0; 
                 }
 
-                // Tempel ke input (Alpa & JP terkunci otomatis)
                 tr.querySelector('.input-hadir').value = h;
-                tr.querySelector('.input-sakit').value = s;
                 tr.querySelector('.input-izin').value = i;
+                tr.querySelector('.input-sakit').value = s;
                 tr.querySelector('.input-alpa').value = a;
                 tr.querySelector('.input-jp').value = jpRiil;
             });
@@ -461,7 +449,6 @@ export const initRaport = async () => {
             inputTahfidz.value = lastTahfidz || 'Belum ada setoran';
 
         } catch (err) {
-            console.error("Gagal menarik data otomatis:", err);
             inputTahsin.value = ''; inputTahfidz.value = '';
         }
     };
@@ -490,15 +477,15 @@ export const initRaport = async () => {
         const dataKehadiran = [];
         document.querySelectorAll('.baris-kehadiran').forEach(tr => {
             const h = tr.querySelector('.input-hadir').value || '0';
-            const s = tr.querySelector('.input-sakit').value || '0';
             const i = tr.querySelector('.input-izin').value || '0';
+            const s = tr.querySelector('.input-sakit').value || '0';
             const a = tr.querySelector('.input-alpa').value || '0';
             const jp = tr.querySelector('.input-jp').value || '0';
             
             if(h !== '0' || s !== '0' || i !== '0' || a !== '0' || jp !== '0') {
                 dataKehadiran.push({
                     bulan: tr.querySelector('.input-bulan').value,
-                    h: h, s: s, i: i, a: a, jp: jp
+                    h: h, i: i, s: s, a: a, jp: jp
                 });
             }
         });
@@ -542,7 +529,7 @@ export const initRaport = async () => {
         btn.disabled = false;
     });
 
-    // 7. TOMBOL PREVIEW (CETAK PDF)
+    // 7. TOMBOL PREVIEW (CETAK PDF) - REVISI DESAIN TABEL ABSEN
     document.getElementById('btnPreviewRaport').addEventListener('click', () => {
         const data = kumpulkanDataForm();
         if (!data) return alert("Pilih Nama Santri terlebih dahulu untuk melihat Raport!");
@@ -564,35 +551,33 @@ export const initRaport = async () => {
             `;
         });
 
-        // B. Render Tabel Kehadiran (Vertikal)
+        // B. Render Tabel Kehadiran (Format Tabel Rinci Sesuai Excel Ustadz)
         let htmlKehadiran = '';
         let totH = 0, totS = 0, totI = 0, totA = 0, totJP = 0;
         
         if(data.detail_nilai.kehadiran.length === 0) {
-            htmlKehadiran = `<tr><td colspan="4" style="padding:8px; text-align:center; border:1px solid #000;">Belum ada data kehadiran</td></tr>`;
+            htmlKehadiran = `<tr><td colspan="7" style="padding:8px; text-align:center; border:1px solid #000;">Belum ada data kehadiran</td></tr>`;
         } else {
             data.detail_nilai.kehadiran.forEach((k, idx) => {
                 htmlKehadiran += `
                     <tr>
                         <td style="text-align:center; padding:6px; border:1px solid #000;">${idx + 1}</td>
                         <td style="padding:6px; border:1px solid #000;">${k.bulan}</td>
-                        <td style="text-align:center; padding:6px; border:1px solid #000; letter-spacing: 2px;">${k.h}, ${k.s}, ${k.i}, ${k.a}</td>
+                        <td style="text-align:center; padding:6px; border:1px solid #000;">${k.h}</td>
+                        <td style="text-align:center; padding:6px; border:1px solid #000;">${k.i}</td>
+                        <td style="text-align:center; padding:6px; border:1px solid #000;">${k.s}</td>
+                        <td style="text-align:center; padding:6px; border:1px solid #000;">${k.a}</td>
                         <td style="text-align:center; padding:6px; border:1px solid #000;">${k.jp}</td>
                     </tr>
                 `;
-                totH += parseInt(k.h) || 0; totS += parseInt(k.s) || 0;
-                totI += parseInt(k.i) || 0; totA += parseInt(k.a) || 0;
+                totH += parseInt(k.h) || 0; totI += parseInt(k.i) || 0;
+                totS += parseInt(k.s) || 0; totA += parseInt(k.a) || 0;
                 totJP += parseInt(k.jp) || 0;
             });
         }
 
-        // Kalkulasi Persentase Kehadiran & Predikat
-        let persentaseHadir = totJP > 0 ? Math.round(((totH + totS + totI) / totJP) * 100) : 0; 
-        // Note: Sakit & Izin seringkali tetap dihitung sbg hari kehadiran positif dalam madrasah, 
-        // Jika ingin hanya 'Hadir' murni yang dihitung, cukup gunakan (totH / totJP). 
-        // Di sini saya pakai (totH / totJP) agar lebih presisi.
-        persentaseHadir = totJP > 0 ? Math.round((totH / totJP) * 100) : 0;
-        
+        // Kalkulasi Persentase Kehadiran
+        let persentaseHadir = totJP > 0 ? Math.round((totH / totJP) * 100) : 0;
         let predikatHadir = '';
         if (persentaseHadir >= 90) predikatHadir = 'A (Sangat Baik)';
         else if (persentaseHadir >= 80) predikatHadir = 'B (Baik)';
@@ -644,6 +629,7 @@ export const initRaport = async () => {
                     </table>
                 </div>
 
+                <!-- TABEL 1: AKADEMIK -->
                 <table class="tabel-utama">
                     <thead>
                         <tr>
@@ -678,20 +664,30 @@ export const initRaport = async () => {
                 </table>
 
                 <div class="section-title">Rekapitulasi Kehadiran:</div>
-                <table class="tabel-utama" style="margin-bottom: 10px; width: 80%;">
+                <!-- REVISI TABEL: LEBAR 100% & HEADER BERSUSUN -->
+                <table class="tabel-utama" style="margin-bottom: 10px; width: 100%;">
                     <thead>
                         <tr>
-                            <th style="width: 10%;">No</th>
-                            <th style="width: 30%;">Bulan</th>
-                            <th style="width: 40%;">Absensi [ H, S, I, A ]</th>
-                            <th style="width: 20%;">JP</th>
+                            <th rowspan="2" style="width: 5%;">No</th>
+                            <th rowspan="2" style="width: 25%;">Bulan</th>
+                            <th colspan="4" style="width: 50%;">Absensi</th>
+                            <th rowspan="2" style="width: 20%;">JP</th>
+                        </tr>
+                        <tr>
+                            <th style="width: 12.5%;">Hadir</th>
+                            <th style="width: 12.5%;">Izin</th>
+                            <th style="width: 12.5%;">Sakit</th>
+                            <th style="width: 12.5%;">Alpha</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${htmlKehadiran}
                         <tr>
                             <td colspan="2" style="text-align:right; padding:6px; border:1px solid #000;"><b>TOTAL 1 SEMESTER:</b></td>
-                            <td style="text-align:center; padding:6px; border:1px solid #000; font-weight:bold; letter-spacing: 2px;">${totH}, ${totS}, ${totI}, ${totA}</td>
+                            <td style="text-align:center; padding:6px; border:1px solid #000; font-weight:bold;">${totH}</td>
+                            <td style="text-align:center; padding:6px; border:1px solid #000; font-weight:bold;">${totI}</td>
+                            <td style="text-align:center; padding:6px; border:1px solid #000; font-weight:bold;">${totS}</td>
+                            <td style="text-align:center; padding:6px; border:1px solid #000; font-weight:bold;">${totA}</td>
                             <td style="text-align:center; padding:6px; border:1px solid #000; font-weight:bold;">${totJP}</td>
                         </tr>
                     </tbody>
