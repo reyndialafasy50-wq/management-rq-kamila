@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Masuk - SIAKAD RQ Kamila</title>
-    <!-- Menyesuaikan Theme Color dengan warna Navy Palet -->
     <meta name="theme-color" content="#4F567D" />
     
     <!-- Google Fonts & FontAwesome -->
@@ -17,7 +16,6 @@
         body { 
             margin: 0; 
             font-family: 'Poppins', sans-serif; 
-            /* Background menggunakan gradasi warna Navy dan Biru Keabuan dari palet */
             background: linear-gradient(135deg, #4F567D 0%, #313651 100%);
             display: flex; 
             align-items: center; 
@@ -47,7 +45,6 @@
             overflow: hidden;
         }
         
-        /* Aksen garis tipis di atas kartu menggunakan warna koral/orange dari palet */
         .login-card::before {
             content: '';
             position: absolute;
@@ -72,7 +69,6 @@
             height: 90px;
             object-fit: cover;
             border-radius: 50%;
-            /* Border warna krem dari palet */
             border: 4px solid #F0DCD7; 
             padding: 2px;
             background: #fff;
@@ -80,7 +76,7 @@
         }
 
         .login-title { 
-            color: #4F567D; /* Warna Navy Palet */
+            color: #4F567D; 
             margin: 0 0 5px; 
             font-size: 1.4rem;
             font-weight: 700;
@@ -120,7 +116,7 @@
         }
 
         .input-group input:focus { 
-            border-color: #4F567D; /* Navy Palet */
+            border-color: #4F567D; 
             background: #fff;
             box-shadow: 0 0 0 3px rgba(79, 86, 125, 0.15);
         }
@@ -129,12 +125,24 @@
             position: absolute; 
             left: 15px; 
             top: 39px; 
-            color: #8999B8; /* Biru Keabuan Muda Palet */
+            color: #8999B8; 
             font-size: 1.1rem;
+        }
+        
+        #errorMsg {
+            display: none;
+            background: #fee2e2;
+            color: #dc2626;
+            font-size: 0.85rem;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: left;
+            border-left: 4px solid #dc2626;
         }
 
         .btn-login { 
-            background: #4F567D; /* Navy Palet */
+            background: #4F567D; 
             color: #fff; 
             width: 100%; 
             padding: 14px; 
@@ -169,17 +177,18 @@
     <div class="login-wrapper">
         <div class="login-card">
             <div class="logo-area">
-                <!-- Memanggil logo modern Ustadz, dengan fallback inisial RQ jika file belum diload -->
-                <img src="logokamilamodern.png" alt="Logo RQ Kamila" onerror="this.src='https://ui-avatars.com/api/?name=RQ&background=F0DCD7&color=4F567D&bold=true'">
+                <img src="images/logokamilamodern.jpg" alt="Logo RQ Kamila" onerror="this.src='https://ui-avatars.com/api/?name=RQ&background=F0DCD7&color=4F567D&bold=true'">
             </div>
             <h2 class="login-title">RQ Kamila</h2>
             <p class="login-subtitle">Silakan masuk menggunakan akun Anda</p>
             
             <form id="formLogin">
+                <div id="errorMsg"><i class="fas fa-exclamation-circle"></i> Username atau sandi salah!</div>
+                
                 <div class="input-group">
-                    <label>No. WhatsApp / Username</label>
+                    <label>Username</label>
                     <i class="fas fa-user"></i>
-                    <input type="text" id="inputUsername" placeholder="Contoh: 08123456789" required autocomplete="off">
+                    <input type="text" id="inputUsername" placeholder="Contoh: dani" required autocomplete="off">
                 </div>
                 
                 <div class="input-group">
@@ -199,21 +208,63 @@
         </div>
     </div>
 
-    <script>
-        document.getElementById('formLogin').addEventListener('submit', function(e) {
+    <!-- Menghubungkan langsung dengan API Supabase kita -->
+    <script type="module">
+        import { api } from './js/api.js';
+
+        const formLogin = document.getElementById('formLogin');
+        const btnLogin = document.getElementById('btnLogin');
+        const inputUsername = document.getElementById('inputUsername');
+        const inputPassword = document.getElementById('inputPassword');
+        const errorMsg = document.getElementById('errorMsg');
+
+        formLogin.addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const btn = document.getElementById('btnLogin');
-            const originalText = btn.innerHTML;
+            const originalText = btnLogin.innerHTML;
+            btnLogin.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Memeriksa Akses...';
+            btnLogin.style.opacity = '0.8';
+            btnLogin.disabled = true;
+            errorMsg.style.display = 'none';
             
-            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Memeriksa Akses...';
-            btn.style.opacity = '0.8';
-            btn.disabled = true;
-            
-            setTimeout(() => {
-                localStorage.setItem('status_login', 'aktif'); 
-                window.location.href = 'index.html'; 
-            }, 1200);
+            const username = inputUsername.value.trim();
+            const password = inputPassword.value.trim();
+
+            try {
+                // Mengecek kecocokan data ke tabel 'guru' di Supabase
+                const result = await api.get('guru', `select=*&username=eq.${username}&password=eq.${password}`);
+                
+                if (result && result.length > 0) {
+                    // JIKA COCOK (BERHASIL LOGIN)
+                    const user = result[0];
+                    
+                    // Simpan identitas penting ke memori lokal HP/Laptop
+                    localStorage.setItem('status_login', 'aktif');
+                    localStorage.setItem('guru_id', user.id);
+                    localStorage.setItem('user_name', user.nama);
+                    localStorage.setItem('user_role', user.role); // 'Admin' atau 'Wali Kelas'
+                    localStorage.setItem('kelas_pegangan', user.kelas_pegangan || '');
+                    
+                    // Buka pintu ke aplikasi utama
+                    window.location.href = 'index.html';
+                } else {
+                    // JIKA SALAH
+                    errorMsg.innerHTML = '<i class="fas fa-exclamation-circle"></i> Username atau sandi salah!';
+                    errorMsg.style.display = 'block';
+                    
+                    btnLogin.innerHTML = originalText;
+                    btnLogin.style.opacity = '1';
+                    btnLogin.disabled = false;
+                }
+            } catch (err) {
+                console.error("Gagal terhubung ke database:", err);
+                errorMsg.innerHTML = '<i class="fas fa-wifi"></i> Gagal koneksi ke server database.';
+                errorMsg.style.display = 'block';
+                
+                btnLogin.innerHTML = originalText;
+                btnLogin.style.opacity = '1';
+                btnLogin.disabled = false;
+            }
         });
     </script>
 </body>
