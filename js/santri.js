@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * BAGIAN 8: MODUL DATA SANTRI (RBAC TERINTEGRASI + MULTI KELAS)
+ * BAGIAN 8: MODUL DATA SANTRI (RBAC + AUTO-ASSIGN KELAS)
  * File: js/santri.js
  * ==================================================
  */
@@ -92,7 +92,6 @@ export function renderSantri() {
                 <div style="margin-bottom: 10px;">
                     <label class="modern-label">Daftar Santri yang belum memiliki kelas:</label>
                     
-                    <!-- KOTAK PENCARIAN SANTRI DITAMBAHKAN DI SINI -->
                     <div style="position: relative; margin-bottom: 10px; width: 100%;">
                         <i class="fas fa-search" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
                         <input type="text" id="inputCariTarikSantri" placeholder="Ketik nama untuk mencari santri..." style="width: 100%; padding: 10px 15px 10px 40px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.9rem; outline: none;">
@@ -493,14 +492,41 @@ export async function initSantri() {
             btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Menyimpan...`;
 
             try {
+                // 1. Ambil Nama Kelas Baru
+                const namaKelasBaru = document.getElementById('inputNamaKelas').value.trim();
+                
+                // 2. Simpan Kelas ke Database (Tabel Kelas)
                 await api.post('kelas', { 
-                    nama_kelas: document.getElementById('inputNamaKelas').value, 
+                    nama_kelas: namaKelasBaru, 
                     jam_kelas: `${document.getElementById('inputJamMulai').value} - ${document.getElementById('inputJamSelesai').value}`, 
                     hari_kelas: selectedDays.join(', ')
                 });
+                
+                // 3. AUTO-ASSIGN: Tambahkan nama kelas baru ini ke akun guru yang sedang membuat
+                const guruId = localStorage.getItem('guru_id');
+                if (guruId && currentUserRole !== 'Admin') {
+                    let kelasPeganganSekarang = localStorage.getItem('kelas_pegangan') || '';
+                    let arrayKelas = kelasPeganganSekarang.split(',').map(s => s.trim()).filter(s => s !== '');
+                    
+                    // Cek agar tidak duplikat
+                    if (!arrayKelas.some(k => k.toLowerCase() === namaKelasBaru.toLowerCase())) {
+                        arrayKelas.push(namaKelasBaru);
+                        const kelasPeganganBaru = arrayKelas.join(', ');
+                        
+                        // Update di Database Supabase
+                        await api.update('guru', guruId, { kelas_pegangan: kelasPeganganBaru });
+                        
+                        // Update di memori HP (Local Storage)
+                        localStorage.setItem('kelas_pegangan', kelasPeganganBaru);
+                    }
+                }
+
                 document.getElementById('modalKelas').classList.remove('active');
-                await loadData();
-                alert("Kelas berhasil dibuat! Silakan klik 'Tarik Santri' untuk memasukkan murid.");
+                
+                // 4. Alert & Refresh Total
+                alert("Kelas berhasil dibuat dan otomatis ditautkan ke akun Anda!\nSistem akan memuat ulang halaman untuk menerapkan perubahan.");
+                window.location.reload(); // Wajib reload agar memori & UI terapdate seketika
+                
             } catch(error) { alert("Gagal menyimpan kelas."); } 
             finally { btn.innerHTML = `<i class="fas fa-save"></i> Simpan Kelas`; }
         });
