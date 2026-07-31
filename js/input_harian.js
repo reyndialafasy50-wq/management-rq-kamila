@@ -128,11 +128,35 @@ export async function initInputHarian() {
     let currentSantriData = []; 
     elTgl.valueAsDate = new Date();
 
+    // --- TAMBAHAN BARU: AMBIL DATA ROLE & KELAS PEGANGAN DARI LOGIN ---
+    const userRole = localStorage.getItem('user_role');
+    const kelasPegangan = localStorage.getItem('kelas_pegangan');
+    // ------------------------------------------------------------------
+
     try {
         const kelasData = await api.get('kelas', 'select=*');
         if(kelasData.length > 0) {
-            elKelas.innerHTML = kelasData.map(k => `<option value="${k.nama_kelas}">${k.nama_kelas}</option>`).join('');
-            fetchDanRenderSantri();
+            
+            // --- FILTER AJAIB (HAK AKSES KELAS) ---
+            let kelasTersedia = kelasData.map(k => k.nama_kelas).sort();
+            
+            if (userRole !== 'Admin' && kelasPegangan) {
+                // Jika bukan admin, hanya ambil kelas yang namanya cocok dengan kelas_pegangan
+                kelasTersedia = kelasTersedia.filter(k => k.toLowerCase() === kelasPegangan.toLowerCase());
+            }
+            // -------------------------------------
+
+            if (kelasTersedia.length > 0) {
+                elKelas.innerHTML = kelasTersedia.map(k => `<option value="${k}">${k}</option>`).join('');
+                // Jika wali kelas hanya punya 1 kelas, otomatis langsung diload santrinya
+                if (kelasTersedia.length === 1) {
+                    elKelas.value = kelasTersedia[0];
+                }
+                fetchDanRenderSantri();
+            } else {
+                elKelas.innerHTML = '<option value="">Anda belum ditugaskan di kelas manapun.</option>';
+                container.innerHTML = '<p style="text-align:center;">Silakan hubungi Admin.</p>';
+            }
         } else {
             elKelas.innerHTML = '<option value="">Belum ada kelas dibuat</option>';
             container.innerHTML = '<p style="text-align:center;">Silakan buat kelas terlebih dahulu.</p>';
@@ -477,4 +501,4 @@ export async function initInputHarian() {
             setTimeout(() => { btnElement.innerHTML = originalText; }, 1000);
         }, 500); 
     };
-        }
+}
