@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * BAGIAN 7: MODUL DASHBOARD (MURNI TANPA LONCENG & RBAC AKTIF)
+ * BAGIAN 7: MODUL DASHBOARD (MURNI TANPA LONCENG & RBAC)
  * File: js/dashboard.js
  * ==================================================
  */
@@ -112,20 +112,20 @@ export function renderDashboard() {
 export async function initDashboard() {
     const elDate = document.getElementById('currentDateDisplay');
     const elClock = document.getElementById('realtimeClock');
-    const greetingEl = document.getElementById('welcomeGreeting');
+    const welcomeGreeting = document.getElementById('welcomeGreeting');
     
-    // --- BACA ROLE & KELAS DARI LOGIN ---
+    // --- BACA ROLE & IDENTITAS DARI STORAGE ---
     const userRole = localStorage.getItem('user_role') || 'Guru';
     const userName = localStorage.getItem('user_name') || '';
     const kelasPegangan = localStorage.getItem('kelas_pegangan');
 
+    // SET GREETING TEXT
     if (userRole === 'Admin') {
-        greetingEl.textContent = `Ahlan wa Sahlan, Admin!`;
+        welcomeGreeting.innerHTML = `Ahlan wa Sahlan, Administrator!`;
     } else {
-        greetingEl.textContent = userName ? `Ahlan wa Sahlan, Ust. ${userName}!` : `Ahlan wa Sahlan, Ustadz!`;
+        welcomeGreeting.innerHTML = `Ahlan wa Sahlan, Ust. ${userName || 'Guru'}!`;
     }
-    // ------------------------------------
-
+    
     function updateClock() {
         const now = new Date();
         elDate.textContent = now.toLocaleDateString('id-ID', { weekday: 'long', day: '2-digit', month: 'short', year: 'numeric' });
@@ -184,12 +184,19 @@ export async function initDashboard() {
         tooltipDataObj = { 'Hadir': {}, 'Izin/Skt': {}, 'Alfa': {}, 'Ulang': {} };
         let hadir = 0, izinSakit = 0, alfa = 0, ulang = 0;
         
+        // PENGATURAN TEKS PUSAT GRAFIK
         let chartSantriList = rawSantriList;
-        if (namaKelasAktif) chartSantriList = rawSantriList.filter(s => s.nama_kelas === namaKelasAktif);
+        if (namaKelasAktif && userRole !== 'Admin') {
+            chartSantriList = rawSantriList.filter(s => s.nama_kelas === namaKelasAktif);
+            document.getElementById('chartClassNameText').textContent = `KELAS ${namaKelasAktif.toUpperCase()}`;
+        } else {
+            document.getElementById('chartClassNameText').textContent = 'SEMUA KELAS';
+        }
+        
         const totalSantriKelas = chartSantriList.length;
 
         filteredLog.forEach(log => {
-            if (namaKelasAktif && log.nama_kelas !== namaKelasAktif) return; 
+            if (namaKelasAktif && userRole !== 'Admin' && log.nama_kelas !== namaKelasAktif) return; 
             const nama = log.nama_santri || 'Tanpa Nama';
             if(log.status_hadir === 'Hadir') { hadir++; tooltipDataObj['Hadir'][nama] = (tooltipDataObj['Hadir'][nama] || 0) + 1; }
             else if(log.status_hadir === 'Izin' || log.status_hadir === 'Sakit') { izinSakit++; tooltipDataObj['Izin/Skt'][nama] = (tooltipDataObj['Izin/Skt'][nama] || 0) + 1; }
@@ -197,7 +204,6 @@ export async function initDashboard() {
             if(log.tahsin_status === 'Ulang' || log.tahfidz_status === 'Ulang') { ulang++; tooltipDataObj['Ulang'][nama] = (tooltipDataObj['Ulang'][nama] || 0) + 1; }
         });
 
-        document.getElementById('chartClassNameText').textContent = namaKelasAktif ? `KELAS ${namaKelasAktif.toUpperCase()}` : 'SEMUA KELAS';
         document.getElementById('chartTotalText').textContent = totalSantriKelas || 0;
         document.getElementById('valHadir').textContent = hadir;
         document.getElementById('valIzinSkt').textContent = izinSakit;
@@ -264,39 +270,67 @@ export async function initDashboard() {
                 api.get('input_harian', `select=*&tanggal=gte.${startOfMonthStr}&order=created_at.asc`),
                 api.get('kelas', 'select=*')
             ]);
+            
+            let activeKelasList = kelasList || [];
 
-            // --- FILTER AJAIB: PISAHKAN LOGIKA ADMIN & GURU ---
+            // FILTER DATA UNTUK GURU YANG MENGAMPU KELAS
             if (userRole !== 'Admin' && kelasPegangan) {
-                rawSantriList = (santriList || []).filter(s => s.nama_kelas && s.nama_kelas.toLowerCase() === kelasPegangan.toLowerCase());
-                rawHarianList = (harianList || []).filter(h => h.nama_kelas && h.nama_kelas.toLowerCase() === kelasPegangan.toLowerCase());
-                namaKelasAktif = kelasPegangan; // Kunci ke kelas guru
-                
-                const jadwalContent = document.getElementById('jadwalContent');
-                jadwalContent.innerHTML = `<div style="display: flex; flex-direction: column; gap: 6px;"><div style="align-self: flex-start;"><span style="background: rgba(59, 130, 246, 0.9); color: #EFF6FF; padding: 4px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 800;">KELAS ANDA</span></div><div style="font-size: 1.05rem; font-weight: 800; color: #ffffff;">${kelasPegangan}</div></div>`;
+                const arrKelas = kelasPegangan.split(',').map(s => s.trim().toLowerCase());
+                rawSantriList = (santriList || []).filter(s => s.nama_kelas && arrKelas.includes(s.nama_kelas.toLowerCase()));
+                rawHarianList = (harianList || []).filter(h => h.nama_kelas && arrKelas.includes(h.nama_kelas.toLowerCase()));
+                activeKelasList = activeKelasList.filter(k => arrKelas.includes(k.nama_kelas.toLowerCase()));
             } else {
-                // LOGIKA ADMIN / GLOBAL
+                // JIKA ADMIN, AMBIL SEMUA
                 rawHarianList = harianList || []; 
                 rawSantriList = santriList || [];
-
-                if(kelasList.length > 0) {
-                    const currentMins = today.getHours() * 60 + today.getMinutes();
-                    let kelasAktif = null, kelasMendatang = null;
-                    kelasList.forEach(k => {
-                        if (k.jam_kelas && k.jam_kelas.includes('-')) {
-                            const [sStr, eStr] = k.jam_kelas.split('-');
-                            const startMins = (parseInt(sStr.split(':')[0]) * 60) + (parseInt(sStr.split(':')[1]) || 0);
-                            const endMins = (parseInt(eStr.split(':')[0]) * 60) + (parseInt(eStr.split(':')[1]) || 0);
-                            if (currentMins >= startMins && currentMins <= endMins) kelasAktif = k;
-                            else if (currentMins < startMins) { if (!kelasMendatang || startMins < kelasMendatang.startMins) kelasMendatang = { ...k, startMins }; }
-                        }
-                    });
-                    const jadwalContent = document.getElementById('jadwalContent');
-                    if (kelasAktif) { namaKelasAktif = kelasAktif.nama_kelas; jadwalContent.innerHTML = `<div style="display: flex; flex-direction: column; gap: 6px;"><div style="align-self: flex-start;"><span style="background: rgba(254, 226, 226, 0.9); color: #991B1B; padding: 4px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 800;">BERJALAN</span></div><div style="font-size: 1.05rem; font-weight: 800; color: #ffffff;">${kelasAktif.nama_kelas}</div></div>`; }
-                    else if (kelasMendatang) { namaKelasAktif = kelasMendatang.nama_kelas; jadwalContent.innerHTML = `<div style="display: flex; flex-direction: column; gap: 6px;"><div style="align-self: flex-start;"><span style="background: rgba(209, 250, 229, 0.9); color: #065F46; padding: 4px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 800;">MENUNGGU</span></div><div style="font-size: 1.05rem; font-weight: 800; color: #ffffff;">${kelasMendatang.nama_kelas}</div></div>`; }
-                    else { namaKelasAktif = null; jadwalContent.innerHTML = `<span style="font-size:0.85rem; color:rgba(255,255,255,0.8); font-weight:600;">Semua kelas selesai.</span>`; }
-                }
             }
-            // --------------------------------------------------
+
+            // PEMINDAI JADWAL CERDAS (Berlaku untuk Guru & Admin)
+            if(activeKelasList.length > 0) {
+                const currentMins = today.getHours() * 60 + today.getMinutes();
+                let kelasAktifArr = []; 
+                let kelasMendatang = null;
+                
+                activeKelasList.forEach(k => {
+                    if (k.jam_kelas && k.jam_kelas.includes('-')) {
+                        const [sStr, eStr] = k.jam_kelas.split('-');
+                        const startMins = (parseInt(sStr.split(':')[0]) * 60) + (parseInt(sStr.split(':')[1]) || 0);
+                        const endMins = (parseInt(eStr.split(':')[0]) * 60) + (parseInt(eStr.split(':')[1]) || 0);
+                        
+                        if (currentMins >= startMins && currentMins <= endMins) {
+                            kelasAktifArr.push(k);
+                        } else if (currentMins < startMins) { 
+                            if (!kelasMendatang || startMins < kelasMendatang.startMins) {
+                                kelasMendatang = { ...k, startMins }; 
+                            }
+                        }
+                    }
+                });
+
+                const jadwalContent = document.getElementById('jadwalContent');
+                
+                if (kelasAktifArr.length > 0) { 
+                    if(userRole === 'Admin') {
+                        namaKelasAktif = null; // Admin selalu melihat statistik global
+                        let teksTampil = kelasAktifArr.length > 1 ? `${kelasAktifArr.length} Kelas Bersamaan` : kelasAktifArr[0].nama_kelas;
+                        jadwalContent.innerHTML = `<div style="display: flex; flex-direction: column; gap: 6px;"><div style="align-self: flex-start;"><span style="background: rgba(254, 226, 226, 0.9); color: #991B1B; padding: 4px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 800;">BERJALAN</span></div><div style="font-size: 1.05rem; font-weight: 800; color: #ffffff;">${teksTampil}</div></div>`; 
+                    } else {
+                        namaKelasAktif = kelasAktifArr[0].nama_kelas; 
+                        jadwalContent.innerHTML = `<div style="display: flex; flex-direction: column; gap: 6px;"><div style="align-self: flex-start;"><span style="background: rgba(254, 226, 226, 0.9); color: #991B1B; padding: 4px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 800;">BERJALAN</span></div><div style="font-size: 1.05rem; font-weight: 800; color: #ffffff;">${kelasAktifArr[0].nama_kelas}</div></div>`; 
+                    }
+                }
+                else if (kelasMendatang) { 
+                    namaKelasAktif = userRole === 'Admin' ? null : kelasMendatang.nama_kelas; 
+                    jadwalContent.innerHTML = `<div style="display: flex; flex-direction: column; gap: 6px;"><div style="align-self: flex-start;"><span style="background: rgba(209, 250, 229, 0.9); color: #065F46; padding: 4px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 800;">MENUNGGU</span></div><div style="font-size: 1.05rem; font-weight: 800; color: #ffffff;">${kelasMendatang.nama_kelas}</div></div>`; 
+                }
+                else { 
+                    namaKelasAktif = null; 
+                    const teksSelesai = userRole !== 'Admin' ? 'Semua kelas Anda selesai.' : 'Semua kelas selesai hari ini.';
+                    jadwalContent.innerHTML = `<span style="font-size:0.85rem; color:rgba(255,255,255,0.8); font-weight:600;">${teksSelesai}</span>`; 
+                }
+            } else {
+                 document.getElementById('jadwalContent').innerHTML = `<span style="font-size:0.85rem; color:rgba(255,255,255,0.8); font-weight:600;">Belum ada jadwal kelas.</span>`;
+            }
 
             renderFilteredData('hari');
         } catch(e) { console.error("Dashboard Error:", e); }
