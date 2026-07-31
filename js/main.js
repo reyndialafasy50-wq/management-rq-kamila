@@ -191,7 +191,6 @@ document.addEventListener('DOMContentLoaded', () => {
             mainContent.innerHTML = renderLaporan();
             initLaporan();
         } else if (hash === '#raport') {
-            // 🔥 UPDATE: Router Raport Sudah Ditambahkan 🔥
             pageTitle.textContent = 'Cetak Raport Santri';
             mainContent.innerHTML = renderRaport();
             initRaport();
@@ -249,4 +248,22 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.innerWidth <= 900 && sidebar && sidebar.classList.contains('active')) toggleMenu();
         });
     });
+
+    // ==========================================
+    // FUNGSI LOGOUT (BARU DITAMBAHKAN)
+    // ==========================================
+    const btnLogout = document.querySelector('a[href="#logout"]');
+    if (btnLogout) {
+        btnLogout.addEventListener('click', (e) => {
+            e.preventDefault();
+            if(confirm('Yakin ingin keluar dari sistem?')) {
+                localStorage.removeItem('status_login');
+                localStorage.removeItem('guru_id');
+                // Tambahan: Hapus data role/akses jika ada
+                localStorage.removeItem('user_role'); 
+                localStorage.removeItem('kelas_pegangan');
+                window.location.href = 'login.html';
+            }
+        });
+    }
 });
