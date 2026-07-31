@@ -1,17 +1,10 @@
 /**
  * ==================================================
- * BAGIAN 8: MODUL DATA SANTRI (RBAC + Fitur Cari di Tarik Santri)
+ * BAGIAN 8: MODUL DATA SANTRI (RBAC TERINTEGRASI)
  * File: js/santri.js
  * ==================================================
  */
 import { api } from './api.js';
-
-// ==========================================
-// SIMULASI LOGIN (GANTI DI SINI UNTUK TESTING)
-// Ketik 'admin' atau 'guru'
-// ==========================================
-const currentUserRole = 'guru'; 
-// ==========================================
 
 let santriDataUtama = [];
 let kelasData = [];
@@ -28,12 +21,14 @@ async function loadExcelLibrary() {
 }
 
 export function renderSantri() {
+    const roleSaatIni = localStorage.getItem('user_role') || 'Guru';
+    
     return `
         <div style="background: var(--surface); padding: 20px; border-radius: 16px; margin-bottom: 20px; border: 1px solid var(--border);">
             <div>
                 <h4 style="margin: 0; font-size: 1rem; color: var(--text-main);"><i class="fas fa-chalkboard-teacher text-info"></i> Manajemen Santri & Kelas</h4>
                 <p style="margin: 3px 0 0; font-size: 0.75rem; color: var(--text-muted); padding-bottom: 10px;">
-                    Role saat ini: <strong style="color:var(--primary); text-transform:uppercase;">${currentUserRole}</strong>
+                    Role saat ini: <strong style="color:var(--primary); text-transform:uppercase;">${roleSaatIni}</strong>
                 </p>
             </div>
             
@@ -219,13 +214,16 @@ export function renderSantri() {
 
 export async function initSantri() {
     loadExcelLibrary(); 
+    
+    // AMBIL DATA ROLE DARI LOGIN
+    const currentUserRole = localStorage.getItem('user_role') || 'Guru';
+    const kelasPegangan = localStorage.getItem('kelas_pegangan');
 
-    if (currentUserRole === 'admin') {
+    if (currentUserRole === 'Admin') {
         document.getElementById('menuAdmin').style.display = 'grid';
         document.getElementById('btnExportExcel').style.display = 'inline-flex';
-    } else if (currentUserRole === 'guru') {
+    } else {
         document.getElementById('menuGuru').style.display = 'grid';
-        document.getElementById('filterKelas').innerHTML = '<option value="">-- Tampilkan Kelas Anda --</option>'; 
     }
 
     const tbody = document.getElementById('tableBodySantri');
@@ -236,22 +234,35 @@ export async function initSantri() {
     const loadData = async () => {
         try {
             kelasData = await api.get('kelas', 'select=*');
+            let kelasTersedia = kelasData.map(k => k.nama_kelas).sort();
+            
+            // --- FILTER AJAIB GURU ---
+            if (currentUserRole !== 'Admin' && kelasPegangan) {
+                kelasTersedia = kelasTersedia.filter(k => k.toLowerCase() === kelasPegangan.toLowerCase());
+            }
+
             let opsiKelas = '';
-            kelasData.forEach(k => { opsiKelas += `<option value="${k.nama_kelas}">${k.nama_kelas}</option>`; });
+            kelasTersedia.forEach(k => { opsiKelas += `<option value="${k}">${k}</option>`; });
             
-            if(currentUserRole === 'admin') filterKelas.innerHTML = '<option value="">-- Semua Kelas --</option>' + opsiKelas;
-            else filterKelas.innerHTML = '<option value="">-- Tampilkan Kelas Anda --</option>' + opsiKelas;
-            
-            if(selectKelasForm) selectKelasForm.innerHTML = '<option value="">Belum ada kelas</option>' + opsiKelas;
-            if(selectTarikKelas) selectTarikKelas.innerHTML = '<option value="">-- Pilih Kelas --</option>' + opsiKelas;
+            if(currentUserRole === 'Admin') {
+                filterKelas.innerHTML = '<option value="">-- Semua Kelas --</option>' + opsiKelas;
+                if(selectKelasForm) selectKelasForm.innerHTML = '<option value="">Belum ada kelas</option>' + opsiKelas;
+                if(selectTarikKelas) selectTarikKelas.innerHTML = '<option value="">-- Pilih Kelas --</option>' + opsiKelas;
+            } else {
+                filterKelas.innerHTML = opsiKelas || '<option value="">Anda belum memiliki kelas</option>';
+                if(selectKelasForm) selectKelasForm.innerHTML = opsiKelas;
+                if(selectTarikKelas) selectTarikKelas.innerHTML = opsiKelas;
+                
+                // Jika hanya punya 1 kelas, langsung pilih kelas itu
+                if (kelasTersedia.length > 0) {
+                    filterKelas.value = kelasTersedia[0];
+                }
+            }
 
             santriDataUtama = await api.get('dapodik_santri', 'select=*&order=nama_santri.asc');
             
-            if (currentUserRole === 'admin') {
-                renderTable(santriDataUtama);
-            } else {
-                renderTable([]);
-            }
+            filterData();
+            
         } catch (error) {
             if(tbody) tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Gagal memuat database.</td></tr>`;
         }
@@ -260,8 +271,8 @@ export async function initSantri() {
     const renderTable = (data) => {
         if(!tbody) return;
         if (data.length === 0) {
-            if(currentUserRole === 'guru') {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 30px;"><i class="fas fa-hand-pointer text-muted" style="font-size:2rem; margin-bottom:10px;"></i><br>Silakan pilih kelas Anda di atas<br>untuk melihat daftar santri.</td></tr>`;
+            if(currentUserRole !== 'Admin') {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 30px;"><i class="fas fa-hand-pointer text-muted" style="font-size:2rem; margin-bottom:10px;"></i><br>Silakan pastikan kelas Anda dipilih<br>untuk melihat daftar santri.</td></tr>`;
             } else {
                 tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Tidak ada data santri ditemukan.</td></tr>`;
             }
@@ -280,8 +291,8 @@ export async function initSantri() {
                     <span style="background:var(--hover-bg); padding:4px 8px; border-radius:6px; font-size:0.75rem;"><i class="fas fa-tag text-info"></i> ${s.nama_kelas || 'Belum ada'}</span>
                 </td>
                 <td data-label="Aksi" style="white-space: nowrap;">
-                    ${currentUserRole === 'admin' ? `<button class="btn-action-sm text-info btn-edit" data-id="${s.id}" title="Edit Manual"><i class="fas fa-edit"></i></button>` : ''}
-                    ${currentUserRole === 'guru' ? `<button class="btn-action-sm text-danger btn-keluarkan" data-id="${s.id}" title="Keluarkan dari Kelas"><i class="fas fa-sign-out-alt"></i></button>` : ''}
+                    ${currentUserRole === 'Admin' ? `<button class="btn-action-sm text-info btn-edit" data-id="${s.id}" title="Edit Manual"><i class="fas fa-edit"></i></button>` : ''}
+                    ${currentUserRole !== 'Admin' ? `<button class="btn-action-sm text-danger btn-keluarkan" data-id="${s.id}" title="Keluarkan dari Kelas"><i class="fas fa-sign-out-alt"></i></button>` : ''}
                 </td>
             </tr>
         `).join('');
@@ -313,8 +324,8 @@ export async function initSantri() {
             
             // Reset modal saat dibuka
             document.getElementById('checkAllTarik').checked = false;
-            document.getElementById('tarikKelasTujuan').value = '';
-            if(document.getElementById('inputCariTarikSantri')) document.getElementById('inputCariTarikSantri').value = ''; // Reset kotak pencarian
+            if(kelasPegangan) document.getElementById('tarikKelasTujuan').value = kelasPegangan;
+            if(document.getElementById('inputCariTarikSantri')) document.getElementById('inputCariTarikSantri').value = '';
             
             document.getElementById('modalTarik').classList.add('active');
         });
@@ -328,11 +339,10 @@ export async function initSantri() {
             const listTbody = document.getElementById('listTarikSantri');
             
             if (listTbody) {
-                const rows = listTbody.getElementsByTagName('tr'); // Ambil semua baris nama santri
+                const rows = listTbody.getElementsByTagName('tr');
                 
                 for (let i = 0; i < rows.length; i++) {
                     const text = rows[i].textContent.toLowerCase();
-                    // Jika cocok dengan ketikan, tampilkan barisnya. Jika tidak, sembunyikan.
                     if (text.includes(keyword)) {
                         rows[i].style.display = ''; 
                     } else {
@@ -345,7 +355,6 @@ export async function initSantri() {
 
     if(document.getElementById('checkAllTarik')) {
         document.getElementById('checkAllTarik').addEventListener('change', (e) => {
-            // Hanya centang baris yang sedang TAMPIL (tidak disembunyikan oleh pencarian)
             const visibleCheckboxes = document.querySelectorAll('#listTarikSantri tr:not([style*="display: none"]) .chk-tarik');
             visibleCheckboxes.forEach(chk => chk.checked = e.target.checked);
         });
@@ -373,7 +382,6 @@ export async function initSantri() {
                 
                 filterKelas.value = kelasTujuan;
                 await loadData();
-                filterData(); 
             } catch(error) {
                 alert("Gagal memproses data. Coba lagi.");
             } finally {
@@ -391,7 +399,6 @@ export async function initSantri() {
             try {
                 await api.update('dapodik_santri', e.currentTarget.getAttribute('data-id'), { nama_kelas: null });
                 await loadData();
-                filterData(); 
             } catch (err) {
                 alert("Gagal mengeluarkan santri.");
             }
@@ -410,8 +417,8 @@ export async function initSantri() {
         const kelas = filterKelas.value;
         let filtered = [];
         
-        if (currentUserRole === 'guru') {
-            if(kelas === "") {
+        if (currentUserRole !== 'Admin') {
+            if(!kelas) {
                 renderTable([]);
                 return;
             }
@@ -445,7 +452,7 @@ export async function initSantri() {
         }
 
         const btnEditProf = document.getElementById('btnEditDariProfil');
-        if(currentUserRole === 'admin') {
+        if(currentUserRole === 'Admin') {
             btnEditProf.style.display = 'inline-block';
             btnEditProf.onclick = () => {
                 document.getElementById('modalProfil').classList.remove('active');
@@ -533,7 +540,6 @@ export async function initSantri() {
                 else await api.post('dapodik_santri', payload);
                 document.getElementById('modalSantri').classList.remove('active');
                 await loadData();
-                filterData();
             } catch (error) { alert("Gagal menyimpan data."); } 
             finally { btn.innerHTML = 'Simpan Data'; }
         });
