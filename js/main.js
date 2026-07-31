@@ -164,6 +164,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const pageTitle = document.getElementById('page-title');
     const navLinks = document.querySelectorAll('.nav-link');
 
+    // --- TAMBAHAN BARU: FILTER HAK AKSES & PROFIL ---
+    const userRole = localStorage.getItem('user_role');
+    const userName = localStorage.getItem('user_name');
+
+    // 1. Ubah Nama di Pojok Kanan Atas sesuai yang login
+    const userNameElement = document.querySelector('.user-name-text');
+    const avatarHeader = document.getElementById('avatarHeader');
+    if (userNameElement && userName) {
+        userNameElement.textContent = `Halo, ${userName}`;
+        if (avatarHeader) avatarHeader.textContent = userName.charAt(0).toUpperCase();
+    }
+
+    // 2. Sembunyikan Menu Khusus Admin jika yang login adalah Wali Kelas
+    if (userRole !== 'Admin') {
+        const menuLaporan = document.querySelector('a[href="#laporan"]');
+        const menuSetting = document.querySelector('a[href="#setting"]');
+        if (menuLaporan) menuLaporan.style.display = 'none';
+        if (menuSetting) menuSetting.style.display = 'none';
+    }
+    // ------------------------------------------------
+
     const loadPage = () => {
         const hash = window.location.hash || '#dashboard';
 
@@ -250,7 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ==========================================
-    // FUNGSI LOGOUT (BARU DITAMBAHKAN)
+    // FUNGSI LOGOUT
     // ==========================================
     const btnLogout = document.querySelector('a[href="#logout"]');
     if (btnLogout) {
@@ -262,6 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Tambahan: Hapus data role/akses jika ada
                 localStorage.removeItem('user_role'); 
                 localStorage.removeItem('kelas_pegangan');
+                localStorage.removeItem('user_name');
                 window.location.href = 'login.html';
             }
         });
