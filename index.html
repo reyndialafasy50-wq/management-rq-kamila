@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Management RQ Kamila V3</title>
+    
+    <!-- SCRIPT PENJAGA HALAMAN (OTENTIKASI) -->
+    <script>
+        // Jika belum login, tendang ke halaman login
+        if (localStorage.getItem('status_login') !== 'aktif') {
+            window.location.href = 'login.html';
+        }
+    </script>
+
     <meta name="theme-color" content="#4F567D" />
     
     <!-- Google Fonts & FontAwesome -->
@@ -82,4 +91,4 @@
     <!-- SCRIPT UTAMA -->
     <script type="module" src="js/main.js"></script>
 </body>
-                                                       </html>
+</html>
