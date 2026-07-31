@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * BAGIAN 8: MODUL DATA SANTRI (RBAC TERINTEGRASI)
+ * BAGIAN 8: MODUL DATA SANTRI (RBAC TERINTEGRASI + MULTI KELAS)
  * File: js/santri.js
  * ==================================================
  */
@@ -217,7 +217,10 @@ export async function initSantri() {
     
     // AMBIL DATA ROLE DARI LOGIN
     const currentUserRole = localStorage.getItem('user_role') || 'Guru';
-    const kelasPegangan = localStorage.getItem('kelas_pegangan');
+    const kelasPeganganRaw = localStorage.getItem('kelas_pegangan') || '';
+
+    // PEMECAH KOMA: Ubah "Kelas A, Kelas B" menjadi array ["kelas a", "kelas b"]
+    const arrayKelasPegangan = kelasPeganganRaw.split(',').map(s => s.trim().toLowerCase()).filter(s => s !== '');
 
     if (currentUserRole === 'Admin') {
         document.getElementById('menuAdmin').style.display = 'grid';
@@ -236,9 +239,9 @@ export async function initSantri() {
             kelasData = await api.get('kelas', 'select=*');
             let kelasTersedia = kelasData.map(k => k.nama_kelas).sort();
             
-            // --- FILTER AJAIB GURU ---
-            if (currentUserRole !== 'Admin' && kelasPegangan) {
-                kelasTersedia = kelasTersedia.filter(k => k.toLowerCase() === kelasPegangan.toLowerCase());
+            // --- FILTER AJAIB GURU (MULTI-KELAS) ---
+            if (currentUserRole !== 'Admin' && arrayKelasPegangan.length > 0) {
+                kelasTersedia = kelasTersedia.filter(k => arrayKelasPegangan.includes(k.toLowerCase()));
             }
 
             let opsiKelas = '';
@@ -324,7 +327,11 @@ export async function initSantri() {
             
             // Reset modal saat dibuka
             document.getElementById('checkAllTarik').checked = false;
-            if(kelasPegangan) document.getElementById('tarikKelasTujuan').value = kelasPegangan;
+            
+            // Pilih kelas otomatis jika guru hanya punya 1 kelas
+            const selectTujuan = document.getElementById('tarikKelasTujuan');
+            if (selectTujuan.options.length > 0) selectTujuan.value = selectTujuan.options[0].value;
+            
             if(document.getElementById('inputCariTarikSantri')) document.getElementById('inputCariTarikSantri').value = '';
             
             document.getElementById('modalTarik').classList.add('active');
