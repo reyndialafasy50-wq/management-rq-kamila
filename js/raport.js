@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * MODUL RAPORT - FINAL (SUPER OTOMATIS + REVISI TABEL PDF)
+ * MODUL RAPORT - FINAL (SUPER OTOMATIS & RBAC FILTER)
  * File: js/raport.js
  * ==================================================
  */
@@ -208,6 +208,9 @@ export const initRaport = async () => {
     const btnTambahBaris = document.getElementById('btnTambahBaris');
     
     let loggedInGuruId = localStorage.getItem('guru_id');
+    const userRole = localStorage.getItem('user_role');
+    const kelasPegangan = localStorage.getItem('kelas_pegangan');
+    
     let dataGuruCache = null;
     let dataSantriCache = [];
 
@@ -273,7 +276,7 @@ export const initRaport = async () => {
     tambahBarisHTML('Rukun Iman & Islam', 'Aqidah', '88', 'Perlu pengulangan');
     kalkulasiTotal();
 
-    // 2. RENDER KERANGKA TABEL KEHADIRAN (Urutan: Hadir, Izin, Sakit, Alpha)
+    // 2. RENDER KERANGKA TABEL KEHADIRAN
     const renderTabelKehadiran = () => {
         const isGanjil = filterSemester.value.includes('Ganjil');
         const bulanList = isGanjil 
@@ -304,7 +307,7 @@ export const initRaport = async () => {
     filterTahun.addEventListener('change', () => { if(filterSantri.value) triggerTarikDataOtomatis(); });
     renderTabelKehadiran();
 
-    // 3. LOAD DATA MASTER
+    // 3. LOAD DATA MASTER & HAK AKSES
     const loadGuru = async () => {
         if (!loggedInGuruId) {
             const dataG = await api.get('guru', 'select=*&limit=1');
@@ -329,12 +332,24 @@ export const initRaport = async () => {
         const ds = await api.get('dapodik_santri', 'select=*');
         if (ds && ds.length > 0) {
             dataSantriCache = ds;
-            const kelasUnik = [...new Set(ds.map(item => item.nama_kelas))].filter(Boolean).sort();
+            let kelasUnik = [...new Set(ds.map(item => item.nama_kelas))].filter(Boolean).sort();
+            
+            // --- FILTER AJAIB (HAK AKSES KELAS) ---
+            if (userRole !== 'Admin' && kelasPegangan) {
+                kelasUnik = kelasUnik.filter(k => k.toLowerCase() === kelasPegangan.toLowerCase());
+            }
+
             kelasUnik.forEach(k => {
                 const opt = document.createElement('option');
                 opt.value = k; opt.textContent = k;
                 filterKelas.appendChild(opt);
             });
+            
+            // Auto-pilih jika hanya 1 kelas
+            if (kelasUnik.length === 1) {
+                filterKelas.value = kelasUnik[0];
+                filterKelas.dispatchEvent(new Event('change'));
+            }
         }
     } catch (e) {}
 
@@ -529,7 +544,7 @@ export const initRaport = async () => {
         btn.disabled = false;
     });
 
-    // 7. TOMBOL PREVIEW (CETAK PDF) - REVISI DESAIN TABEL ABSEN
+    // 7. TOMBOL PREVIEW (CETAK PDF)
     document.getElementById('btnPreviewRaport').addEventListener('click', () => {
         const data = kumpulkanDataForm();
         if (!data) return alert("Pilih Nama Santri terlebih dahulu untuk melihat Raport!");
@@ -537,7 +552,6 @@ export const initRaport = async () => {
         const santri = dataSantriCache.find(s => s.id === data.santri_id);
         const guru = dataGuruCache || { nama: 'Wali Kelas', ttd_digital: '' };
         
-        // A. Render Tabel Akademik
         let htmlBarisNilai = '';
         data.detail_nilai.akademik.forEach((n, idx) => {
             htmlBarisNilai += `
@@ -551,7 +565,6 @@ export const initRaport = async () => {
             `;
         });
 
-        // B. Render Tabel Kehadiran (Format Tabel Rinci Sesuai Excel Ustadz)
         let htmlKehadiran = '';
         let totH = 0, totS = 0, totI = 0, totA = 0, totJP = 0;
         
@@ -576,7 +589,6 @@ export const initRaport = async () => {
             });
         }
 
-        // Kalkulasi Persentase Kehadiran
         let persentaseHadir = totJP > 0 ? Math.round((totH / totJP) * 100) : 0;
         let predikatHadir = '';
         if (persentaseHadir >= 90) predikatHadir = 'A (Sangat Baik)';
@@ -629,7 +641,6 @@ export const initRaport = async () => {
                     </table>
                 </div>
 
-                <!-- TABEL 1: AKADEMIK -->
                 <table class="tabel-utama">
                     <thead>
                         <tr>
@@ -664,7 +675,6 @@ export const initRaport = async () => {
                 </table>
 
                 <div class="section-title">Rekapitulasi Kehadiran:</div>
-                <!-- REVISI TABEL: LEBAR 100% & HEADER BERSUSUN -->
                 <table class="tabel-utama" style="margin-bottom: 10px; width: 100%;">
                     <thead>
                         <tr>
