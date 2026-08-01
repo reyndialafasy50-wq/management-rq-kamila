@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * BAGIAN 9: INPUT HARIAN MOBILE-FIRST (SINGLE TABLE V2)
+ * BAGIAN 9: INPUT HARIAN MOBILE-FIRST (RELASI GURU_ID)
  * File: js/input_harian.js
  * ==================================================
  */
@@ -128,23 +128,24 @@ export async function initInputHarian() {
     let currentSantriData = []; 
     elTgl.valueAsDate = new Date();
 
-    // --- TAMBAHAN BARU: AMBIL DATA ROLE & KELAS PEGANGAN DARI LOGIN ---
+    // --- AMBIL DATA ROLE & ID GURU DARI LOGIN ---
     const userRole = localStorage.getItem('user_role');
-    const kelasPegangan = localStorage.getItem('kelas_pegangan');
-    // ------------------------------------------------------------------
+    const guruId = localStorage.getItem('guru_id'); // Membaca Sertifikat Hak Milik
+    // --------------------------------------------
 
     try {
         const kelasData = await api.get('kelas', 'select=*');
         if(kelasData.length > 0) {
             
-            // --- FILTER AJAIB (HAK AKSES KELAS) ---
-            let kelasTersedia = kelasData.map(k => k.nama_kelas).sort();
-            
-            if (userRole !== 'Admin' && kelasPegangan) {
-                // Jika bukan admin, hanya ambil kelas yang namanya cocok dengan kelas_pegangan
-                kelasTersedia = kelasTersedia.filter(k => k.toLowerCase() === kelasPegangan.toLowerCase());
+            // --- FILTER RELASIONAL BERDASARKAN GURU_ID ---
+            let kelasMilikGuruData = kelasData;
+            if (userRole !== 'Admin' && guruId) {
+                // Hanya ambil data dari tabel kelas yang kolom guru_id nya sama dengan id guru yang login
+                kelasMilikGuruData = kelasData.filter(k => String(k.guru_id) === String(guruId));
             }
-            // -------------------------------------
+            
+            let kelasTersedia = kelasMilikGuruData.map(k => k.nama_kelas).sort();
+            // ---------------------------------------------
 
             if (kelasTersedia.length > 0) {
                 elKelas.innerHTML = kelasTersedia.map(k => `<option value="${k}">${k}</option>`).join('');
