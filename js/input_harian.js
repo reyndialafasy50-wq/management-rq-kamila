@@ -1,12 +1,10 @@
 /**
  * ==================================================
- * BAGIAN 9: INPUT HARIAN MOBILE-FIRST (RELASI GURU_ID)
+ * BAGIAN 9: INPUT HARIAN MOBILE-FIRST (RELASI GURU_ID MURNI)
  * File: js/input_harian.js
  * ==================================================
  */
 import { api } from './api.js';
-
-const currentUserRole = 'guru'; 
 
 const namaSurat = ["", "Al-Fatihah", "Al-Baqarah", "Ali 'Imran", "An-Nisa'", "Al-Ma'idah", "Al-An'am", "Al-A'raf", "Al-Anfal", "At-Taubah", "Yunus", "Hud", "Yusuf", "Ar-Ra'd", "Ibrahim", "Al-Hijr", "An-Nahl", "Al-Isra'", "Al-Kahf", "Maryam", "Taha", "Al-Anbiya'", "Al-Hajj", "Al-Mu'minun", "An-Nur", "Al-Furqan", "Asy-Syu'ara'", "An-Naml", "Al-Qasas", "Al-'Ankabut", "Ar-Rum", "Luqman", "As-Sajdah", "Al-Ahzab", "Saba'", "Fatir", "Yasin", "As-Saffat", "Sad", "Az-Zumar", "Ghafir", "Fussilat", "Asy-Syura", "Az-Zukhruf", "Ad-Dukhan", "Al-Jasiyah", "Al-Ahqaf", "Muhammad", "Al-Fath", "Al-Hujurat", "Qaf", "Az-Zariyat", "At-Tur", "An-Najm", "Al-Qamar", "Ar-Rahman", "Al-Waqi'ah", "Al-Hadid", "Al-Mujadilah", "Al-Hasyr", "Al-Mumtahanah", "As-Saff", "Al-Jumu'ah", "Al-Munafiqun", "At-Tagabun", "At-Talaq", "At-Tahrim", "Al-Mulk", "Al-Qalam", "Al-Haqqah", "Al-Ma'arij", "Nuh", "Al-Jinn", "Al-Muzzammil", "Al-Muddassir", "Al-Qiyamah", "Al-Insan", "Al-Mursalat", "An-Naba'", "An-Nazi'at", "'Abasa", "At-Takwir", "Al-Infitar", "Al-Mutaffifin", "Al-Insyiqaq", "Al-Buruj", "At-Tariq", "Al-A'la", "Al-Gasyiyah", "Al-Fajr", "Al-Balad", "Asy-Syams", "Al-Lail", "Ad-Duha", "Asy-Syarh", "At-Tin", "Al-'Alaq", "Al-Qadr", "Al-Bayyinah", "Az-Zalzalah", "Al-'Adiyat", "Al-Qari'ah", "At-Takasur", "Al-'Asr", "Al-Humazah", "Al-Fil", "Quraisy", "Al-Ma'un", "Al-Kausar", "Al-Kafirun", "An-Nasr", "Al-Lahab", "Al-Ikhlas", "Al-Falaq", "An-Nas"];
 const petaJuz = { 1: [1,2], 2: [2], 3: [2,3], 4: [3,4], 5: [4], 6: [4,5], 7: [5,6], 8: [6,7], 9: [7,8], 10: [8,9], 11: [9,10,11], 12: [11,12], 13: [12,13,14], 14: [15,16], 15: [17,18], 16: [18,19,20], 17: [21,22], 18: [23,24,25], 19: [25,26,27], 20: [27,28,29], 21: [29,30,31,32,33], 22: [33,34,35,36], 23: [36,37,38,39], 24: [39,40,41], 25: [41,42,43,44,45], 26: [46,47,48,49,50,51], 27: [51,52,53,54,55,56,57], 28: [58,59,60,61,62,63,64,65,66], 29: [67,68,69,70,71,72,73,74,75,76,77], 30: Array.from({length: 37}, (_, i) => i + 78) };
@@ -14,7 +12,6 @@ const petaJuz = { 1: [1,2], 2: [2], 3: [2,3], 4: [3,4], 5: [4], 6: [4,5], 7: [5,
 export function renderInputHarian() {
     return `
         <style>
-            /* FIX POINT 1: Header Menembus Padding (Rapat Sempurna) */
             .input-header-wrapper { 
                 background: var(--surface); 
                 padding: 20px; 
@@ -71,7 +68,6 @@ export function renderInputHarian() {
             .toast-save { font-size: 0.7rem; color: #10B981; font-weight: 600; opacity: 0; transition: 0.3s; margin-left: 5px; display: inline-flex; align-items: center; gap: 3px;}
             .toast-save.show { opacity: 1; }
 
-            /* FIX POINT 2: Tombol Batch Save Duduk Manis di Bawah */
             .batch-save-container {
                 padding: 10px 0 30px 0; 
                 display: none;
@@ -109,7 +105,6 @@ export function renderInputHarian() {
             </div>
         </div>
 
-        <!-- WADAH TOMBOL SIMPAN SEKELAS -->
         <div class="batch-save-container" id="batchSaveContainer">
             <button class="btn-batch-save" id="btnBatchSaveAbsen" onclick="simpanAbsenSekelas(this)">
                 <i class="fas fa-save"></i> Simpan Kehadiran Kelas Ini
@@ -331,7 +326,6 @@ export async function initInputHarian() {
                 const acc = document.getElementById(`acc_${id}`);
                 const card = document.getElementById(`card_${id}`);
                 
-                // CATATAN: Di sini auto-save dihapus! Absen baru disimpan saat tombol besar ditekan.
                 if (val !== 'H') {
                     expandBtn.style.display = 'none';
                     acc.style.display = 'none';
@@ -386,10 +380,6 @@ export async function initInputHarian() {
         } catch(e) { console.error("AutoSave Error:", e); }
     }
 
-    // ==========================================
-    // FUNGSI BARU: SIMPAN ABSEN BATCH (SEKELAS)
-    // DENGAN ALERT SYOK TERAPI ALPA KE-10
-    // ==========================================
     window.simpanAbsenSekelas = async (btnElement) => {
         const originalText = btnElement.innerHTML;
         btnElement.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Menyimpan Kehadiran...`;
@@ -397,7 +387,6 @@ export async function initInputHarian() {
         btnElement.disabled = true;
 
         try {
-            // Kita proses satu per satu santri yang ada di kelas ini
             const promises = currentSantriData.map(async (s) => {
                 const checkedRadio = document.querySelector(`input[name="abs_${s.id}"]:checked`);
                 const val = checkedRadio ? checkedRadio.value : 'H';
@@ -414,13 +403,11 @@ export async function initInputHarian() {
                     status_hadir: statusBaku
                 };
                 
-                // Gunakan tambal sulam cerdas
                 await upsertKeHarian(s.id, payload);
 
-                // --- FITUR BARU: SYOK TERAPI ALPA KE-10 ---
-                // Jika Ustadz menginput "Alpa", cek total alpanya bulan ini
+                // --- FITUR SYOK TERAPI ALPA KE-10 ---
                 if (statusBaku === 'Alpa') {
-                    const tglBulanIni = new Date().toISOString().substring(0, 7); // Hasil: YYYY-MM
+                    const tglBulanIni = new Date().toISOString().substring(0, 7);
                     const res = await api.get('input_harian', `select=id&santri_id=eq.${s.id}&status_hadir=eq.Alpa&tanggal=gte.${tglBulanIni}-01`);
                     
                     if (res && res.length >= 10) {
@@ -429,17 +416,12 @@ export async function initInputHarian() {
                         }, 1000);
                     }
                 }
-                // ------------------------------------------
             });
 
-            // Tunggu semua proses selesai bersamaan
             await Promise.all(promises);
 
             btnElement.innerHTML = `<i class="fas fa-check-circle"></i> Berhasil Disimpan!`;
             btnElement.style.background = '#10B981'; // Hijau Sukses
-            
-            // 👇 PEMANGGIL LONCENG OTOMATIS ADA DI SINI 👇
-            if (window.periksaNotifikasiGlobal) window.periksaNotifikasiGlobal();
             
             setTimeout(() => {
                 btnElement.innerHTML = originalText;
