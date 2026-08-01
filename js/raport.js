@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * MODUL RAPORT - FINAL (SUPER OTOMATIS & RBAC FILTER)
+ * MODUL RAPORT - FINAL (RELASI GURU_ID MURNI)
  * File: js/raport.js
  * ==================================================
  */
@@ -209,7 +209,6 @@ export const initRaport = async () => {
     
     let loggedInGuruId = localStorage.getItem('guru_id');
     const userRole = localStorage.getItem('user_role');
-    const kelasPegangan = localStorage.getItem('kelas_pegangan');
     
     let dataGuruCache = null;
     let dataSantriCache = [];
@@ -307,8 +306,9 @@ export const initRaport = async () => {
     filterTahun.addEventListener('change', () => { if(filterSantri.value) triggerTarikDataOtomatis(); });
     renderTabelKehadiran();
 
-    // 3. LOAD DATA MASTER & HAK AKSES
-    const loadGuru = async () => {
+    // 3. LOAD DATA MASTER & HAK AKSES (RELASIONAL GURU_ID)
+    const loadMasterData = async () => {
+        // Ambil Data Guru
         if (!loggedInGuruId) {
             const dataG = await api.get('guru', 'select=*&limit=1');
             if (dataG && dataG.length > 0) {
@@ -325,33 +325,51 @@ export const initRaport = async () => {
                 }
             } catch (e) {}
         }
-    };
-    loadGuru();
 
-    try {
-        const ds = await api.get('dapodik_santri', 'select=*');
-        if (ds && ds.length > 0) {
-            dataSantriCache = ds;
-            let kelasUnik = [...new Set(ds.map(item => item.nama_kelas))].filter(Boolean).sort();
-            
-            // --- FILTER AJAIB (HAK AKSES KELAS) ---
-            if (userRole !== 'Admin' && kelasPegangan) {
-                kelasUnik = kelasUnik.filter(k => k.toLowerCase() === kelasPegangan.toLowerCase());
-            }
+        // Ambil Data Kelas & Santri bersamaan
+        try {
+            const [kData, ds] = await Promise.all([
+                api.get('kelas', 'select=*'),
+                api.get('dapodik_santri', 'select=*')
+            ]);
 
-            kelasUnik.forEach(k => {
-                const opt = document.createElement('option');
-                opt.value = k; opt.textContent = k;
-                filterKelas.appendChild(opt);
-            });
-            
-            // Auto-pilih jika hanya 1 kelas
-            if (kelasUnik.length === 1) {
-                filterKelas.value = kelasUnik[0];
-                filterKelas.dispatchEvent(new Event('change'));
+            if (ds && ds.length > 0) {
+                dataSantriCache = ds;
+                let kelasUnik = [];
+                
+                // --- FILTER AJAIB (HAK AKSES KELAS BERDASARKAN GURU_ID) ---
+                if (userRole !== 'Admin' && loggedInGuruId) {
+                    // Saring kelas dari tabel 'kelas' berdasarkan guru_id
+                    const kelasMilikGuru = (kData || []).filter(k => String(k.guru_id) === String(loggedInGuruId));
+                    kelasUnik = kelasMilikGuru.map(k => k.nama_kelas).sort();
+                } else {
+                    // Jika Admin, ambil semua nama kelas dari tabel kelas
+                    kelasUnik = (kData || []).map(k => k.nama_kelas).sort();
+                    
+                    // Backup jika tabel kelas kosong tapi tabel santri ada datanya
+                    if (kelasUnik.length === 0) {
+                        kelasUnik = [...new Set(ds.map(item => item.nama_kelas))].filter(Boolean).sort();
+                    }
+                }
+
+                kelasUnik.forEach(k => {
+                    const opt = document.createElement('option');
+                    opt.value = k; opt.textContent = k;
+                    filterKelas.appendChild(opt);
+                });
+                
+                // Auto-pilih jika hanya 1 kelas
+                if (kelasUnik.length === 1) {
+                    filterKelas.value = kelasUnik[0];
+                    filterKelas.dispatchEvent(new Event('change'));
+                }
             }
+        } catch (e) {
+            console.error("Gagal load data master raport", e);
         }
-    } catch (e) {}
+    };
+    
+    loadMasterData();
 
     filterKelas.addEventListener('change', (e) => {
         const kelas = e.target.value;
