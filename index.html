@@ -44,10 +44,7 @@
                 <a href="#santri" class="nav-link"><i class="fas fa-user-graduate w-[20px]"></i> Data Santri</a>
                 <a href="#harian" class="nav-link"><i class="fas fa-clipboard-list w-[20px]"></i> Input Harian</a>
                 <a href="#laporan" class="nav-link"><i class="fas fa-chart-pie w-[20px]"></i> Laporan</a>
-                
-                <!-- INI MENU RAPORT YANG BARU DITAMBAHKAN -->
                 <a href="#raport" class="nav-link"><i class="fas fa-award w-[20px]"></i> Cetak Raport</a>
-                
                 <a href="#setting" class="nav-link"><i class="fas fa-cog w-[20px]"></i> Pengaturan</a>
             </nav>
             <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; margin-top: auto;">
@@ -67,15 +64,15 @@
                     <i class="fas fa-bell" id="bellNotif"></i><span class="notif-badge"></span>
                 </button>
                 <div class="user-profile-box">
-                    <span class="user-name-text">Halo, Admin</span>
-                    <div class="avatar-box" id="avatarHeader">A</div>
+                    <span class="user-name-text" id="headerUserName">Halo, User</span>
+                    <div class="avatar-box" id="avatarHeader">U</div>
                 </div>
             </div>
         </header>
 
         <!-- MAIN CONTENT -->
         <main class="region region--main" id="main-content">
-            <!-- Akan diisi otomatis oleh js/dashboard.js & js/santri.js -->
+            <!-- Akan diisi otomatis oleh JS Router -->
         </main>
 
         <!-- FOOTER -->
@@ -88,6 +85,24 @@
     <!-- OVERLAY SIDEBAR MOBILE -->
     <div id="sidebarOverlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99;"></div>
     
+    <!-- SCRIPT PENYESUAI TAMPILAN PROFIL HEADER -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const userName = localStorage.getItem('user_name') || 'Pengguna';
+            const userRole = localStorage.getItem('user_role') || 'Guru';
+            
+            const elName = document.getElementById('headerUserName');
+            const elAvatar = document.getElementById('avatarHeader');
+            
+            if (elName) {
+                elName.textContent = userRole === 'Admin' ? `Halo, Admin` : `Ust. ${userName}`;
+            }
+            if (elAvatar) {
+                elAvatar.textContent = userName.charAt(0).toUpperCase();
+            }
+        });
+    </script>
+
     <!-- SCRIPT UTAMA -->
     <script type="module" src="js/main.js"></script>
 </body>
