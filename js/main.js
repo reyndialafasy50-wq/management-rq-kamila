@@ -10,7 +10,7 @@ import { renderInputHarian, initInputHarian } from './input_harian.js';
 import { renderLaporan, initLaporan } from './laporan.js'; 
 import { api } from './api.js';
 import { renderSetting, initSetting } from './setting.js';
-import { renderRaport, initRaport } from './raport.js'; // <-- IMPORT RAPORT
+import { renderRaport, initRaport } from './raport.js';
 
 // ==========================================
 // FUNGSI LONCENG GLOBAL (ANTI-MELESET)
@@ -164,8 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const pageTitle = document.getElementById('page-title');
     const navLinks = document.querySelectorAll('.nav-link');
 
-    // --- TAMBAHAN BARU: FILTER HAK AKSES & PROFIL ---
-    const userRole = localStorage.getItem('user_role');
+    // --- FILTER HAK AKSES & PROFIL ---
     const userName = localStorage.getItem('user_name');
 
     // 1. Ubah Nama di Pojok Kanan Atas sesuai yang login
@@ -175,14 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
         userNameElement.textContent = `Halo, ${userName}`;
         if (avatarHeader) avatarHeader.textContent = userName.charAt(0).toUpperCase();
     }
-
-    // 2. Sembunyikan Menu Khusus Admin jika yang login adalah Wali Kelas
-    if (userRole !== 'Admin') {
-        const menuLaporan = document.querySelector('a[href="#laporan"]');
-        const menuSetting = document.querySelector('a[href="#setting"]');
-        if (menuLaporan) menuLaporan.style.display = 'none';
-        if (menuSetting) menuSetting.style.display = 'none';
-    }
+    // (Script penyembunyi menu Laporan & Setting sudah DIHAPUS TOTAL)
     // ------------------------------------------------
 
     const loadPage = () => {
@@ -280,9 +272,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if(confirm('Yakin ingin keluar dari sistem?')) {
                 localStorage.removeItem('status_login');
                 localStorage.removeItem('guru_id');
-                // Tambahan: Hapus data role/akses jika ada
                 localStorage.removeItem('user_role'); 
-                localStorage.removeItem('kelas_pegangan');
+                localStorage.removeItem('kelas_pegangan'); // Hapus jejak sistem lama
                 localStorage.removeItem('user_name');
                 window.location.href = 'login.html';
             }
