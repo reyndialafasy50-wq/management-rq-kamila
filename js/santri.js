@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * BAGIAN 8: MODUL DATA SANTRI (RELASI GURU_ID MURNI)
+ * BAGIAN 8: MODUL DATA SANTRI (RELASI GURU_ID MURNI + RECOVERY)
  * File: js/santri.js
  * ==================================================
  */
@@ -311,20 +311,33 @@ export async function initSantri() {
                 return alert("Anda belum membuat kelas satupun. Silakan 'Buat Kelas' terlebih dahulu.");
             }
 
-            const belumAdaKelas = santriDataUtama.filter(s => !s.nama_kelas || s.nama_kelas.trim() === '');
+            // --- RADAR PENDETEKSI KELAS HANTU (ORPHAN RECOVERY) ---
+            const semuaKelasAktif = kelasData.map(k => k.nama_kelas.toLowerCase());
+            
+            const belumAdaKelas = santriDataUtama.filter(s => {
+                if (!s.nama_kelas || s.nama_kelas.trim() === '') return true;
+                return !semuaKelasAktif.includes(s.nama_kelas.toLowerCase());
+            });
+            // ------------------------------------------------------
+
             const listTbody = document.getElementById('listTarikSantri');
             if (belumAdaKelas.length === 0) {
-                listTbody.innerHTML = `<tr><td colspan="2" style="text-align:center;">Semua santri di database sudah memiliki kelas.</td></tr>`;
+                listTbody.innerHTML = `<tr><td colspan="2" style="text-align:center;">Semua santri di database sudah memiliki kelas aktif.</td></tr>`;
             } else {
-                listTbody.innerHTML = belumAdaKelas.map(s => `
+                listTbody.innerHTML = belumAdaKelas.map(s => {
+                    let infoKelas = s.nama_kelas ? `<br><span style="color: #EF4444; font-weight:bold; font-size: 0.7rem;"><i class="fas fa-exclamation-triangle"></i> Kelas Lama: ${s.nama_kelas} (Terhapus)</span>` : '';
+                    return `
                     <tr>
                         <td style="text-align:center;"><input type="checkbox" class="chk-tarik" value="${s.id}"></td>
                         <td>
                             <div style="font-weight:600; font-size:0.9rem;">${s.nama_santri}</div>
-                            <div style="font-size:0.75rem; color:var(--text-muted);">NIS: ${s.nis || '-'} • JK: ${s.jenis_kelamin}</div>
+                            <div style="font-size:0.75rem; color:var(--text-muted);">
+                                NIS: ${s.nis || '-'} • JK: ${s.jenis_kelamin}
+                                ${infoKelas}
+                            </div>
                         </td>
                     </tr>
-                `).join('');
+                `}).join('');
             }
             
             document.getElementById('checkAllTarik').checked = false;
