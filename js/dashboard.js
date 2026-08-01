@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * BAGIAN 7: MODUL DASHBOARD (MURNI TANPA LONCENG & RELASI GURU_ID)
+ * BAGIAN 7: MODUL DASHBOARD (MURNI RELASI GURU_ID)
  * File: js/dashboard.js
  * ==================================================
  */
