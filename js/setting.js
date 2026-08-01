@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * MODUL PENGATURAN USTADZ - VERSI 6 (FINAL ALL FITUR)
+ * MODUL PENGATURAN USTADZ - VERSI 6 (RELASI GURU_ID MURNI)
  * File: js/setting.js
  * ==================================================
  */
@@ -149,7 +149,7 @@ export const renderSetting = () => {
                     <label>Cakupan Libur</label>
                     <div class="pill-tabs">
                         <input type="radio" name="udzur_cakupan" id="udzur_semua" value="semua" checked>
-                        <label for="udzur_semua">Semua Kelas</label>
+                        <label for="udzur_semua">Semua Kelas Anda</label>
                         <input type="radio" name="udzur_cakupan" id="udzur_pilih" value="pilih">
                         <label for="udzur_pilih">Pilih Kelas</label>
                     </div>
@@ -213,6 +213,7 @@ export const initSetting = async () => {
     const btnSimpanTemplateWa = document.getElementById('btnSimpanTemplateWa');
 
     let loggedInGuruId = localStorage.getItem('guru_id');
+    const userRole = localStorage.getItem('user_role');
 
     // LOAD DATA GURU
     const loadDataGuru = async () => {
@@ -261,6 +262,14 @@ export const initSetting = async () => {
         btnSimpanProfil.disabled = true;
         try {
             await api.update('guru', loggedInGuruId, { nama: namaBaru, no_hp: waBaru });
+            
+            // UPDATE LOCAL STORAGE & TAMPILAN NAMA DI HEADER
+            localStorage.setItem('user_name', namaBaru);
+            const headerUserName = document.getElementById('headerUserName');
+            if(headerUserName) headerUserName.textContent = userRole === 'Admin' ? 'Halo, Admin' : `Ust. ${namaBaru}`;
+            const headerAvatar = document.getElementById('avatarHeader');
+            if(headerAvatar) headerAvatar.textContent = namaBaru.charAt(0).toUpperCase();
+
             alert('Alhamdulillah, profil berhasil diperbarui!');
             document.getElementById('namaLoginSimulasi').textContent = namaBaru;
         } catch (e) { alert('Gagal memperbarui profil. Cek koneksi.'); }
@@ -344,7 +353,7 @@ export const initSetting = async () => {
     });
 
     // ==========================================
-    // LOGIKA FITUR ATUR LIBUR KELAS
+    // LOGIKA FITUR ATUR LIBUR KELAS (DENGAN FILTER GURU_ID)
     // ==========================================
     const udzurTanggal = document.getElementById('udzurTanggal');
     const udzurAlasan = document.getElementById('udzurAlasan');
@@ -359,18 +368,30 @@ export const initSetting = async () => {
     radioSemua.addEventListener('change', togglePilihanKelas);
     radioPilih.addEventListener('change', togglePilihanKelas);
 
-    // Ambil daftar kelas dari dapodik
+    // Ambil daftar kelas HANYA yang dimiliki guru ini (atau semua jika Admin)
+    let daftarKelasMilikGuru = [];
     try {
-        const dataSantri = await api.get('dapodik_santri', 'select=nama_kelas');
-        if (dataSantri && dataSantri.length > 0) {
-            const kelasUnik = [...new Set(dataSantri.map(item => item.nama_kelas))].filter(Boolean).sort();
-            let htmlCheckbox = '';
-            kelasUnik.forEach(k => {
-                htmlCheckbox += `<label class="checkbox-kelas"><input type="checkbox" name="chk_kelas_libur" value="${k}"> ${k}</label>`;
-            });
-            wadahPilihanKelas.innerHTML = htmlCheckbox;
+        const tabelKelas = await api.get('kelas', 'select=*');
+        if (tabelKelas && tabelKelas.length > 0) {
+            if (userRole !== 'Admin' && loggedInGuruId) {
+                daftarKelasMilikGuru = tabelKelas.filter(k => String(k.guru_id) === String(loggedInGuruId)).map(k => k.nama_kelas).sort();
+            } else {
+                daftarKelasMilikGuru = tabelKelas.map(k => k.nama_kelas).sort();
+            }
+
+            if (daftarKelasMilikGuru.length > 0) {
+                let htmlCheckbox = '';
+                daftarKelasMilikGuru.forEach(k => {
+                    htmlCheckbox += `<label class="checkbox-kelas"><input type="checkbox" name="chk_kelas_libur" value="${k}"> ${k}</label>`;
+                });
+                wadahPilihanKelas.innerHTML = htmlCheckbox;
+            } else {
+                wadahPilihanKelas.innerHTML = '<div style="text-align:center; font-size:0.85rem; color:#94a3b8;">Anda belum ditugaskan di kelas manapun.</div>';
+                btnSimpanLibur.disabled = true;
+                btnSimpanLibur.style.opacity = '0.5';
+            }
         } else {
-            wadahPilihanKelas.innerHTML = '<div style="text-align:center; font-size:0.85rem; color:#94a3b8;">Belum ada data kelas.</div>';
+            wadahPilihanKelas.innerHTML = '<div style="text-align:center; font-size:0.85rem; color:#94a3b8;">Belum ada data kelas di database.</div>';
         }
     } catch (e) { console.error("Gagal load kelas libur:", e); }
 
@@ -385,12 +406,15 @@ export const initSetting = async () => {
         if (!tgl || !alasan.trim()) return alert('Mohon lengkapi tanggal dan alasan libur!');
 
         const cakupan = radioSemua.checked ? 'Semua Kelas' : 'Pilih Kelas';
-        let kelasTerpilih = 'Semua';
+        let kelasTerpilih = '';
 
         if (cakupan === 'Pilih Kelas') {
             const checkedBoxes = document.querySelectorAll('input[name="chk_kelas_libur"]:checked');
             if (checkedBoxes.length === 0) return alert('Pilih minimal satu kelas yang diliburkan!');
             kelasTerpilih = Array.from(checkedBoxes).map(cb => cb.value).join(', ');
+        } else {
+            // Jika pilih Semua Kelas, kita simpan string koma dari semua kelas milik ustadz ini
+            kelasTerpilih = daftarKelasMilikGuru.join(', ');
         }
 
         const oriText = btnSimpanLibur.innerHTML;
