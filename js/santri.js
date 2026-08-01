@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * BAGIAN 8: MODUL DATA SANTRI (RBAC + AUTO-ASSIGN KELAS)
+ * BAGIAN 8: MODUL DATA SANTRI (RELASI GURU_ID MURNI)
  * File: js/santri.js
  * ==================================================
  */
@@ -8,6 +8,7 @@ import { api } from './api.js';
 
 let santriDataUtama = [];
 let kelasData = [];
+let kelasTersedia = []; // Menyimpan array nama kelas yang berhak diakses
 
 async function loadExcelLibrary() {
     return new Promise((resolve, reject) => {
@@ -214,12 +215,8 @@ export function renderSantri() {
 export async function initSantri() {
     loadExcelLibrary(); 
     
-    // AMBIL DATA ROLE DARI LOGIN
     const currentUserRole = localStorage.getItem('user_role') || 'Guru';
-    const kelasPeganganRaw = localStorage.getItem('kelas_pegangan') || '';
-
-    // PEMECAH KOMA: Ubah "Kelas A, Kelas B" menjadi array ["kelas a", "kelas b"]
-    const arrayKelasPegangan = kelasPeganganRaw.split(',').map(s => s.trim().toLowerCase()).filter(s => s !== '');
+    const guruId = localStorage.getItem('guru_id'); // Identitas pemegang sertifikat yang valid
 
     if (currentUserRole === 'Admin') {
         document.getElementById('menuAdmin').style.display = 'grid';
@@ -236,12 +233,15 @@ export async function initSantri() {
     const loadData = async () => {
         try {
             kelasData = await api.get('kelas', 'select=*');
-            let kelasTersedia = kelasData.map(k => k.nama_kelas).sort();
             
-            // --- FILTER AJAIB GURU (MULTI-KELAS) ---
-            if (currentUserRole !== 'Admin' && arrayKelasPegangan.length > 0) {
-                kelasTersedia = kelasTersedia.filter(k => arrayKelasPegangan.includes(k.toLowerCase()));
+            // --- FILTER RELASIONAL BERDASARKAN GURU_ID ---
+            let kelasMilikGuruData = kelasData;
+            if (currentUserRole !== 'Admin' && guruId) {
+                // Hanya ambil data dari tabel kelas yang kolom guru_id nya sama dengan id guru yang login
+                kelasMilikGuruData = kelasData.filter(k => String(k.guru_id) === String(guruId));
             }
+            
+            kelasTersedia = kelasMilikGuruData.map(k => k.nama_kelas).sort();
 
             let opsiKelas = '';
             kelasTersedia.forEach(k => { opsiKelas += `<option value="${k}">${k}</option>`; });
@@ -251,12 +251,11 @@ export async function initSantri() {
                 if(selectKelasForm) selectKelasForm.innerHTML = '<option value="">Belum ada kelas</option>' + opsiKelas;
                 if(selectTarikKelas) selectTarikKelas.innerHTML = '<option value="">-- Pilih Kelas --</option>' + opsiKelas;
             } else {
-                filterKelas.innerHTML = opsiKelas || '<option value="">Anda belum memiliki kelas</option>';
+                filterKelas.innerHTML = '<option value="">-- Tampilkan Kelas Anda --</option>' + opsiKelas;
                 if(selectKelasForm) selectKelasForm.innerHTML = opsiKelas;
                 if(selectTarikKelas) selectTarikKelas.innerHTML = opsiKelas;
                 
-                // Jika hanya punya 1 kelas, langsung pilih kelas itu
-                if (kelasTersedia.length > 0) {
+                if (kelasTersedia.length === 1) {
                     filterKelas.value = kelasTersedia[0];
                 }
             }
@@ -274,7 +273,7 @@ export async function initSantri() {
         if(!tbody) return;
         if (data.length === 0) {
             if(currentUserRole !== 'Admin') {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 30px;"><i class="fas fa-hand-pointer text-muted" style="font-size:2rem; margin-bottom:10px;"></i><br>Silakan pastikan kelas Anda dipilih<br>untuk melihat daftar santri.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 30px;"><i class="fas fa-hand-pointer text-muted" style="font-size:2rem; margin-bottom:10px;"></i><br>Silakan pilih kelas di atas<br>untuk melihat daftar santri.</td></tr>`;
             } else {
                 tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Tidak ada data santri ditemukan.</td></tr>`;
             }
@@ -308,6 +307,10 @@ export async function initSantri() {
     // ============================================
     if(document.getElementById('btnTarikSantri')) {
         document.getElementById('btnTarikSantri').addEventListener('click', () => {
+            if (kelasTersedia.length === 0) {
+                return alert("Anda belum membuat kelas satupun. Silakan 'Buat Kelas' terlebih dahulu.");
+            }
+
             const belumAdaKelas = santriDataUtama.filter(s => !s.nama_kelas || s.nama_kelas.trim() === '');
             const listTbody = document.getElementById('listTarikSantri');
             if (belumAdaKelas.length === 0) {
@@ -324,10 +327,8 @@ export async function initSantri() {
                 `).join('');
             }
             
-            // Reset modal saat dibuka
             document.getElementById('checkAllTarik').checked = false;
             
-            // Pilih kelas otomatis jika guru hanya punya 1 kelas
             const selectTujuan = document.getElementById('tarikKelasTujuan');
             if (selectTujuan.options.length > 0) selectTujuan.value = selectTujuan.options[0].value;
             
@@ -337,7 +338,6 @@ export async function initSantri() {
         });
     }
 
-    // LOGIKA PENCARIAN DI DALAM MODAL TARIK SANTRI
     const searchInputTarik = document.getElementById('inputCariTarikSantri');
     if (searchInputTarik) {
         searchInputTarik.addEventListener('input', function(e) {
@@ -346,7 +346,6 @@ export async function initSantri() {
             
             if (listTbody) {
                 const rows = listTbody.getElementsByTagName('tr');
-                
                 for (let i = 0; i < rows.length; i++) {
                     const text = rows[i].textContent.toLowerCase();
                     if (text.includes(keyword)) {
@@ -411,7 +410,6 @@ export async function initSantri() {
         }
     };
 
-
     // ============================================
     // PENCARIAN & FILTER TABEL UTAMA
     // ============================================
@@ -424,11 +422,12 @@ export async function initSantri() {
         let filtered = [];
         
         if (currentUserRole !== 'Admin') {
-            if(!kelas) {
-                renderTable([]);
-                return;
+            if (kelas) {
+                filtered = santriDataUtama.filter(s => s.nama_kelas === kelas);
+            } else {
+                // Tampilkan gabungan murid dari semua kelas yang dimiliki guru ini
+                filtered = santriDataUtama.filter(s => kelasTersedia.includes(s.nama_kelas));
             }
-            filtered = santriDataUtama.filter(s => s.nama_kelas === kelas);
         } else {
             filtered = santriDataUtama.filter(s => (kelas === "" || s.nama_kelas === kelas));
         }
@@ -492,40 +491,22 @@ export async function initSantri() {
             btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Menyimpan...`;
 
             try {
-                // 1. Ambil Nama Kelas Baru
                 const namaKelasBaru = document.getElementById('inputNamaKelas').value.trim();
                 
-                // 2. Simpan Kelas ke Database (Tabel Kelas)
+                // --- MENGGUNAKAN RELASI LANGSUNG (guru_id) ---
+                // Menyimpan nama kelas dan memasukkan ID Guru sebagai pemilik
                 await api.post('kelas', { 
                     nama_kelas: namaKelasBaru, 
                     jam_kelas: `${document.getElementById('inputJamMulai').value} - ${document.getElementById('inputJamSelesai').value}`, 
-                    hari_kelas: selectedDays.join(', ')
+                    hari_kelas: selectedDays.join(', '),
+                    guru_id: guruId 
                 });
                 
-                // 3. AUTO-ASSIGN: Tambahkan nama kelas baru ini ke akun guru yang sedang membuat
-                const guruId = localStorage.getItem('guru_id');
-                if (guruId && currentUserRole !== 'Admin') {
-                    let kelasPeganganSekarang = localStorage.getItem('kelas_pegangan') || '';
-                    let arrayKelas = kelasPeganganSekarang.split(',').map(s => s.trim()).filter(s => s !== '');
-                    
-                    // Cek agar tidak duplikat
-                    if (!arrayKelas.some(k => k.toLowerCase() === namaKelasBaru.toLowerCase())) {
-                        arrayKelas.push(namaKelasBaru);
-                        const kelasPeganganBaru = arrayKelas.join(', ');
-                        
-                        // Update di Database Supabase
-                        await api.update('guru', guruId, { kelas_pegangan: kelasPeganganBaru });
-                        
-                        // Update di memori HP (Local Storage)
-                        localStorage.setItem('kelas_pegangan', kelasPeganganBaru);
-                    }
-                }
-
                 document.getElementById('modalKelas').classList.remove('active');
+                alert("Kelas berhasil dibuat dan resmi menjadi hak milik Anda!");
                 
-                // 4. Alert & Refresh Total
-                alert("Kelas berhasil dibuat dan otomatis ditautkan ke akun Anda!\nSistem akan memuat ulang halaman untuk menerapkan perubahan.");
-                window.location.reload(); // Wajib reload agar memori & UI terapdate seketika
+                // Segarkan otomatis
+                window.location.reload(); 
                 
             } catch(error) { alert("Gagal menyimpan kelas."); } 
             finally { btn.innerHTML = `<i class="fas fa-save"></i> Simpan Kelas`; }
