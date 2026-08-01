@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * BAGIAN 7: MODUL DASHBOARD (MURNI TANPA LONCENG & RBAC)
+ * BAGIAN 7: MODUL DASHBOARD (MURNI TANPA LONCENG & RELASI GURU_ID)
  * File: js/dashboard.js
  * ==================================================
  */
@@ -117,7 +117,7 @@ export async function initDashboard() {
     // --- BACA ROLE & IDENTITAS DARI STORAGE ---
     const userRole = localStorage.getItem('user_role') || 'Guru';
     const userName = localStorage.getItem('user_name') || '';
-    const kelasPegangan = localStorage.getItem('kelas_pegangan');
+    const guruId = localStorage.getItem('guru_id'); // Identitas pemegang sertifikat
 
     // SET GREETING TEXT
     if (userRole === 'Admin') {
@@ -273,12 +273,14 @@ export async function initDashboard() {
             
             let activeKelasList = kelasList || [];
 
-            // FILTER DATA UNTUK GURU YANG MENGAMPU KELAS
-            if (userRole !== 'Admin' && kelasPegangan) {
-                const arrKelas = kelasPegangan.split(',').map(s => s.trim().toLowerCase());
+            // FILTER DATA UNTUK GURU YANG MENGAMPU KELAS MENGGUNAKAN guru_id
+            if (userRole !== 'Admin' && guruId) {
+                // Ambil daftar nama kelas yang menjadi hak milik guru ini
+                activeKelasList = activeKelasList.filter(k => String(k.guru_id) === String(guruId));
+                const arrKelas = activeKelasList.map(k => k.nama_kelas.toLowerCase());
+                
                 rawSantriList = (santriList || []).filter(s => s.nama_kelas && arrKelas.includes(s.nama_kelas.toLowerCase()));
                 rawHarianList = (harianList || []).filter(h => h.nama_kelas && arrKelas.includes(h.nama_kelas.toLowerCase()));
-                activeKelasList = activeKelasList.filter(k => arrKelas.includes(k.nama_kelas.toLowerCase()));
             } else {
                 // JIKA ADMIN, AMBIL SEMUA
                 rawHarianList = harianList || []; 
