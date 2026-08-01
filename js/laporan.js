@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * MODUL LAPORAN & RAPOR - VERSI FINAL (TYPO FIXED & DB MATCHED)
+ * MODUL LAPORAN & RAPOR - VERSI FINAL (RELASI GURU_ID MURNI)
  * File: js/laporan.js
  * ==================================================
  */
@@ -240,15 +240,40 @@ export const initLaporan = async () => {
     };
 
     let rawSantriData = [];
+    
+    // --- AMBIL DATA ROLE & ID GURU DARI LOGIN ---
+    const userRole = localStorage.getItem('user_role');
+    const guruId = localStorage.getItem('guru_id'); // Membaca Sertifikat Hak Milik
+    const userName = localStorage.getItem('user_name') || 'Wali Kelas';
+    // --------------------------------------------
 
-    // FUNGSI LOAD KELAS (TANPA TYPO & 100% AMAN!)
+    // FUNGSI LOAD KELAS DENGAN RELASI GURU_ID
     const loadDaftarKelas = async () => {
         try {
-            // Karena screenshot membuktikan tabel 'kelas' ada, kita panggil dengan santai
-            const dataKelas = await api.get('kelas', 'select=nama_kelas');
+            const dataKelas = await api.get('kelas', 'select=*');
             if (dataKelas && dataKelas.length > 0) {
-                el.kelas.innerHTML = '<option value="">-- Pilih Kelas --</option>';
-                dataKelas.forEach(k => el.kelas.add(new Option(k.nama_kelas, k.nama_kelas)));
+                
+                // --- FILTER RELASIONAL BERDASARKAN GURU_ID ---
+                let kelasMilikGuruData = dataKelas;
+                if (userRole !== 'Admin' && guruId) {
+                    kelasMilikGuruData = dataKelas.filter(k => String(k.guru_id) === String(guruId));
+                }
+                
+                let kelasTersedia = kelasMilikGuruData.map(k => k.nama_kelas).sort();
+                // ---------------------------------------------
+
+                if (kelasTersedia.length > 0) {
+                    el.kelas.innerHTML = '<option value="">-- Pilih Kelas --</option>';
+                    kelasTersedia.forEach(k => el.kelas.add(new Option(k, k)));
+                    
+                    // Auto-pilih jika hanya 1 kelas
+                    if (kelasTersedia.length === 1) {
+                        el.kelas.value = kelasTersedia[0];
+                        el.kelas.dispatchEvent(new Event('change'));
+                    }
+                } else {
+                    el.kelas.innerHTML = '<option value="">-- Anda tidak mengampu kelas manapun --</option>';
+                }
             } else {
                 el.kelas.innerHTML = '<option value="">-- Data Kelas Kosong --</option>';
             }
@@ -306,7 +331,10 @@ export const initLaporan = async () => {
         const bulanVal = el.bulan.value;
         
         document.getElementById('lblKertasKelas').textContent = kelasVal || 'Belum dipilih';
-        document.getElementById('lblKertasUstadz').textContent = '-'; 
+        
+        // Menampilkan nama guru yang login atau 'Owner' jika Admin di kertas landscape
+        document.getElementById('lblKertasUstadz').textContent = userRole === 'Admin' ? 'Mudir/Owner' : userName; 
+        
         document.getElementById('lblRaporKelas').textContent = kelasVal || 'Belum dipilih';
 
         if (bulanVal) {
@@ -334,7 +362,6 @@ export const initLaporan = async () => {
                 }
 
                 // DIBUAT AMAN! Tarik semua data bulan ini, biar JS yang filter by nama_santri 
-                // Mencegah error jika tabel input_harian kebetulan tidak punya kolom nama_kelas
                 const harianList = await api.get('input_harian', `select=*&tanggal=gte.${tglMulai}&tanggal=lte.${tglSelesai}`) || [];
 
                 let html = '';
