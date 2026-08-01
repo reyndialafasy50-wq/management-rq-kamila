@@ -238,12 +238,11 @@
                     // JIKA COCOK (BERHASIL LOGIN)
                     const user = result[0];
                     
-                    // Simpan identitas penting ke memori lokal HP/Laptop
+                    // Simpan identitas penting ke memori lokal HP/Laptop (MURNI TANPA KELAS_PEGANGAN)
                     localStorage.setItem('status_login', 'aktif');
                     localStorage.setItem('guru_id', user.id);
                     localStorage.setItem('user_name', user.nama);
                     localStorage.setItem('user_role', user.role); // 'Admin' atau 'Wali Kelas'
-                    localStorage.setItem('kelas_pegangan', user.kelas_pegangan || '');
                     
                     // Buka pintu ke aplikasi utama
                     window.location.href = 'index.html';
