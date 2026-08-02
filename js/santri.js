@@ -1,762 +1,603 @@
 /**
  * ==================================================
- * BAGIAN 8: MODUL DATA SANTRI (RELASI GURU_ID MURNI + MUTASI ADMIN)
- * File: js/santri.js
+ * MODUL PENGATURAN USTADZ & ADMIN - VERSI FINAL (+ TARGET KBM)
+ * File: js/setting.js
  * ==================================================
  */
+
 import { api } from './api.js';
 
-let santriDataUtama = [];
-let kelasData = [];
-let kelasTersedia = []; // Menyimpan array nama kelas yang berhak diakses
-
-async function loadExcelLibrary() {
-    return new Promise((resolve, reject) => {
-        if (typeof window.XLSX !== 'undefined') return resolve();
-        const script = document.createElement('script');
-        script.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
-        script.onload = resolve;
-        script.onerror = reject;
-        document.head.appendChild(script);
-    });
-}
-
-export function renderSantri() {
-    const roleSaatIni = localStorage.getItem('user_role') || 'Guru';
-    
+export const renderSetting = () => {
     return `
-        <div style="background: var(--surface); padding: 20px; border-radius: 16px; margin-bottom: 20px; border: 1px solid var(--border);">
-            <div>
-                <h4 style="margin: 0; font-size: 1rem; color: var(--text-main);"><i class="fas fa-chalkboard-teacher text-info"></i> Manajemen Santri & Kelas</h4>
-                <p style="margin: 3px 0 0; font-size: 0.75rem; color: var(--text-muted); padding-bottom: 10px;">
-                    Role saat ini: <strong style="color:var(--primary); text-transform:uppercase;">${roleSaatIni}</strong>
-                </p>
+    <style>
+        .setting-wrapper { display: flex; flex-direction: column; gap: 20px; padding-bottom: 90px; animation: fadeIn 0.4s ease-out; }
+        
+        .header-title { font-size: 1.2rem; font-weight: 800; color: var(--text-main); margin-bottom: 5px; display: flex; align-items: center; gap: 8px; }
+        .header-subtitle { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px; }
+
+        .tab-container { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; border-bottom: 2px solid var(--border); margin-bottom: 10px; scrollbar-width: none; }
+        .tab-container::-webkit-scrollbar { display: none; }
+        .tab-btn { background: var(--surface); border: 1px solid var(--border); padding: 10px 15px; border-radius: 10px; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); cursor: pointer; transition: all 0.2s; white-space: nowrap; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .tab-btn.active { background: #3B82F6; color: white; border-color: #3B82F6; box-shadow: 0 4px 10px rgba(59,130,246,0.3); }
+        
+        /* Warna Khusus Tab Admin */
+        .tab-btn.admin-tab.active { background: #8B5CF6; color: white; border-color: #8B5CF6; box-shadow: 0 4px 10px rgba(139,92,246,0.3); }
+
+        .setting-card { background: var(--surface); border-radius: 16px; padding: 22px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); border: 1px solid var(--border); margin-bottom: 20px; animation: fadeIn 0.3s ease-out; }
+        .card-title { font-size: 1.05rem; font-weight: 800; color: var(--text-main); margin-top: 0; margin-bottom: 15px; border-bottom: 2px solid #F1F5F9; padding-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 0.8rem; font-weight: 800; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-control { width: 100%; padding: 12px 15px; border: 1.5px solid var(--border); border-radius: 10px; background: var(--bg-main); color: var(--text-main); font-size: 0.95rem; font-weight: 600; transition: 0.2s; }
+        .form-control:focus { border-color: #3B82F6; outline: none; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+        textarea.form-control { resize: vertical; min-height: 100px; line-height: 1.5; font-weight: 500; }
+        
+        .btn-simpan { width: 100%; padding: 14px; background: linear-gradient(135deg, #3B82F6, #2563EB); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 0.95rem; cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(37,99,235,0.2); }
+        .btn-simpan:active { transform: scale(0.97); }
+
+        .canvas-container { border: 2px dashed #CBD5E1; border-radius: 12px; background: #F8FAFC; overflow: hidden; margin-bottom: 15px; position: relative; }
+        #canvasTtd { width: 100%; height: 200px; cursor: crosshair; touch-action: none; }
+        .btn-clear { position: absolute; top: 10px; right: 10px; background: #FEE2E2; color: #DC2626; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer; z-index: 10; }
+
+        .pill-tabs { display: flex; background: #f1f5f9; border-radius: 12px; padding: 4px; gap: 4px; width: 100%; margin-bottom: 8px;}
+        .pill-tabs label { padding: 10px 15px; font-size: 0.85rem; font-weight: 700; color: #64748b; cursor: pointer; border-radius: 8px; transition: 0.2s; flex: 1; text-align: center; }
+        .pill-tabs input { display: none; }
+        .pill-tabs input[value="semua"]:checked + label { background-color: #3B82F6; color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1);}
+        .pill-tabs input[value="pilih"]:checked + label { background-color: #F59E0B; color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1);}
+        .checkbox-kelas { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 0.9rem; font-weight: 600; color: #334155; cursor: pointer; background: white; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; }
+        .checkbox-kelas input { width: 18px; height: 18px; cursor: pointer; accent-color: #F59E0B; }
+    </style>
+
+    <div class="setting-wrapper">
+        <div>
+            <div class="header-title"><i class="fas fa-user-cog"></i> Ruang Pribadi & Pengaturan</div>
+            <div class="header-subtitle">Kelola profil, keamanan, dan alat bantu laporan Anda.</div>
+        </div>
+
+        <div class="tab-container">
+            <button class="tab-btn active" data-target="panelProfil"><i class="fas fa-user-shield"></i> Profil & Akun</button>
+            <button class="tab-btn" data-target="panelTtd"><i class="fas fa-signature"></i> Tanda Tangan</button>
+            <button class="tab-btn" data-target="panelTemplate"><i class="fas fa-comment-dots"></i> Bank Catatan</button>
+            <button class="tab-btn" data-target="panelLibur"><i class="fas fa-calendar-times"></i> Atur Libur</button>
+            
+            <!-- TAB KHUSUS ADMIN (DISEMBUNYIKAN DEFAULT) -->
+            <button class="tab-btn admin-tab" data-target="panelAdminJP" id="tabAdminJP" style="display: none;"><i class="fas fa-bullseye"></i> Target KBM</button>
+        </div>
+
+        <!-- 1. PANEL PROFIL & KEAMANAN -->
+        <div id="panelProfil" class="panel-setting">
+            <div id="alertSimulasiLogin" style="background: #E0F2FE; color: #0284C7; padding: 10px 15px; border-radius: 10px; font-size: 0.85rem; font-weight: 600; margin-bottom: 15px; display: none; align-items: center; gap: 10px;">
+                <i class="fas fa-info-circle"></i> <span>Anda sedang login sebagai: <b id="namaLoginSimulasi">...</b></span>
+            </div>
+            <div class="setting-card">
+                <h3 class="card-title"><i class="fas fa-id-card"></i> Data Diri</h3>
+                <div class="form-group">
+                    <label>Nama Lengkap (Sesuai Rapor)</label>
+                    <input type="text" id="inputNamaProfil" class="form-control" placeholder="Contoh: Ust. Fulan, S.Pd.I">
+                </div>
+                <div class="form-group">
+                    <label>Nomor WhatsApp Aktif</label>
+                    <input type="tel" id="inputWaProfil" class="form-control" placeholder="Mulai dengan 628...">
+                </div>
+                <button class="btn-simpan" id="btnSimpanProfil"><i class="fas fa-save"></i> Perbarui Profil</button>
+            </div>
+            <div class="setting-card">
+                <h3 class="card-title" style="color: #DC2626; border-bottom-color: #FEE2E2;"><i class="fas fa-lock"></i> Keamanan Akun</h3>
+                <div class="form-group">
+                    <label>Password Baru</label>
+                    <input type="password" id="inputPasswordBaru" class="form-control" placeholder="Masukkan password baru">
+                </div>
+                <div class="form-group">
+                    <label>Konfirmasi Password Baru</label>
+                    <input type="password" id="inputPasswordKonfirm" class="form-control" placeholder="Ketik ulang password">
+                </div>
+                <button class="btn-simpan" id="btnGantiPassword" style="background: linear-gradient(135deg, #EF4444, #DC2626); box-shadow: 0 4px 12px rgba(220,38,38,0.2);"><i class="fas fa-key"></i> Ganti Password</button>
+            </div>
+        </div>
+
+        <!-- 2. PANEL TANDA TANGAN DIGITAL -->
+        <div id="panelTtd" class="panel-setting" style="display: none;">
+            <div class="setting-card">
+                <h3 class="card-title"><i class="fas fa-pen-nib"></i> Tanda Tangan Digital</h3>
+                <p style="font-size: 0.85rem; color: #64748B; margin-bottom: 15px;">Tanda tangan di bawah ini otomatis ditempelkan pada file Rapor/Laporan PDF.</p>
+                <div class="canvas-container">
+                    <button class="btn-clear" id="btnClearTtd"><i class="fas fa-eraser"></i> Hapus</button>
+                    <canvas id="canvasTtd"></canvas>
+                </div>
+                <button class="btn-simpan" id="btnSimpanTtd" style="background: linear-gradient(135deg, #10B981, #059669);"><i class="fas fa-cloud-upload-alt"></i> Simpan Tanda Tangan</button>
+            </div>
+        </div>
+
+        <!-- 3. PANEL BANK CATATAN & TEMPLATE -->
+        <div id="panelTemplate" class="panel-setting" style="display: none;">
+            <div class="setting-card">
+                <h3 class="card-title"><i class="fas fa-book-open"></i> Template Catatan Rapor</h3>
+                <p style="font-size: 0.85rem; color: #64748B; margin-bottom: 15px;">Catatan ini akan menjadi teks awal saat Anda mengisi form evaluasi rapor.</p>
+                <div class="form-group">
+                    <label>Kalimat Default Evaluasi</label>
+                    <textarea id="inputTemplateRapor" class="form-control" placeholder="Ketik kalimat evaluasi standar di sini...">Ananda telah mengikuti kegiatan belajar dengan baik.</textarea>
+                </div>
+                <button class="btn-simpan" id="btnSimpanTemplateRapor"><i class="fas fa-save"></i> Simpan Template Rapor</button>
             </div>
             
-            <!-- MENU KHUSUS ADMIN (3 TOMBOL) -->
-            <div id="menuAdmin" style="display: none; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; width: 100%; margin-top: 5px;">
-                <button class="btn-secondary" id="btnTambahSantri" style="width: 100%; justify-content: center;"><i class="fas fa-user-plus"></i> Tambah Santri</button>
-                <input type="file" id="fileExcel" accept=".xlsx, .xls" style="display: none;">
-                <button class="btn-secondary" id="btnImportExcel" style="width: 100%; justify-content: center;"><i class="fas fa-file-excel"></i> Upload Dapodik</button>
-                <button class="btn-secondary" id="btnMutasiSantri" style="width: 100%; justify-content: center; background-color: #F59E0B; color: white; border: none;"><i class="fas fa-exchange-alt"></i> Mutasi / Luluskan</button>
-            </div>
-
-            <!-- MENU KHUSUS GURU (2 TOMBOL) -->
-            <div id="menuGuru" style="display: none; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; margin-top: 5px;">
-                <button class="btn-secondary" id="btnTambahKelas" style="width: 100%; justify-content: center;"><i class="fas fa-plus"></i> Buat Kelas</button>
-                <button class="btn-secondary" id="btnTarikSantri" style="background-color: var(--primary); color: white; border: none; width: 100%; justify-content: center;"><i class="fas fa-users-cog"></i> Tarik Santri</button>
-            </div>
-        </div>
-
-        <div class="toolbar-flex">
-            <div class="search-box">
-                <i class="fas fa-search"></i>
-                <input type="text" id="searchSantri" placeholder="Cari nama santri...">
-            </div>
-            <select class="filter-select" id="filterKelas">
-                <option value="">-- Tampilkan Semua Kelas --</option>
-            </select>
-            <button class="btn-secondary btn-export" id="btnExportExcel" style="display: none;"><i class="fas fa-download"></i> Export</button>
-        </div>
-
-        <div class="custom-table-container">
-            <table class="custom-table">
-                <thead>
-                    <tr>
-                        <th style="width: 50px; text-align:center;"><input type="checkbox" id="checkAllUtama" title="Pilih Semua"></th>
-                        <th>NIS</th>
-                        <th>Nama Lengkap</th>
-                        <th>Kelas</th>
-                        <th style="text-align: center;">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBodySantri">
-                    <tr><td colspan="5" style="text-align:center;"><i class="fas fa-spinner fa-spin"></i> Memuat data...</td></tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- ================= MODALS ================= -->
-
-        <!-- MODAL MUTASI & KELULUSAN (KHUSUS ADMIN) -->
-        <div class="modal-overlay" id="modalMutasi">
-            <div class="modal-card" style="max-width: 450px; padding: 25px;">
-                <div class="modern-modal-header">
-                    <h3>Mutasi / Ubah Status Santri</h3>
-                    <button type="button" class="btn-close" onclick="document.getElementById('modalMutasi').classList.remove('active')"><i class="fas fa-times"></i></button>
+            <div class="setting-card">
+                <h3 class="card-title" style="color: #059669; border-bottom-color: #D1FAE5;"><i class="fab fa-whatsapp"></i> Template Pesan Pengantar</h3>
+                <p style="font-size: 0.85rem; color: #64748B; margin-bottom: 15px;">Pesan ini akan otomatis disalin saat membagikan rapor santri via WA.</p>
+                <div class="form-group">
+                    <label>Pesan WhatsApp Default</label>
+                    <textarea id="inputTemplateWa" class="form-control">Assalamu'alaikum Warahmatullahi Wabarakatuh.&#10;&#10;Ayah/Bunda, berikut kami lampirkan file Laporan Perkembangan (Rapor) Ananda bulan ini. Mohon berkenan untuk ditinjau.&#10;&#10;Jazakumullah Khairan.</textarea>
                 </div>
+                <button class="btn-simpan" id="btnSimpanTemplateWa" style="background: linear-gradient(135deg, #10B981, #059669);"><i class="fas fa-save"></i> Simpan Template WA</button>
+            </div>
+        </div>
+
+        <!-- 4. PANEL ATUR LIBUR (AKTIF DATABASE) -->
+        <div id="panelLibur" class="panel-setting" style="display: none;">
+            <div class="setting-card" style="border-top: 4px solid #F59E0B;">
+                <h3 class="card-title" style="color: #D97706; border-bottom-color: #FEF3C7; padding-top:5px;"><i class="fas fa-calendar-times"></i> Atur Libur Kelas</h3>
+                <div class="form-group">
+                    <label>Tanggal Libur</label>
+                    <input type="date" id="udzurTanggal" class="form-control" value="${new Date().toISOString().slice(0,10)}">
+                </div>
+                <div class="form-group">
+                    <label>Alasan Utama</label>
+                    <select id="udzurAlasan" class="form-control">
+                        <option value="Ustadz Izin (Ada Keperluan)">Ustadz Izin (Ada Keperluan)</option>
+                        <option value="Ustadz Sakit">Ustadz Sakit</option>
+                        <option value="Libur Nasional">Libur Nasional / Cuti Bersama</option>
+                        <option value="Lainnya">Lainnya (Ketik Manual)...</option>
+                    </select>
+                    <input type="text" id="udzurAlasanManual" placeholder="Ketik alasan spesifik..." class="form-control" style="display:none; margin-top:8px;">
+                </div>
+                <div class="form-group">
+                    <label>Cakupan Libur</label>
+                    <div class="pill-tabs">
+                        <input type="radio" name="udzur_cakupan" id="udzur_semua" value="semua" checked>
+                        <label for="udzur_semua">Semua Kelas Anda</label>
+                        <input type="radio" name="udzur_cakupan" id="udzur_pilih" value="pilih">
+                        <label for="udzur_pilih">Pilih Kelas</label>
+                    </div>
+                </div>
+                <div id="udzurPilihanKelas" style="display:none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; max-height: 200px; overflow-y: auto; margin-bottom: 20px;">
+                    <div style="text-align:center; font-size:0.85rem; color:#94a3b8;"><i class="fas fa-spinner fa-spin"></i> Memuat daftar kelas...</div>
+                </div>
+                <button class="btn-simpan" id="btnSimpanLibur" style="background: linear-gradient(135deg, #EF4444, #DC2626);"><i class="fas fa-save"></i> Simpan Status Libur</button>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- 5. PANEL KHUSUS ADMIN (TARGET KBM / JP)        -->
+        <!-- ============================================== -->
+        <div id="panelAdminJP" class="panel-setting" style="display: none;">
+            <div class="setting-card" style="border-top: 4px solid #8B5CF6;">
+                <h3 class="card-title" style="color: #7C3AED; border-bottom-color: #EDE9FE; padding-top:5px;"><i class="fas fa-bullseye"></i> Target Hari Aktif (JP) Bulanan</h3>
+                <p style="font-size: 0.85rem; color: #64748B; margin-bottom: 15px;">Tetapkan jumlah target hari efektif KBM per bulan. Sistem Raport akan menghitung persentase kehadiran santri berdasarkan angka ini.</p>
                 
-                <div style="margin-bottom: 15px;">
-                    <label class="modern-label">Tujuan Mutasi / Status Baru:</label>
-                    <select id="mutasiTujuan" class="modern-input" required>
-                        <option value="">-- Pilih Tujuan --</option>
-                        <optgroup label="Naik / Pindah Kelas" id="optgroupKelasMutasi"></optgroup>
-                        <optgroup label="Status Akademik">
-                            <option value="ALUMNI">Lulus / Alumni</option>
-                            <option value="KELUAR">Keluarkan / Pindah Sekolah</option>
-                        </optgroup>
+                <div class="form-group">
+                    <label>Tahun Ajaran</label>
+                    <select id="adminJpTahun" class="form-control">
+                        <option value="2025/2026">2025/2026</option>
+                        <option value="2026/2027" selected>2026/2027</option>
                     </select>
                 </div>
-
-                <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 20px; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                    Aksi ini akan diterapkan secara masal pada <b id="countMutasi" style="color: #F59E0B; font-size: 1rem;">0</b> santri yang dicentang.
-                </p>
-
-                <button type="button" class="btn-modern-submit" id="btnProsesMutasi" style="background: linear-gradient(135deg, #F59E0B, #D97706); box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);">
-                    <i class="fas fa-exchange-alt"></i> Eksekusi Pemindahan
-                </button>
-            </div>
-        </div>
-
-        <!-- MODAL TARIK SANTRI (KHUSUS GURU) -->
-        <div class="modal-overlay" id="modalTarik">
-            <div class="modal-card" style="max-width: 550px; padding: 25px;">
-                <div class="modern-modal-header">
-                    <h3>Tarik Santri ke Kelas</h3>
-                    <button type="button" class="btn-close" onclick="document.getElementById('modalTarik').classList.remove('active')"><i class="fas fa-times"></i></button>
+                <div class="form-group">
+                    <label>Semester</label>
+                    <select id="adminJpSemester" class="form-control">
+                        <option value="Ganjil (Odd)">Ganjil (Odd)</option>
+                        <option value="Genap (Even)">Genap (Even)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Bulan</label>
+                    <select id="adminJpBulan" class="form-control">
+                        <!-- Opsi akan diisi oleh JavaScript -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Target Hari Aktif KBM (Angka)</label>
+                    <input type="number" id="adminJpTarget" class="form-control" placeholder="Contoh: 24" min="0" max="31">
+                    <small style="color: #D97706; display: block; margin-top: 5px; font-weight: 700; font-style: italic;">*Jika tidak diisi, persentase kehadiran raport mungkin tidak akurat.</small>
                 </div>
                 
-                <div style="margin-bottom: 15px;">
-                    <label class="modern-label">Pilih Kelas Tujuan (Kelas Anda):</label>
-                    <select id="tarikKelasTujuan" class="modern-input" required></select>
-                </div>
+                <!-- Hidden input untuk menyimpan ID jika data sudah ada di database -->
+                <input type="hidden" id="adminJpId">
 
-                <div style="margin-bottom: 10px;">
-                    <label class="modern-label">Daftar Santri yang belum memiliki kelas:</label>
-                    
-                    <div style="position: relative; margin-bottom: 10px; width: 100%;">
-                        <i class="fas fa-search" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
-                        <input type="text" id="inputCariTarikSantri" placeholder="Ketik nama untuk mencari santri..." style="width: 100%; padding: 10px 15px 10px 40px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.9rem; outline: none;">
-                    </div>
-
-                    <div style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px;">
-                        <table class="custom-table" style="margin: 0;">
-                            <thead style="position: sticky; top: 0; background: var(--surface); z-index: 1;">
-                                <tr>
-                                    <th style="width: 40px; text-align:center;"><input type="checkbox" id="checkAllTarik"></th>
-                                    <th>Nama Santri & NIS</th>
-                                </tr>
-                            </thead>
-                            <tbody id="listTarikSantri"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <button type="button" class="btn-modern-submit" id="btnProsesTarik">
-                    <i class="fas fa-download"></i> Masukkan ke Kelas
-                </button>
+                <button class="btn-simpan" id="btnSimpanAdminJP" style="background: linear-gradient(135deg, #8B5CF6, #7C3AED); box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);"><i class="fas fa-save"></i> Simpan Target JP</button>
             </div>
         </div>
 
-        <!-- Modal Tambah Kelas -->
-        <div class="modal-overlay" id="modalKelas">
-            <div class="modal-card" style="max-width: 420px; padding: 25px;">
-                <div class="modern-modal-header">
-                    <h3>Buat Kelas Baru</h3>
-                    <button type="button" class="btn-close" onclick="document.getElementById('modalKelas').classList.remove('active')"><i class="fas fa-times"></i></button>
-                </div>
-                <form id="formKelas">
-                    <div style="margin-bottom: 20px;">
-                        <label class="modern-label">Nama Kelas</label>
-                        <input type="text" id="inputNamaKelas" class="modern-input" required placeholder="Contoh: Abu Bakar">
-                    </div>
-                    <div class="time-grid">
-                        <div class="time-col">
-                            <label class="modern-label">Jam Mulai</label>
-                            <input type="time" id="inputJamMulai" class="modern-input" required>
-                        </div>
-                        <div class="time-col">
-                            <label class="modern-label">Jam Selesai</label>
-                            <input type="time" id="inputJamSelesai" class="modern-input" required>
-                        </div>
-                    </div>
-                    <div style="margin-bottom: 10px;">
-                        <label class="modern-label">Hari Belajar</label>
-                        <div class="day-chips-container" id="dayChipsContainer">
-                            <div class="day-chip" data-hari="SEN">SEN</div>
-                            <div class="day-chip" data-hari="SEL">SEL</div>
-                            <div class="day-chip" data-hari="RAB">RAB</div>
-                            <div class="day-chip" data-hari="KAM">KAM</div>
-                            <div class="day-chip" data-hari="JUM">JUM</div>
-                            <div class="day-chip" data-hari="SAB">SAB</div>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn-modern-submit" id="btnSimpanKelas"><i class="fas fa-save"></i> Simpan Kelas</button>
-                </form>
-            </div>
-        </div>
-
-        <!-- Modal Tambah/Edit Santri Manual -->
-        <div class="modal-overlay" id="modalSantri">
-            <div class="modal-card">
-                <div class="modal-header">
-                    <h3 class="modal-title" id="modalTitle">Form Santri</h3>
-                    <button class="btn-close" onclick="document.getElementById('modalSantri').classList.remove('active')"><i class="fas fa-times"></i></button>
-                </div>
-                <form id="formSantri">
-                    <input type="hidden" id="santriId">
-                    <div class="form-group">
-                        <label class="form-label">Nomor Induk (NIS)</label>
-                        <input type="text" id="nis" class="form-input" required placeholder="Contoh: 2026001">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Nama Lengkap</label>
-                        <input type="text" id="nama" class="form-input" required placeholder="Masukkan nama santri">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Jenis Kelamin</label>
-                        <select id="jk" class="form-select" required>
-                            <option value="L">Laki-laki</option>
-                            <option value="P">Perempuan</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Pilih Kelas (Bisa Kosong)</label>
-                        <select id="kelasId" class="form-select">
-                            <option value="">Belum ada kelas</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn-primary" style="width: 100%; justify-content: center;" id="btnSimpanSantri">Simpan Data</button>
-                </form>
-            </div>
-        </div>
-
-        <!-- Modal Profil Santri -->
-        <div class="modal-overlay" id="modalProfil">
-            <div class="profile-card">
-                <button class="profile-close" onclick="document.getElementById('modalProfil').classList.remove('active')"><i class="fas fa-times"></i></button>
-                <div class="profile-cover"></div>
-                <div class="profile-avatar-wrapper">
-                    <img src="" class="profile-avatar" id="profAvatar">
-                </div>
-                <div class="profile-info">
-                    <h2 id="profName">Nama Santri</h2>
-                    <p id="profBio">NIS: 000 • Kelas -</p>
-                </div>
-                <div class="profile-actions">
-                    <button class="btn-icon-circle" title="Hubungi WA"><i class="fab fa-whatsapp"></i></button>
-                    <button class="btn-icon-circle" title="Buka Riwayat"><i class="fas fa-chart-line"></i></button>
-                    <button class="btn-icon-circle" title="Edit Data" id="btnEditDariProfil"><i class="fas fa-edit"></i></button>
-                </div>
-            </div>
-        </div>
+    </div>
     `;
-}
+};
 
-export async function initSantri() {
-    loadExcelLibrary(); 
-    
-    const currentUserRole = localStorage.getItem('user_role') || 'Guru';
-    const guruId = localStorage.getItem('guru_id');
+export const initSetting = async () => {
+    // 1. LOGIKA NAVIGASI TAB
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const panels = document.querySelectorAll('.panel-setting');
+    const userRole = localStorage.getItem('user_role');
 
-    if (currentUserRole === 'Admin') {
-        document.getElementById('menuAdmin').style.display = 'grid';
-        document.getElementById('btnExportExcel').style.display = 'inline-flex';
-    } else {
-        document.getElementById('menuGuru').style.display = 'grid';
+    // Munculkan Tab Khusus Admin
+    if (userRole === 'Admin') {
+        const tabAdminJP = document.getElementById('tabAdminJP');
+        if (tabAdminJP) tabAdminJP.style.display = 'flex';
     }
 
-    const tbody = document.getElementById('tableBodySantri');
-    const filterKelas = document.getElementById('filterKelas');
-    const selectKelasForm = document.getElementById('kelasId');
-    const selectTarikKelas = document.getElementById('tarikKelasTujuan');
-    const checkAllUtama = document.getElementById('checkAllUtama');
-
-    const loadData = async () => {
-        try {
-            kelasData = await api.get('kelas', 'select=*');
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            tabBtns.forEach(b => b.classList.remove('active'));
+            panels.forEach(p => p.style.display = 'none');
+            btn.classList.add('active');
+            const targetId = btn.getAttribute('data-target');
+            document.getElementById(targetId).style.display = 'block';
+            if (targetId === 'panelTtd') resizeCanvas();
             
-            // --- FILTER RELASIONAL BERDASARKAN GURU_ID ---
-            let kelasMilikGuruData = kelasData;
-            if (currentUserRole !== 'Admin' && guruId) {
-                kelasMilikGuruData = kelasData.filter(k => String(k.guru_id) === String(guruId));
-            }
-            
-            kelasTersedia = kelasMilikGuruData.map(k => k.nama_kelas).sort();
-
-            let opsiKelas = '';
-            kelasTersedia.forEach(k => { opsiKelas += `<option value="${k}">${k}</option>`; });
-            
-            if(currentUserRole === 'Admin') {
-                filterKelas.innerHTML = '<option value="">-- Semua Kelas --</option>' + opsiKelas;
-                if(selectKelasForm) selectKelasForm.innerHTML = '<option value="">Belum ada kelas</option>' + opsiKelas;
-                if(selectTarikKelas) selectTarikKelas.innerHTML = '<option value="">-- Pilih Kelas --</option>' + opsiKelas;
-                
-                // Isi Dropdown Tujuan Mutasi (Hanya Admin)
-                const optgroupMutasi = document.getElementById('optgroupKelasMutasi');
-                if(optgroupMutasi) {
-                    optgroupMutasi.innerHTML = kelasData.map(k => `<option value="${k.nama_kelas}">${k.nama_kelas}</option>`).join('');
-                }
-            } else {
-                filterKelas.innerHTML = '<option value="">-- Tampilkan Kelas Anda --</option>' + opsiKelas;
-                if(selectKelasForm) selectKelasForm.innerHTML = opsiKelas;
-                if(selectTarikKelas) selectTarikKelas.innerHTML = opsiKelas;
-                
-                if (kelasTersedia.length === 1) {
-                    filterKelas.value = kelasTersedia[0];
-                }
-            }
-
-            santriDataUtama = await api.get('dapodik_santri', 'select=*&order=nama_santri.asc');
-            filterData();
-            
-        } catch (error) {
-            if(tbody) tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Gagal memuat database.</td></tr>`;
-        }
-    };
-
-    const renderTable = (data) => {
-        if(!tbody) return;
-        if (data.length === 0) {
-            if(currentUserRole !== 'Admin') {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 30px;"><i class="fas fa-hand-pointer text-muted" style="font-size:2rem; margin-bottom:10px;"></i><br>Silakan pilih kelas di atas<br>untuk melihat daftar santri.</td></tr>`;
-            } else {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Tidak ada data santri ditemukan.</td></tr>`;
-            }
-            return;
-        }
-        
-        tbody.innerHTML = data.map(s => `
-            <tr>
-                <td data-label="Pilih" style="text-align:center;"><input type="checkbox" class="check-item" value="${s.id}"></td>
-                <td data-label="NIS" style="font-weight: 600; font-size: 0.85rem;">${s.nis || '-'}</td>
-                <td data-label="Nama Lengkap">
-                    <span class="clickable-name" onclick="bukaProfil('${s.id}')">${s.nama_santri}</span>
-                    <small style="color:var(--text-muted);">${s.jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan'}</small>
-                </td>
-                <td data-label="Kelas">
-                    <span style="background:var(--hover-bg); padding:4px 8px; border-radius:6px; font-size:0.75rem;"><i class="fas fa-tag text-info"></i> ${s.nama_kelas || 'Belum ada'}</span>
-                </td>
-                <td data-label="Aksi" style="white-space: nowrap; text-align:center;">
-                    ${currentUserRole === 'Admin' ? `<button class="btn-action-sm text-info btn-edit" data-id="${s.id}" title="Edit Manual"><i class="fas fa-edit"></i></button>` : ''}
-                    ${currentUserRole !== 'Admin' ? `<button class="btn-action-sm text-danger btn-keluarkan" data-id="${s.id}" title="Keluarkan dari Kelas"><i class="fas fa-sign-out-alt"></i></button>` : ''}
-                </td>
-            </tr>
-        `).join('');
-
-        document.querySelectorAll('.btn-edit').forEach(b => b.addEventListener('click', handleEdit));
-        document.querySelectorAll('.btn-keluarkan').forEach(b => b.addEventListener('click', handleKeluarkan));
-        
-        // Reset check all jika render ulang
-        if(checkAllUtama) checkAllUtama.checked = false;
-    };
-
-    // ============================================
-    // LOGIKA CENTANG SEMUA (CHECK ALL)
-    // ============================================
-    if(checkAllUtama) {
-        checkAllUtama.addEventListener('change', (e) => {
-            const checkboxes = document.querySelectorAll('.check-item');
-            checkboxes.forEach(chk => chk.checked = e.target.checked);
+            // Panggil fungsi pemuatan data JP saat tab Target KBM diklik
+            if (targetId === 'panelAdminJP') loadDataJP();
         });
-    }
-
-    // ============================================
-    // LOGIKA MUTASI / KELULUSAN (KHUSUS ADMIN)
-    // ============================================
-    if(document.getElementById('btnMutasiSantri')) {
-        document.getElementById('btnMutasiSantri').addEventListener('click', () => {
-            const checked = document.querySelectorAll('.check-item:checked');
-            if(checked.length === 0) {
-                return alert("Silakan centang minimal 1 santri pada tabel terlebih dahulu.");
-            }
-            document.getElementById('countMutasi').textContent = checked.length;
-            document.getElementById('mutasiTujuan').value = '';
-            document.getElementById('modalMutasi').classList.add('active');
-        });
-    }
-
-    if(document.getElementById('btnProsesMutasi')) {
-        document.getElementById('btnProsesMutasi').addEventListener('click', async (e) => {
-            const tujuan = document.getElementById('mutasiTujuan').value;
-            if(!tujuan) return alert("Pilih tujuan mutasi atau status kelulusan!");
-
-            const checked = document.querySelectorAll('.check-item:checked');
-            if(checked.length === 0) return alert("Tidak ada santri yang dipilih.");
-
-            let konfirmasiMsg = `Yakin ingin memindahkan ${checked.length} santri ke kelas: ${tujuan}?`;
-            if(tujuan === 'ALUMNI') konfirmasiMsg = `Yakin ingin merubah status ${checked.length} santri menjadi LULUS/ALUMNI?`;
-            if(tujuan === 'KELUAR') konfirmasiMsg = `Yakin ingin merubah status ${checked.length} santri menjadi KELUAR/PINDAH SEKOLAH?`;
-
-            if(!confirm(konfirmasiMsg)) return;
-
-            const btn = e.currentTarget;
-            const oriHtml = btn.innerHTML;
-            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Memproses Data...`;
-            btn.disabled = true;
-
-            try {
-                // Proses update masal secara parallel
-                const promises = Array.from(checked).map(chk => 
-                    api.update('dapodik_santri', chk.value, { nama_kelas: tujuan })
-                );
-                await Promise.all(promises);
-                
-                document.getElementById('modalMutasi').classList.remove('active');
-                alert(`Alhamdulillah, eksekusi mutasi/perubahan status untuk ${checked.length} santri berhasil diselesaikan.`);
-                
-                await loadData(); // Segarkan tabel
-            } catch(error) {
-                alert("Terjadi kesalahan saat memproses mutasi. Cek koneksi Anda.");
-            } finally {
-                btn.innerHTML = oriHtml;
-                btn.disabled = false;
-            }
-        });
-    }
-
-    // ============================================
-    // LOGIKA TARIK SANTRI (KHUSUS GURU)
-    // ============================================
-    if(document.getElementById('btnTarikSantri')) {
-        document.getElementById('btnTarikSantri').addEventListener('click', () => {
-            if (kelasTersedia.length === 0) {
-                return alert("Anda belum membuat kelas satupun. Silakan 'Buat Kelas' terlebih dahulu.");
-            }
-
-            // --- RADAR PENDETEKSI KELAS HANTU (ORPHAN RECOVERY) ---
-            const semuaKelasAktif = kelasData.map(k => k.nama_kelas.toLowerCase());
-            
-            const belumAdaKelas = santriDataUtama.filter(s => {
-                if (!s.nama_kelas || s.nama_kelas.trim() === '' || s.nama_kelas === 'ALUMNI' || s.nama_kelas === 'KELUAR') return true;
-                return !semuaKelasAktif.includes(s.nama_kelas.toLowerCase());
-            });
-            // ------------------------------------------------------
-
-            const listTbody = document.getElementById('listTarikSantri');
-            if (belumAdaKelas.length === 0) {
-                listTbody.innerHTML = `<tr><td colspan="2" style="text-align:center;">Semua santri di database sudah memiliki kelas aktif.</td></tr>`;
-            } else {
-                listTbody.innerHTML = belumAdaKelas.map(s => {
-                    let infoKelas = (s.nama_kelas && s.nama_kelas !== 'ALUMNI' && s.nama_kelas !== 'KELUAR') ? `<br><span style="color: #EF4444; font-weight:bold; font-size: 0.7rem;"><i class="fas fa-exclamation-triangle"></i> Kelas Lama: ${s.nama_kelas} (Terhapus)</span>` : '';
-                    let infoStatus = (s.nama_kelas === 'ALUMNI' || s.nama_kelas === 'KELUAR') ? `<br><span style="color: #F59E0B; font-weight:bold; font-size: 0.7rem;"><i class="fas fa-info-circle"></i> Status Saat Ini: ${s.nama_kelas}</span>` : '';
-                    
-                    return `
-                    <tr>
-                        <td style="text-align:center;"><input type="checkbox" class="chk-tarik" value="${s.id}"></td>
-                        <td>
-                            <div style="font-weight:600; font-size:0.9rem;">${s.nama_santri}</div>
-                            <div style="font-size:0.75rem; color:var(--text-muted);">
-                                NIS: ${s.nis || '-'} • JK: ${s.jenis_kelamin}
-                                ${infoKelas} ${infoStatus}
-                            </div>
-                        </td>
-                    </tr>
-                `}).join('');
-            }
-            
-            document.getElementById('checkAllTarik').checked = false;
-            
-            const selectTujuan = document.getElementById('tarikKelasTujuan');
-            if (selectTujuan.options.length > 0) selectTujuan.value = selectTujuan.options[0].value;
-            
-            if(document.getElementById('inputCariTarikSantri')) document.getElementById('inputCariTarikSantri').value = '';
-            
-            document.getElementById('modalTarik').classList.add('active');
-        });
-    }
-
-    const searchInputTarik = document.getElementById('inputCariTarikSantri');
-    if (searchInputTarik) {
-        searchInputTarik.addEventListener('input', function(e) {
-            const keyword = e.target.value.toLowerCase();
-            const listTbody = document.getElementById('listTarikSantri');
-            
-            if (listTbody) {
-                const rows = listTbody.getElementsByTagName('tr');
-                for (let i = 0; i < rows.length; i++) {
-                    const text = rows[i].textContent.toLowerCase();
-                    if (text.includes(keyword)) {
-                        rows[i].style.display = ''; 
-                    } else {
-                        rows[i].style.display = 'none'; 
-                    }
-                }
-            }
-        });
-    }
-
-    if(document.getElementById('checkAllTarik')) {
-        document.getElementById('checkAllTarik').addEventListener('change', (e) => {
-            const visibleCheckboxes = document.querySelectorAll('#listTarikSantri tr:not([style*="display: none"]) .chk-tarik');
-            visibleCheckboxes.forEach(chk => chk.checked = e.target.checked);
-        });
-    }
-
-    if(document.getElementById('btnProsesTarik')) {
-        document.getElementById('btnProsesTarik').addEventListener('click', async (e) => {
-            const kelasTujuan = document.getElementById('tarikKelasTujuan').value;
-            if(!kelasTujuan) return alert("Silakan pilih Kelas Tujuan terlebih dahulu!");
-            
-            const checked = document.querySelectorAll('.chk-tarik:checked');
-            if(checked.length === 0) return alert("Pilih minimal 1 santri untuk ditarik!");
-
-            const btn = e.currentTarget;
-            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Sedang Menarik Data...`;
-
-            try {
-                const promises = Array.from(checked).map(chk => 
-                    api.update('dapodik_santri', chk.value, { nama_kelas: kelasTujuan })
-                );
-                await Promise.all(promises);
-                
-                document.getElementById('modalTarik').classList.remove('active');
-                alert(`Sukses! ${checked.length} santri berhasil ditarik masuk ke kelas ${kelasTujuan}.`);
-                
-                filterKelas.value = kelasTujuan;
-                await loadData();
-            } catch(error) {
-                alert("Gagal memproses data. Coba lagi.");
-            } finally {
-                btn.innerHTML = `<i class="fas fa-download"></i> Masukkan ke Kelas`;
-            }
-        });
-    }
-
-    // ============================================
-    // LOGIKA KELUARKAN SANTRI DARI KELAS (GURU)
-    // ============================================
-    const handleKeluarkan = async (e) => {
-        if(confirm("Yakin ingin mengeluarkan santri ini dari kelas Anda? (Data santri tidak dihapus, hanya status kelasnya saja yang direset).")) {
-            e.currentTarget.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
-            try {
-                await api.update('dapodik_santri', e.currentTarget.getAttribute('data-id'), { nama_kelas: null });
-                await loadData();
-            } catch (err) {
-                alert("Gagal mengeluarkan santri.");
-            }
-        }
-    };
-
-    // ============================================
-    // PENCARIAN & FILTER TABEL UTAMA
-    // ============================================
-    if(filterKelas) filterKelas.addEventListener('change', filterData);
-    if(document.getElementById('searchSantri')) document.getElementById('searchSantri').addEventListener('input', filterData);
-    
-    function filterData() {
-        const keyword = document.getElementById('searchSantri').value.toLowerCase();
-        const kelas = filterKelas.value;
-        let filtered = [];
-        
-        if (currentUserRole !== 'Admin') {
-            if (kelas) {
-                filtered = santriDataUtama.filter(s => s.nama_kelas === kelas);
-            } else {
-                // Tampilkan gabungan murid dari semua kelas yang dimiliki guru ini
-                filtered = santriDataUtama.filter(s => kelasTersedia.includes(s.nama_kelas));
-            }
-        } else {
-            filtered = santriDataUtama.filter(s => (kelas === "" || s.nama_kelas === kelas));
-        }
-
-        if (keyword) {
-            filtered = filtered.filter(s => s.nama_santri.toLowerCase().includes(keyword) || (s.nis && s.nis.toLowerCase().includes(keyword)));
-        }
-        renderTable(filtered);
-    }
-
-    // ============================================
-    // FITUR STANDAR
-    // ============================================
-    window.bukaProfil = (id) => {
-        const s = santriDataUtama.find(x => x.id === id);
-        if(!s) return;
-        document.getElementById('profAvatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(s.nama_santri)}&background=F0DCD7&color=4F567D&size=200&font-size=0.33&bold=true`;
-        document.getElementById('profName').textContent = s.nama_santri;
-        document.getElementById('profBio').textContent = `NIS: ${s.nis || '-'} • ${s.nama_kelas || 'Tanpa Kelas'}`;
-        
-        const btnWa = document.querySelector('.profile-actions .fab.fa-whatsapp');
-        if(btnWa) {
-            btnWa.parentElement.onclick = () => {
-                if(s.no_wa) window.open(`https://wa.me/${s.no_wa.replace(/[^0-9]/g, '')}`, '_blank');
-                else alert("Nomor WhatsApp tidak tersedia untuk santri ini.");
-            };
-        }
-
-        const btnEditProf = document.getElementById('btnEditDariProfil');
-        if(currentUserRole === 'Admin') {
-            btnEditProf.style.display = 'inline-block';
-            btnEditProf.onclick = () => {
-                document.getElementById('modalProfil').classList.remove('active');
-                bukaFormEdit(s);
-            };
-        } else {
-            btnEditProf.style.display = 'none';
-        }
-
-        document.getElementById('modalProfil').classList.add('active');
-    };
-
-    if(document.getElementById('btnTambahKelas')) {
-        document.getElementById('btnTambahKelas').addEventListener('click', () => {
-            document.getElementById('formKelas').reset();
-            document.querySelectorAll('.day-chip').forEach(c => c.classList.remove('active'));
-            document.getElementById('modalKelas').classList.add('active');
-        });
-    }
-
-    document.querySelectorAll('.day-chip').forEach(chip => {
-        chip.addEventListener('click', function() { this.classList.toggle('active'); });
     });
 
-    if(document.getElementById('formKelas')) {
-        document.getElementById('formKelas').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const selectedDays = Array.from(document.querySelectorAll('.day-chip.active')).map(chip => chip.getAttribute('data-hari'));
-            if(selectedDays.length === 0) return alert("Silakan pilih minimal 1 hari belajar!");
-            const btn = document.getElementById('btnSimpanKelas');
-            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Menyimpan...`;
+    const canvas = document.getElementById('canvasTtd');
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+    let ttdSudahAda = ''; 
 
-            try {
-                const namaKelasBaru = document.getElementById('inputNamaKelas').value.trim();
-                
-                // --- MENGGUNAKAN RELASI LANGSUNG (guru_id) ---
-                // Menyimpan nama kelas dan memasukkan ID Guru sebagai pemilik
-                await api.post('kelas', { 
-                    nama_kelas: namaKelasBaru, 
-                    jam_kelas: `${document.getElementById('inputJamMulai').value} - ${document.getElementById('inputJamSelesai').value}`, 
-                    hari_kelas: selectedDays.join(', '),
-                    guru_id: guruId 
-                });
-                
-                document.getElementById('modalKelas').classList.remove('active');
-                alert("Kelas berhasil dibuat dan resmi menjadi hak milik Anda!");
-                
-                // Segarkan otomatis
-                window.location.reload(); 
-                
-            } catch(error) { alert("Gagal menyimpan kelas."); } 
-            finally { btn.innerHTML = `<i class="fas fa-save"></i> Simpan Kelas`; }
-        });
-    }
-
-    if(document.getElementById('btnTambahSantri')) {
-        document.getElementById('btnTambahSantri').addEventListener('click', () => {
-            document.getElementById('formSantri').reset();
-            document.getElementById('santriId').value = '';
-            document.getElementById('modalTitle').textContent = 'Tambah Santri Manual';
-            document.getElementById('modalSantri').classList.add('active');
-        });
-    }
-
-    const bukaFormEdit = (santri) => {
-        document.getElementById('santriId').value = santri.id;
-        document.getElementById('nis').value = santri.nis || '';
-        document.getElementById('nama').value = santri.nama_santri;
-        document.getElementById('jk').value = santri.jenis_kelamin;
-        document.getElementById('kelasId').value = santri.nama_kelas || '';
-        document.getElementById('modalTitle').textContent = 'Edit Data Santri';
-        document.getElementById('modalSantri').classList.add('active');
-    };
-    
-    const handleEdit = (e) => {
-        const s = santriDataUtama.find(x => x.id === e.currentTarget.getAttribute('data-id'));
-        if(s) bukaFormEdit(s);
+    const resizeCanvas = () => {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = 200; 
+        ctx.strokeStyle = "#1E3A8A"; 
+        ctx.lineWidth = 3;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        if (ttdSudahAda) {
+            const img = new Image();
+            img.onload = () => ctx.drawImage(img, 0, 0);
+            img.src = ttdSudahAda;
+        }
     };
 
-    if(document.getElementById('formSantri')) {
-        document.getElementById('formSantri').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('btnSimpanSantri');
-            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Menyimpan...`;
-            const id = document.getElementById('santriId').value;
-            const payload = {
-                nis: document.getElementById('nis').value,
-                nama_santri: document.getElementById('nama').value,
-                jenis_kelamin: document.getElementById('jk').value,
-                nama_kelas: document.getElementById('kelasId').value
-            };
-            try {
-                if(id) await api.update('dapodik_santri', id, payload);
-                else await api.post('dapodik_santri', payload);
-                document.getElementById('modalSantri').classList.remove('active');
-                await loadData();
-            } catch (error) { alert("Gagal menyimpan data."); } 
-            finally { btn.innerHTML = 'Simpan Data'; }
-        });
-    }
+    const inputNamaProfil = document.getElementById('inputNamaProfil');
+    const inputWaProfil = document.getElementById('inputWaProfil');
+    const btnSimpanProfil = document.getElementById('btnSimpanProfil');
+    const inputPasswordBaru = document.getElementById('inputPasswordBaru');
+    const inputPasswordKonfirm = document.getElementById('inputPasswordKonfirm');
+    const btnGantiPassword = document.getElementById('btnGantiPassword');
+    const inputTemplateRapor = document.getElementById('inputTemplateRapor');
+    const inputTemplateWa = document.getElementById('inputTemplateWa');
+    const btnSimpanTemplateRapor = document.getElementById('btnSimpanTemplateRapor');
+    const btnSimpanTemplateWa = document.getElementById('btnSimpanTemplateWa');
 
-    const btnImport = document.getElementById('btnImportExcel');
-    const fileInput = document.getElementById('fileExcel');
+    let loggedInGuruId = localStorage.getItem('guru_id');
 
-    if(btnImport && fileInput) {
-        btnImport.addEventListener('click', () => fileInput.click()); 
-        fileInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if(!file) return;
-            if (typeof window.XLSX === 'undefined') return alert("Tunggu sebentar, sistem sedang memuat komponen pembaca Excel.");
-            btnImport.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Mengunggah...`;
+    // LOAD DATA GURU
+    const loadDataGuru = async () => {
+        try {
+            if (!loggedInGuruId) {
+                const dataGuru = await api.get('guru', 'select=*&limit=1');
+                if (dataGuru && dataGuru.length > 0) {
+                    loggedInGuruId = dataGuru[0].id;
+                    localStorage.setItem('guru_id', loggedInGuruId);
+                }
+            }
 
-            const reader = new FileReader();
-            reader.onload = async (event) => {
-                try {
-                    const data = new Uint8Array(event.target.result);
-                    const workbook = XLSX.read(data, {type: 'array'});
-                    const firstSheetName = workbook.SheetNames[0];
-                    const jsonArray = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheetName], { header: 1, defval: "" }); 
-                    let successCount = 0;
-                    
-                    for (let i = 1; i < jsonArray.length; i++) {
-                        const row = jsonArray[i];
-                        if (row.length === 0 || !row.some(cell => cell !== "")) continue;
-                        
-                        const nama = row[1] || ''; 
-                        const nis = row[2] || ''; 
-                        const jkRaw = row[3] || ''; 
-                        const tempatLahir = row[4] || ''; 
-                        const tanggalLahir = row[5] || ''; 
-                        const nik = row[6] || ''; 
-                        const alamat = row[7] || ''; 
-                        const asalSekolah = row[8] || ''; 
-                        const namaAyah = row[9] || ''; 
-                        const statusAyah = row[10] || ''; 
-                        const namaIbu = row[11] || ''; 
-                        const statusIbu = row[12] || ''; 
-                        const noWa = row[13] || ''; 
-                        const wali = row[14] || ''; 
-
-                        if(String(nama).trim() !== "") {
-                            let jkFix = 'L'; 
-                            if (jkRaw.toString().toUpperCase().includes('P')) { jkFix = 'P'; }
-                            try {
-                                await api.post('dapodik_santri', {
-                                    nis: String(nis).trim(), nama_santri: String(nama).trim(), jenis_kelamin: jkFix,
-                                    tempat_lahir: String(tempatLahir).trim(), tanggal_lahir: String(tanggalLahir).trim(), nik: String(nik).trim(),
-                                    alamat: String(alamat).trim(), asal_sekolah: String(asalSekolah).trim(), nama_ayah: String(namaAyah).trim(),
-                                    status_ayah: String(statusAyah).trim(), nama_ibu: String(namaIbu).trim(), status_ibu: String(statusIbu).trim(),
-                                    no_wa: String(noWa).trim(), wali: String(wali).trim(), nama_kelas: null 
-                                });
-                                successCount++;
-                            } catch (dbError) { console.error("Lewati baris:", dbError); }
-                        }
+            if (loggedInGuruId) {
+                const profileData = await api.get('guru', `select=*&id=eq.${loggedInGuruId}`);
+                if (profileData && profileData.length > 0) {
+                    const guru = profileData[0];
+                    inputNamaProfil.value = guru.nama || '';
+                    inputWaProfil.value = guru.no_hp || '';
+                    document.getElementById('alertSimulasiLogin').style.display = 'flex';
+                    document.getElementById('namaLoginSimulasi').textContent = guru.nama || 'Anonim';
+                    if (guru.template_rapor) inputTemplateRapor.value = guru.template_rapor;
+                    if (guru.template_wa) inputTemplateWa.value = guru.template_wa;
+                    if (guru.ttd_digital) {
+                        ttdSudahAda = guru.ttd_digital;
+                        const img = new Image();
+                        img.onload = () => {
+                            ctx.clearRect(0, 0, canvas.width, canvas.height);
+                            ctx.drawImage(img, 0, 0);
+                        };
+                        img.src = ttdSudahAda;
                     }
-                    alert(successCount > 0 ? `Upload Sukses! Berhasil mengimpor ${successCount} data santri secara lengkap.` : `Gagal: Tidak ada data valid yang tersimpan.`);
-                    await loadData(); 
-                } catch (error) { alert("Gagal mengunggah: " + error.message); } 
-                finally { btnImport.innerHTML = `<i class="fas fa-file-excel"></i> Upload Dapodik`; fileInput.value = ''; }
-            };
-            reader.readAsArrayBuffer(file);
-        });
-    }
+                }
+            }
+        } catch (e) { console.error("Gagal memuat data guru:", e); }
+    };
+    await loadDataGuru(); 
 
-    if(document.getElementById('btnExportExcel')) {
-        document.getElementById('btnExportExcel').addEventListener('click', () => {
-            if (typeof window.XLSX === 'undefined') return alert("Tunggu sistem memuat Excel.");
-            if (santriDataUtama.length === 0) return alert("Belum ada data.");
-            const btn = document.getElementById('btnExportExcel');
-            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i>...`;
+    // SIMPAN PROFIL
+    btnSimpanProfil.addEventListener('click', async () => {
+        if (!loggedInGuruId) return alert('Sesi login tidak ditemukan.');
+        const namaBaru = inputNamaProfil.value;
+        const waBaru = inputWaProfil.value;
+        if (!namaBaru) return alert('Nama tidak boleh kosong!');
+        const oriText = btnSimpanProfil.innerHTML;
+        btnSimpanProfil.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+        btnSimpanProfil.disabled = true;
+        try {
+            await api.update('guru', loggedInGuruId, { nama: namaBaru, no_hp: waBaru });
             
-            const ws = XLSX.utils.json_to_sheet(santriDataUtama.map((s, index) => ({
-                "NO": index + 1, "NAMA SANTRI": s.nama_santri || "", "NIS": s.nis || "", "L/P": s.jenis_kelamin || "",
-                "KELAS TERDAFTAR": s.nama_kelas || "Belum ada", "NOMOR WA": s.no_wa || ""
-            })));
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Data");
-            XLSX.writeFile(wb, "Data_Santri.xlsx");
-            btn.innerHTML = `<i class="fas fa-download"></i> Export`;
+            // UPDATE LOCAL STORAGE & TAMPILAN NAMA DI HEADER
+            localStorage.setItem('user_name', namaBaru);
+            const headerUserName = document.getElementById('headerUserName');
+            if(headerUserName) headerUserName.textContent = userRole === 'Admin' ? 'Halo, Admin' : `Ust. ${namaBaru}`;
+            const headerAvatar = document.getElementById('avatarHeader');
+            if(headerAvatar) headerAvatar.textContent = namaBaru.charAt(0).toUpperCase();
+
+            alert('Alhamdulillah, profil berhasil diperbarui!');
+            document.getElementById('namaLoginSimulasi').textContent = namaBaru;
+        } catch (e) { alert('Gagal memperbarui profil. Cek koneksi.'); }
+        btnSimpanProfil.innerHTML = oriText;
+        btnSimpanProfil.disabled = false;
+    });
+
+    // GANTI PASSWORD
+    btnGantiPassword.addEventListener('click', async () => {
+        if (!loggedInGuruId) return alert('Sesi login tidak ditemukan.');
+        const pw1 = inputPasswordBaru.value;
+        const pw2 = inputPasswordKonfirm.value;
+        if (!pw1 || !pw2) return alert('Password baru tidak boleh kosong!');
+        if (pw1 !== pw2) return alert('Konfirmasi password tidak cocok!');
+        if (pw1.length < 6) return alert('Untuk keamanan, password minimal 6 karakter!');
+        const oriText = btnGantiPassword.innerHTML;
+        btnGantiPassword.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+        btnGantiPassword.disabled = true;
+        try {
+            await api.update('guru', loggedInGuruId, { password: pw1 });
+            alert('Password berhasil diganti! Harap ingat password baru Anda.');
+            inputPasswordBaru.value = ''; inputPasswordKonfirm.value = '';
+        } catch (e) { alert('Gagal mengganti password. Cek koneksi.'); }
+        btnGantiPassword.innerHTML = oriText;
+        btnGantiPassword.disabled = false;
+    });
+
+    // SIMPAN TEMPLATE RAPOR & WA
+    btnSimpanTemplateRapor.addEventListener('click', async () => {
+        if (!loggedInGuruId) return alert('Sesi login tidak ditemukan.');
+        const oriText = btnSimpanTemplateRapor.innerHTML;
+        btnSimpanTemplateRapor.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+        btnSimpanTemplateRapor.disabled = true;
+        try {
+            await api.update('guru', loggedInGuruId, { template_rapor: inputTemplateRapor.value });
+            alert('Template Catatan Rapor berhasil tersimpan!');
+        } catch(e) { alert('Gagal menyimpan template Rapor.'); }
+        btnSimpanTemplateRapor.innerHTML = oriText;
+        btnSimpanTemplateRapor.disabled = false;
+    });
+
+    btnSimpanTemplateWa.addEventListener('click', async () => {
+        if (!loggedInGuruId) return alert('Sesi login tidak ditemukan.');
+        const oriText = btnSimpanTemplateWa.innerHTML;
+        btnSimpanTemplateWa.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+        btnSimpanTemplateWa.disabled = true;
+        try {
+            await api.update('guru', loggedInGuruId, { template_wa: inputTemplateWa.value });
+            alert('Template Pesan WA berhasil tersimpan!');
+        } catch(e) { alert('Gagal menyimpan template WA.'); }
+        btnSimpanTemplateWa.innerHTML = oriText;
+        btnSimpanTemplateWa.disabled = false;
+    });
+
+    // SIMPAN TTD
+    canvas.addEventListener('mousedown', (e) => { isDrawing = true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY); });
+    canvas.addEventListener('mousemove', (e) => { if (isDrawing) { ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); } });
+    canvas.addEventListener('mouseup', () => isDrawing = false);
+    canvas.addEventListener('mouseout', () => isDrawing = false);
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); isDrawing = true; const touch = e.touches[0]; const rect = canvas.getBoundingClientRect(); ctx.beginPath(); ctx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top); });
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); if (!isDrawing) return; const touch = e.touches[0]; const rect = canvas.getBoundingClientRect(); ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top); ctx.stroke(); });
+    canvas.addEventListener('touchend', () => isDrawing = false);
+
+    document.getElementById('btnClearTtd').addEventListener('click', () => { ctx.clearRect(0, 0, canvas.width, canvas.height); ttdSudahAda = ''; });
+    window.addEventListener('resize', () => { if (document.getElementById('panelTtd').style.display === 'block') resizeCanvas(); });
+
+    const btnSimpanTtd = document.getElementById('btnSimpanTtd');
+    btnSimpanTtd.addEventListener('click', async () => {
+        if (!loggedInGuruId) return alert('Sesi login tidak ditemukan.');
+        const oriText = btnSimpanTtd.innerHTML;
+        btnSimpanTtd.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+        btnSimpanTtd.disabled = true;
+        try {
+            const dataTtdBase64 = canvas.toDataURL("image/png");
+            await api.update('guru', loggedInGuruId, { ttd_digital: dataTtdBase64 });
+            ttdSudahAda = dataTtdBase64;
+            alert('Tanda tangan berhasil disimpan!');
+        } catch (e) { alert('Gagal menyimpan tanda tangan.'); }
+        btnSimpanTtd.innerHTML = oriText;
+        btnSimpanTtd.disabled = false;
+    });
+
+    // ==========================================
+    // LOGIKA FITUR ATUR LIBUR KELAS
+    // ==========================================
+    const udzurTanggal = document.getElementById('udzurTanggal');
+    const udzurAlasan = document.getElementById('udzurAlasan');
+    const udzurAlasanManual = document.getElementById('udzurAlasanManual');
+    const radioSemua = document.getElementById('udzur_semua');
+    const radioPilih = document.getElementById('udzur_pilih');
+    const wadahPilihanKelas = document.getElementById('udzurPilihanKelas');
+    const btnSimpanLibur = document.getElementById('btnSimpanLibur');
+
+    udzurAlasan.addEventListener('change', (e) => { udzurAlasanManual.style.display = e.target.value === 'Lainnya' ? 'block' : 'none'; });
+    const togglePilihanKelas = () => { wadahPilihanKelas.style.display = radioPilih.checked ? 'block' : 'none'; };
+    radioSemua.addEventListener('change', togglePilihanKelas);
+    radioPilih.addEventListener('change', togglePilihanKelas);
+
+    let daftarKelasMilikGuru = [];
+    try {
+        const tabelKelas = await api.get('kelas', 'select=*');
+        if (tabelKelas && tabelKelas.length > 0) {
+            if (userRole !== 'Admin' && loggedInGuruId) {
+                daftarKelasMilikGuru = tabelKelas.filter(k => String(k.guru_id) === String(loggedInGuruId)).map(k => k.nama_kelas).sort();
+            } else {
+                daftarKelasMilikGuru = tabelKelas.map(k => k.nama_kelas).sort();
+            }
+
+            if (daftarKelasMilikGuru.length > 0) {
+                let htmlCheckbox = '';
+                daftarKelasMilikGuru.forEach(k => {
+                    htmlCheckbox += `<label class="checkbox-kelas"><input type="checkbox" name="chk_kelas_libur" value="${k}"> ${k}</label>`;
+                });
+                wadahPilihanKelas.innerHTML = htmlCheckbox;
+            } else {
+                wadahPilihanKelas.innerHTML = '<div style="text-align:center; font-size:0.85rem; color:#94a3b8;">Anda belum ditugaskan di kelas manapun.</div>';
+                btnSimpanLibur.disabled = true;
+                btnSimpanLibur.style.opacity = '0.5';
+            }
+        } else {
+            wadahPilihanKelas.innerHTML = '<div style="text-align:center; font-size:0.85rem; color:#94a3b8;">Belum ada data kelas di database.</div>';
+        }
+    } catch (e) { console.error("Gagal load kelas libur:", e); }
+
+    btnSimpanLibur.addEventListener('click', async () => {
+        if (!loggedInGuruId) return alert('Sesi login tidak ditemukan.');
+        
+        const tgl = udzurTanggal.value;
+        let alasan = udzurAlasan.value;
+        if (alasan === 'Lainnya') alasan = udzurAlasanManual.value;
+
+        if (!tgl || !alasan.trim()) return alert('Mohon lengkapi tanggal dan alasan libur!');
+
+        const cakupan = radioSemua.checked ? 'Semua Kelas' : 'Pilih Kelas';
+        let kelasTerpilih = '';
+
+        if (cakupan === 'Pilih Kelas') {
+            const checkedBoxes = document.querySelectorAll('input[name="chk_kelas_libur"]:checked');
+            if (checkedBoxes.length === 0) return alert('Pilih minimal satu kelas yang diliburkan!');
+            kelasTerpilih = Array.from(checkedBoxes).map(cb => cb.value).join(', ');
+        } else {
+            kelasTerpilih = daftarKelasMilikGuru.join(', ');
+        }
+
+        const oriText = btnSimpanLibur.innerHTML;
+        btnSimpanLibur.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+        btnSimpanLibur.disabled = true;
+
+        try {
+            await api.post('libur_kelas', {
+                guru_id: loggedInGuruId,
+                tanggal: tgl,
+                alasan: alasan,
+                cakupan: cakupan,
+                kelas_terpilih: kelasTerpilih
+            });
+
+            alert('Alhamdulillah, status libur kelas berhasil disimpan!');
+            
+            udzurAlasan.value = 'Ustadz Izin (Ada Keperluan)';
+            udzurAlasanManual.style.display = 'none';
+            udzurAlasanManual.value = '';
+            radioSemua.checked = true;
+            wadahPilihanKelas.style.display = 'none';
+            document.querySelectorAll('input[name="chk_kelas_libur"]').forEach(cb => cb.checked = false);
+
+        } catch (e) {
+            console.error("Gagal menyimpan libur:", e);
+            alert('Gagal menyimpan jadwal libur. Cek koneksi internet Anda.');
+        }
+
+        btnSimpanLibur.innerHTML = oriText;
+        btnSimpanLibur.disabled = false;
+    });
+
+    // ==========================================
+    // LOGIKA KHUSUS ADMIN (TARGET KBM / JP)
+    // ==========================================
+    const jpTahun = document.getElementById('adminJpTahun');
+    const jpSemester = document.getElementById('adminJpSemester');
+    const jpBulan = document.getElementById('adminJpBulan');
+    const jpTarget = document.getElementById('adminJpTarget');
+    const jpId = document.getElementById('adminJpId');
+    const btnSimpanAdminJP = document.getElementById('btnSimpanAdminJP');
+
+    // Fungsi Render Daftar Bulan berdasarkan Semester
+    const renderBulanJP = () => {
+        if (!jpBulan) return;
+        const isGanjil = jpSemester.value.includes('Ganjil');
+        const bulanList = isGanjil 
+            ? ['Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
+            : ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni'];
+        
+        let htmlBulan = '';
+        bulanList.forEach(b => {
+            htmlBulan += `<option value="${b}">${b}</option>`;
+        });
+        jpBulan.innerHTML = htmlBulan;
+        loadDataJP();
+    };
+
+    // Fungsi Tarik Data dari Database `setting_jp`
+    const loadDataJP = async () => {
+        if (userRole !== 'Admin') return;
+        
+        const tahun = jpTahun.value;
+        const semester = jpSemester.value;
+        const bulan = jpBulan.value;
+        
+        if (!tahun || !semester || !bulan) return;
+
+        jpTarget.value = ''; // Kosongkan dulu
+        jpId.value = '';
+
+        try {
+            const dataJP = await api.get('setting_jp', `select=*&tahun_ajaran=eq.${encodeURIComponent(tahun)}&semester=eq.${encodeURIComponent(semester)}&bulan=eq.${encodeURIComponent(bulan)}`);
+            if (dataJP && dataJP.length > 0) {
+                // Jika sudah pernah disetel, isi formnya
+                jpTarget.value = dataJP[0].jp_default;
+                jpId.value = dataJP[0].id;
+            }
+        } catch (error) {
+            console.error('Gagal mengambil target JP:', error);
+        }
+    };
+
+    if (jpSemester && jpTahun && jpBulan) {
+        jpSemester.addEventListener('change', renderBulanJP);
+        jpTahun.addEventListener('change', loadDataJP);
+        jpBulan.addEventListener('change', loadDataJP);
+        
+        // Panggilan awal untuk render opsi bulan
+        renderBulanJP();
+    }
+
+    if (btnSimpanAdminJP) {
+        btnSimpanAdminJP.addEventListener('click', async () => {
+            const tahun = jpTahun.value;
+            const semester = jpSemester.value;
+            const bulan = jpBulan.value;
+            const targetAngka = jpTarget.value;
+            const idToUpdate = jpId.value;
+
+            if (!targetAngka || isNaN(targetAngka)) return alert("Mohon isi Target Hari Aktif dengan angka yang valid!");
+
+            const oriText = btnSimpanAdminJP.innerHTML;
+            btnSimpanAdminJP.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+            btnSimpanAdminJP.disabled = true;
+
+            const payload = {
+                tahun_ajaran: tahun,
+                semester: semester,
+                bulan: bulan,
+                jp_default: parseInt(targetAngka)
+            };
+
+            try {
+                if (idToUpdate) {
+                    // Update yang sudah ada
+                    await api.update('setting_jp', idToUpdate, payload);
+                } else {
+                    // Buat baru jika belum ada
+                    await api.post('setting_jp', payload);
+                }
+                alert(`Alhamdulillah, Target KBM untuk ${bulan} (${semester}) berhasil disetel ke ${targetAngka} hari.`);
+                await loadDataJP(); // Segarkan data form
+            } catch (error) {
+                console.error("Gagal menyimpan Target JP:", error);
+                alert("Terjadi kesalahan. Cek koneksi Anda.");
+            }
+
+            btnSimpanAdminJP.innerHTML = oriText;
+            btnSimpanAdminJP.disabled = false;
         });
     }
 
-    loadData();
-}
+};
