@@ -1,17 +1,300 @@
 /**
  * ==================================================
- * BAGIAN 7: MODUL DASHBOARD (MURNI RELASI GURU_ID)
+ * BAGIAN 7: MODUL DASHBOARD (ADMIN COMMAND CENTER & GURU)
  * File: js/dashboard.js
  * ==================================================
  */
 import { api } from './api.js';
 
+// Variabel Global Khusus Dashboard Guru
 let myChart;
 let rawHarianList = []; 
 let rawSantriList = [];
 let namaKelasAktif = null;
 
+// ==========================================
+// 1. ROUTER DASHBOARD (PENENTU TAMPILAN)
+// ==========================================
 export function renderDashboard() {
+    const role = localStorage.getItem('user_role') || 'Guru';
+    if (role === 'Admin') {
+        return renderDashboardAdmin();
+    } else {
+        return renderDashboardGuru();
+    }
+}
+
+export async function initDashboard() {
+    const role = localStorage.getItem('user_role') || 'Guru';
+    if (role === 'Admin') {
+        await initDashboardAdmin();
+    } else {
+        await initDashboardGuru();
+    }
+}
+
+// ==========================================
+// 2. RENDER & LOGIKA DASHBOARD ADMIN (MATA ELANG)
+// ==========================================
+function renderDashboardAdmin() {
+    return `
+    <!-- SUNTIKAN CSS PEMBERONTAK (BYPASS LEBAR LAYAR KHUSUS ADMIN) -->
+    <style id="cssAdminFullWidth">
+        #main-content {
+            max-width: 100% !important;
+            width: 100% !important;
+            padding: 20px 30px !important;
+            margin: 0 !important;
+            box-sizing: border-box !important;
+        }
+        .admin-grid-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            font-family: 'Inter', sans-serif;
+            animation: fadeIn 0.4s ease-out;
+            color: var(--text-main);
+        }
+        .bento-row { display: grid; gap: 20px; width: 100%; }
+        .row-stats { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+        .row-main { grid-template-columns: 2fr 1fr; }
+        @media (max-width: 1024px) { .row-main { grid-template-columns: 1fr; } }
+        
+        .admin-card {
+            background: var(--surface); border-radius: 18px; padding: 22px;
+            border: 1px solid var(--border); box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            display: flex; flex-direction: column; position: relative; overflow: hidden;
+        }
+        .stat-card { flex-direction: row; align-items: center; justify-content: space-between; transition: transform 0.2s, box-shadow 0.2s; }
+        .stat-card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,0.06); }
+        .stat-icon { width: 54px; height: 54px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+
+        .admin-header-banner {
+            background: linear-gradient(135deg, #002452, #003a77); color: white;
+            padding: 24px 30px; border-radius: 20px; display: flex;
+            justify-content: space-between; align-items: center; box-shadow: 0 10px 30px rgba(0,36,82,0.15);
+        }
+        .live-clock { font-family: monospace; font-size: 1.1rem; background: rgba(255,255,255,0.15); padding: 8px 16px; border-radius: 10px; backdrop-filter: blur(5px); }
+
+        .radar-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .radar-table th { text-align: left; padding: 12px; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; border-bottom: 2px solid var(--border); }
+        .radar-table td { padding: 14px 12px; border-bottom: 1px dashed var(--border); font-size: 0.9rem; }
+        .badge-status { padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; }
+        .badge-sukses { background: rgba(16, 185, 129, 0.15); color: #10B981; }
+        .badge-pending { background: rgba(239, 68, 68, 0.15); color: #EF4444; animation: pulse 1.5s infinite; }
+
+        .live-log-container { max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-right: 5px; }
+        .log-item-admin { padding: 12px; border-radius: 12px; background: var(--bg-main); border: 1px solid var(--border); font-size: 0.85rem; display: flex; gap: 12px; align-items: flex-start; }
+    </style>
+
+    <div class="admin-grid-wrapper">
+        <div class="admin-header-banner">
+            <div>
+                <h2 style="margin: 0; font-size: 1.5rem; font-weight: 800; font-family: 'Libre Caslon Text', serif;">Control Room - Rumah Qur'an Kamila</h2>
+                <p style="margin: 5px 0 0 0; opacity: 0.8; font-size: 0.9rem;">Pengawasan Kepatuhan Akademik & Operasional Sekolah Real-time</p>
+            </div>
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <div class="live-clock" id="liveJamDigital">00:00:00 WIB</div>
+                <button id="btnTegurSemuaWa" class="btn-secondary" style="background: #25D366; color: white; border: none; font-weight: 700; cursor: pointer; padding: 10px 18px; border-radius: 10px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fab fa-whatsapp"></i> Broadcast Teguran WA
+                </button>
+            </div>
+        </div>
+
+        <div class="bento-row row-stats">
+            <div class="admin-card stat-card">
+                <div>
+                    <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Total Santri Aktif</span>
+                    <h2 style="margin: 5px 0 0 0; font-size: 1.8rem; font-weight: 800; color: #002452;" id="statSantriTotal">0</h2>
+                </div>
+                <div class="stat-icon" style="background: rgba(59, 130, 246, 0.1); color: #3B82F6;"><i class="fas fa-user-graduate"></i></div>
+            </div>
+            <div class="admin-card stat-card">
+                <div>
+                    <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Total Kelas / Rombel</span>
+                    <h2 style="margin: 5px 0 0 0; font-size: 1.8rem; font-weight: 800; color: #002452;" id="statKelasTotal">0</h2>
+                </div>
+                <div class="stat-icon" style="background: rgba(139, 92, 246, 0.1); color: #8B5CF6;"><i class="fas fa-chalkboard-teacher"></i></div>
+            </div>
+            <div class="admin-card stat-card">
+                <div>
+                    <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Ustadz Pengampu</span>
+                    <h2 style="margin: 5px 0 0 0; font-size: 1.8rem; font-weight: 800; color: #002452;" id="statUstdzTotal">0</h2>
+                </div>
+                <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: #F59E0B;"><i class="fas fa-user-shield"></i></div>
+            </div>
+            <div class="admin-card stat-card">
+                <div>
+                    <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Kehadiran Hari Ini</span>
+                    <h2 style="margin: 5px 0 0 0; font-size: 1.8rem; font-weight: 800; color: #10B981;" id="statHadirPersen">0%</h2>
+                </div>
+                <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: #10B981;"><i class="fas fa-chart-line"></i></div>
+            </div>
+        </div>
+
+        <div class="bento-row row-main">
+            <div class="admin-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--text-main);"><i class="fas fa-eye text-info"></i> Radar Kepatuhan Absensi Ustadz Hari Ini</h3>
+                    <small style="color: var(--text-muted);" id="teksTanggalHariIni">-</small>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="radar-table">
+                        <thead>
+                            <tr>
+                                <th>Kelas</th>
+                                <th>Ustadz Pengampu</th>
+                                <th>Jam KBM</th>
+                                <th>Status Absensi</th>
+                                <th style="text-align: center;">Tindakan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelRadarBody">
+                            <tr><td colspan="5" style="text-align:center;"><i class="fas fa-spinner fa-spin"></i> Memindai data kelas...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="admin-card">
+                <h3 style="margin: 0 0 15px 0; font-size: 1.05rem; font-weight: 800; color: var(--text-main);"><i class="fas fa-trophy" style="color: #F59E0B;"></i> Papan Performa Kelas</h3>
+                <div style="margin-bottom: 20px;">
+                    <span style="font-size: 0.75rem; font-weight: 800; color: #10B981; text-transform: uppercase; display: block; margin-bottom: 8px;">🏆 Top 3 Kelas Ter-Rajin Bulan Ini</span>
+                    <div id="listTopRajin" style="display: flex; flex-direction: column; gap: 8px;">-</div>
+                </div>
+                <div style="border-top: 1px dashed var(--border); padding-top: 15px;">
+                    <span style="font-size: 0.75rem; font-weight: 800; color: #EF4444; text-transform: uppercase; display: block; margin-bottom: 8px;">⚠️ Kelas Perhatian Khusus (Tinggi Alpa)</span>
+                    <div id="listTopKritis" style="display: flex; flex-direction: column; gap: 8px;">-</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="admin-card">
+            <h3 style="margin: 0 0 15px 0; font-size: 1.05rem; font-weight: 800; color: var(--text-main);"><i class="fas fa-stream" style="color: #3B82F6;"></i> Log Aktivitas Penginputan Live</h3>
+            <div class="live-log-container" id="containerLiveLog">
+                <div style="text-align:center; color: var(--text-muted); padding: 10px;"><i class="fas fa-spinner fa-spin"></i> Mengambil data rekam aktivitas...</div>
+            </div>
+        </div>
+    </div>
+    `;
+}
+
+async function initDashboardAdmin() {
+    const updateJam = () => {
+        const d = new Date();
+        const jam = String(d.getHours()).padStart(2, '0');
+        const menit = String(d.getMinutes()).padStart(2, '0');
+        const detik = String(d.getSeconds()).padStart(2, '0');
+        const clockEl = document.getElementById('liveJamDigital');
+        if (clockEl) clockEl.textContent = `${jam}:${menit}:${detik} WIB`;
+    };
+    setInterval(updateJam, 1000);
+    updateJam();
+
+    const now = new Date();
+    const tglHariIni = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const blnIni = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    
+    const optionsTgl = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const teksTglEl = document.getElementById('teksTanggalHariIni');
+    if (teksTglEl) teksTglEl.textContent = now.toLocaleDateString('id-ID', optionsTgl);
+
+    try {
+        const [santriList, kelasList, guruList, inputHariIni, inputBulanIni] = await Promise.all([
+            api.get('dapodik_santri', 'select=id,nama_kelas'),
+            api.get('kelas', 'select=*'),
+            api.get('guru', 'select=*'),
+            api.get('input_harian', `select=*&tanggal=eq.${tglHariIni}`),
+            api.get('input_harian', `select=*&tanggal=gte.${blnIni}-01`)
+        ]);
+
+        const santriAktif = (santriList || []).filter(s => s.nama_kelas !== 'ALUMNI' && s.nama_kelas !== 'KELUAR');
+        document.getElementById('statSantriTotal').textContent = santriAktif.length;
+        document.getElementById('statKelasTotal').textContent = (kelasList || []).length;
+        document.getElementById('statUstdzTotal').textContent = (guruList || []).length;
+
+        const hadirHariIni = (inputHariIni || []).filter(x => x.status_hadir === 'Hadir').length;
+        const totalInputHariIni = (inputHariIni || []).length;
+        const persenHadir = totalInputHariIni > 0 ? Math.round((hadirHariIni / totalInputHariIni) * 100) : 0;
+        document.getElementById('statHadirPersen').textContent = `${persenHadir}%`;
+
+        const tabelBody = document.getElementById('tabelRadarBody');
+        let htmlRadar = '';
+        let listUstadzBelumAbsen = [];
+
+        (kelasList || []).forEach(k => {
+            const pengampu = (guruList || []).find(g => String(g.id) === String(k.guru_id)) || { nama: 'Belum Ditentukan', no_hp: '' };
+            const sudahAbsen = (inputHariIni || []).some(x => x.nama_kelas && x.nama_kelas.toLowerCase() === k.nama_kelas.toLowerCase());
+
+            let hp = (pengampu.no_hp || '').replace(/[^0-9]/g, '');
+            if (hp.startsWith('0')) hp = '62' + hp.slice(1);
+
+            const drafPesan = `Assalamu'alaikum Ust. *${pengampu.nama}*.\n\nMohon maaf mengganggu, sekadar mengingatkan dari pengurus RQ Kamila untuk melakukan pengisian absensi harian kelas *${k.nama_kelas}* hari ini (${tglHariIni}). Terima kasih.`;
+            const waLink = hp ? `https://wa.me/${hp}?text=${encodeURIComponent(drafPesan)}` : '#';
+
+            if (!sudahAbsen) listUstadzBelumAbsen.push({ nama: pengampu.nama, kelas: k.nama_kelas, waLink });
+
+            htmlRadar += `
+                <tr>
+                    <td style="font-weight: 700; color: #002452;">${k.nama_kelas}</td>
+                    <td><b>Ust. ${pengampu.nama}</b></td>
+                    <td><small style="color:var(--text-muted);"><i class="far fa-clock"></i> ${k.jam_kelas || 'Sesuai Jadwal'}</small></td>
+                    <td>${sudahAbsen ? `<span class="badge-status badge-sukses"><i class="fas fa-check-circle"></i> Selesai Absen</span>` : `<span class="badge-status badge-pending"><i class="fas fa-exclamation-circle"></i> Belum Absen</span>`}</td>
+                    <td style="text-align: center;">${!sudahAbsen && hp ? `<a href="${waLink}" target="_blank" style="background: rgba(37, 211, 102, 0.1); color: #25D366; padding: 6px 12px; border-radius: 8px; font-weight: 700; text-decoration: none; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 5px;"><i class="fab fa-whatsapp"></i> Tegur WA</a>` : `<button disabled style="border:none; background:transparent; color:var(--text-muted); font-size:0.8rem;">-</button>`}</td>
+                </tr>
+            `;
+        });
+        tabelBody.innerHTML = htmlRadar || `<tr><td colspan="5" style="text-align:center;">Belum ada data kelas.</td></tr>`;
+
+        document.getElementById('btnTegurSemuaWa').onclick = () => {
+            if (listUstadzBelumAbsen.length === 0) alert("Masya Allah! Seluruh Ustadz pengampu sudah menyelesaikan absensi hari ini.");
+            else { alert(`Terdapat ${listUstadzBelumAbsen.length} kelas yang belum diisi absensinya hari ini. Membuka jendela teguran pertama...`); window.open(listUstadzBelumAbsen[0].waLink, '_blank'); }
+        };
+
+        let rekapKelasBulan = {};
+        (inputBulanIni || []).forEach(x => {
+            if (!x.nama_kelas) return;
+            const kName = x.nama_kelas;
+            if (!rekapKelasBulan[kName]) rekapKelasBulan[kName] = { hadir: 0, alpa: 0, total: 0 };
+            if (x.status_hadir === 'Hadir') rekapKelasBulan[kName].hadir++;
+            if (x.status_hadir === 'Alpa') rekapKelasBulan[kName].alpa++;
+            rekapKelasBulan[kName].total++;
+        });
+
+        let arrKlasemen = [];
+        for (const key in rekapKelasBulan) {
+            const data = rekapKelasBulan[key];
+            const persen = data.total > 0 ? Math.round((data.hadir / data.total) * 100) : 0;
+            arrKlasemen.push({ kelas: key, persen, alpa: data.alpa });
+        }
+
+        arrKlasemen.sort((a,b) => b.persen - a.persen);
+        const topRajin = arrKlasemen.slice(0, 3);
+        let htmlRajin = '';
+        topRajin.forEach((item, idx) => { htmlRajin += `<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(16, 185, 129, 0.08); padding:8px 12px; border-radius:10px; font-size:0.85rem;"><div><b>#${idx+1} ${item.kelas}</b></div><div style="color:#10B981; font-weight:800;">${item.persen}% Hadir</div></div>`; });
+        document.getElementById('listTopRajin').innerHTML = htmlRajin || '<small style="color:var(--text-muted);">Belum ada rekap bulan ini.</small>';
+
+        arrKlasemen.sort((a,b) => b.alpa - a.alpa);
+        const topKritis = arrKlasemen.filter(x => x.alpa > 0).slice(0, 3);
+        let htmlKritis = '';
+        topKritis.forEach((item) => { htmlKritis += `<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(239, 68, 68, 0.08); padding:8px 12px; border-radius:10px; font-size:0.85rem;"><div><b>${item.kelas}</b></div><div style="color:#EF4444; font-weight:800;">${item.alpa}x Total Alpa</div></div>`; });
+        document.getElementById('listTopKritis').innerHTML = htmlKritis || '<small style="color:var(--text-muted);">Alhamdulillah, tidak ada kelas kritis.</small>';
+
+        const logContainer = document.getElementById('containerLiveLog');
+        const lastInput = (inputBulanIni || []).slice(-10).reverse();
+        let htmlLog = '';
+        lastInput.forEach(log => {
+            let ikon = log.status_hadir === 'Hadir' ? 'fa-check-circle text-success' : 'fa-book-open text-info';
+            htmlLog += `<div class="log-item-admin"><i class="fas ${ikon}" style="font-size: 1.1rem; margin-top:2px;"></i><div style="flex:1;"><div style="font-weight:700;">${log.nama_santri} (${log.nama_kelas || 'Kelas'})</div><div style="color:var(--text-muted); font-size:0.78rem; margin-top:2px;">${log.status_hadir ? `Status: <b>${log.status_hadir}</b>` : ''} ${log.materi ? `• Setoran: ${log.materi} (${log.jilid_surah || ''})` : ''}</div></div><small style="color:var(--text-muted); font-size:0.75rem;">${log.tanggal}</small></div>`;
+        });
+        logContainer.innerHTML = htmlLog || '<div style="text-align:center; color:var(--text-muted);">Belum ada rekam aktivitas baru.</div>';
+    } catch (e) { console.error("Gagal memuat Dashboard Admin:", e); }
+}
+
+// ==========================================
+// 3. RENDER & LOGIKA DASHBOARD GURU (ASLI)
+// ==========================================
+function renderDashboardGuru() {
     return `
         <style>
             .timeline-container { position: relative; padding-left: 20px; margin-top: 15px; }
@@ -109,17 +392,15 @@ export function renderDashboard() {
     `;
 }
 
-export async function initDashboard() {
+async function initDashboardGuru() {
     const elDate = document.getElementById('currentDateDisplay');
     const elClock = document.getElementById('realtimeClock');
     const welcomeGreeting = document.getElementById('welcomeGreeting');
     
-    // --- BACA ROLE & IDENTITAS DARI STORAGE ---
     const userRole = localStorage.getItem('user_role') || 'Guru';
     const userName = localStorage.getItem('user_name') || '';
-    const guruId = localStorage.getItem('guru_id'); // Identitas pemegang sertifikat
+    const guruId = localStorage.getItem('guru_id'); 
 
-    // SET GREETING TEXT
     if (userRole === 'Admin') {
         welcomeGreeting.innerHTML = `Ahlan wa Sahlan, Administrator!`;
     } else {
@@ -184,7 +465,6 @@ export async function initDashboard() {
         tooltipDataObj = { 'Hadir': {}, 'Izin/Skt': {}, 'Alfa': {}, 'Ulang': {} };
         let hadir = 0, izinSakit = 0, alfa = 0, ulang = 0;
         
-        // PENGATURAN TEKS PUSAT GRAFIK
         let chartSantriList = rawSantriList;
         if (namaKelasAktif && userRole !== 'Admin') {
             chartSantriList = rawSantriList.filter(s => s.nama_kelas === namaKelasAktif);
@@ -273,21 +553,17 @@ export async function initDashboard() {
             
             let activeKelasList = kelasList || [];
 
-            // FILTER DATA UNTUK GURU YANG MENGAMPU KELAS MENGGUNAKAN guru_id
             if (userRole !== 'Admin' && guruId) {
-                // Ambil daftar nama kelas yang menjadi hak milik guru ini
                 activeKelasList = activeKelasList.filter(k => String(k.guru_id) === String(guruId));
                 const arrKelas = activeKelasList.map(k => k.nama_kelas.toLowerCase());
                 
                 rawSantriList = (santriList || []).filter(s => s.nama_kelas && arrKelas.includes(s.nama_kelas.toLowerCase()));
                 rawHarianList = (harianList || []).filter(h => h.nama_kelas && arrKelas.includes(h.nama_kelas.toLowerCase()));
             } else {
-                // JIKA ADMIN, AMBIL SEMUA
                 rawHarianList = harianList || []; 
                 rawSantriList = santriList || [];
             }
 
-            // PEMINDAI JADWAL CERDAS (Berlaku untuk Guru & Admin)
             if(activeKelasList.length > 0) {
                 const currentMins = today.getHours() * 60 + today.getMinutes();
                 let kelasAktifArr = []; 
@@ -313,7 +589,7 @@ export async function initDashboard() {
                 
                 if (kelasAktifArr.length > 0) { 
                     if(userRole === 'Admin') {
-                        namaKelasAktif = null; // Admin selalu melihat statistik global
+                        namaKelasAktif = null;
                         let teksTampil = kelasAktifArr.length > 1 ? `${kelasAktifArr.length} Kelas Bersamaan` : kelasAktifArr[0].nama_kelas;
                         jadwalContent.innerHTML = `<div style="display: flex; flex-direction: column; gap: 6px;"><div style="align-self: flex-start;"><span style="background: rgba(254, 226, 226, 0.9); color: #991B1B; padding: 4px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 800;">BERJALAN</span></div><div style="font-size: 1.05rem; font-weight: 800; color: #ffffff;">${teksTampil}</div></div>`; 
                     } else {
