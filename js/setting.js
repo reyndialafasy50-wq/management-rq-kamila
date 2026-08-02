@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * MODUL PENGATURAN USTADZ - VERSI 6 (RELASI GURU_ID MURNI)
+ * MODUL PENGATURAN USTADZ & ADMIN - VERSI FINAL (+ TARGET KBM)
  * File: js/setting.js
  * ==================================================
  */
@@ -20,6 +20,9 @@ export const renderSetting = () => {
         .tab-btn { background: var(--surface); border: 1px solid var(--border); padding: 10px 15px; border-radius: 10px; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); cursor: pointer; transition: all 0.2s; white-space: nowrap; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
         .tab-btn.active { background: #3B82F6; color: white; border-color: #3B82F6; box-shadow: 0 4px 10px rgba(59,130,246,0.3); }
         
+        /* Warna Khusus Tab Admin */
+        .tab-btn.admin-tab.active { background: #8B5CF6; color: white; border-color: #8B5CF6; box-shadow: 0 4px 10px rgba(139,92,246,0.3); }
+
         .setting-card { background: var(--surface); border-radius: 16px; padding: 22px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); border: 1px solid var(--border); margin-bottom: 20px; animation: fadeIn 0.3s ease-out; }
         .card-title { font-size: 1.05rem; font-weight: 800; color: var(--text-main); margin-top: 0; margin-bottom: 15px; border-bottom: 2px solid #F1F5F9; padding-bottom: 10px; display: flex; align-items: center; gap: 8px; }
         
@@ -47,7 +50,7 @@ export const renderSetting = () => {
 
     <div class="setting-wrapper">
         <div>
-            <div class="header-title"><i class="fas fa-user-cog"></i> Ruang Pribadi Ustadz</div>
+            <div class="header-title"><i class="fas fa-user-cog"></i> Ruang Pribadi & Pengaturan</div>
             <div class="header-subtitle">Kelola profil, keamanan, dan alat bantu laporan Anda.</div>
         </div>
 
@@ -56,6 +59,9 @@ export const renderSetting = () => {
             <button class="tab-btn" data-target="panelTtd"><i class="fas fa-signature"></i> Tanda Tangan</button>
             <button class="tab-btn" data-target="panelTemplate"><i class="fas fa-comment-dots"></i> Bank Catatan</button>
             <button class="tab-btn" data-target="panelLibur"><i class="fas fa-calendar-times"></i> Atur Libur</button>
+            
+            <!-- TAB KHUSUS ADMIN (DISEMBUNYIKAN DEFAULT) -->
+            <button class="tab-btn admin-tab" data-target="panelAdminJP" id="tabAdminJP" style="display: none;"><i class="fas fa-bullseye"></i> Target KBM</button>
         </div>
 
         <!-- 1. PANEL PROFIL & KEAMANAN -->
@@ -125,9 +131,7 @@ export const renderSetting = () => {
             </div>
         </div>
 
-        <!-- ============================================== -->
-        <!-- 4. PANEL ATUR LIBUR (AKTIF DATABASE)           -->
-        <!-- ============================================== -->
+        <!-- 4. PANEL ATUR LIBUR (AKTIF DATABASE) -->
         <div id="panelLibur" class="panel-setting" style="display: none;">
             <div class="setting-card" style="border-top: 4px solid #F59E0B;">
                 <h3 class="card-title" style="color: #D97706; border-bottom-color: #FEF3C7; padding-top:5px;"><i class="fas fa-calendar-times"></i> Atur Libur Kelas</h3>
@@ -161,292 +165,486 @@ export const renderSetting = () => {
             </div>
         </div>
 
+        <!-- ============================================== -->
+        <!-- 5. PANEL KHUSUS ADMIN (TARGET KBM / JP)        -->
+        <!-- ============================================== -->
+        <div id="panelAdminJP" class="panel-setting" style="display: none;">
+            <div class="setting-card" style="border-top: 4px solid #8B5CF6;">
+                <h3 class="card-title" style="color: #7C3AED; border-bottom-color: #EDE9FE; padding-top:5px;"><i class="fas fa-bullseye"></i> Target Hari Aktif (JP) Bulanan</h3>
+                <p style="font-size: 0.85rem; color: #64748B; margin-bottom: 15px;">Tetapkan jumlah target hari efektif KBM per bulan. Sistem Raport akan menghitung persentase kehadiran santri berdasarkan angka ini.</p>
+                
+                <div class="form-group">
+                    <label>Tahun Ajaran</label>
+                    <select id="adminJpTahun" class="form-control">
+                        <option value="2025/2026">2025/2026</option>
+                        <option value="2026/2027" selected>2026/2027</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Semester</label>
+                    <select id="adminJpSemester" class="form-control">
+                        <option value="Ganjil (Odd)">Ganjil (Odd)</option>
+                        <option value="Genap (Even)">Genap (Even)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Bulan</label>
+                    <select id="adminJpBulan" class="form-control">
+                        <!-- Opsi akan diisi oleh JavaScript -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Target Hari Aktif KBM (Angka)</label>
+                    <input type="number" id="adminJpTarget" class="form-control" placeholder="Contoh: 24" min="0" max="31">
+                    <small style="color: #D97706; display: block; margin-top: 5px; font-weight: 700; font-style: italic;">*Jika tidak diisi, persentase kehadiran raport mungkin tidak akurat.</small>
+                </div>
+                
+                <input type="hidden" id="adminJpId">
+
+                <button class="btn-simpan" id="btnSimpanAdminJP" style="background: linear-gradient(135deg, #8B5CF6, #7C3AED); box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);"><i class="fas fa-save"></i> Simpan Target JP</button>
+            </div>
+        </div>
+
     </div>
     `;
 };
 
 export const initSetting = async () => {
-    // 1. LOGIKA NAVIGASI TAB
-    const tabBtns = document.querySelectorAll('.tab-btn');
-    const panels = document.querySelectorAll('.panel-setting');
+    try {
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const panels = document.querySelectorAll('.panel-setting');
+        const userRole = localStorage.getItem('user_role');
 
-    tabBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            tabBtns.forEach(b => b.classList.remove('active'));
-            panels.forEach(p => p.style.display = 'none');
-            btn.classList.add('active');
-            const targetId = btn.getAttribute('data-target');
-            document.getElementById(targetId).style.display = 'block';
-            if (targetId === 'panelTtd') resizeCanvas();
-        });
-    });
-
-    const canvas = document.getElementById('canvasTtd');
-    const ctx = canvas.getContext('2d');
-    let isDrawing = false;
-    let ttdSudahAda = ''; 
-
-    const resizeCanvas = () => {
-        const rect = canvas.parentElement.getBoundingClientRect();
-        canvas.width = rect.width;
-        canvas.height = 200; 
-        ctx.strokeStyle = "#1E3A8A"; 
-        ctx.lineWidth = 3;
-        ctx.lineCap = "round";
-        ctx.lineJoin = "round";
-        if (ttdSudahAda) {
-            const img = new Image();
-            img.onload = () => ctx.drawImage(img, 0, 0);
-            img.src = ttdSudahAda;
+        if (userRole === 'Admin') {
+            const tabAdminJP = document.getElementById('tabAdminJP');
+            if (tabAdminJP) tabAdminJP.style.display = 'flex';
         }
-    };
 
-    const inputNamaProfil = document.getElementById('inputNamaProfil');
-    const inputWaProfil = document.getElementById('inputWaProfil');
-    const btnSimpanProfil = document.getElementById('btnSimpanProfil');
-    const inputPasswordBaru = document.getElementById('inputPasswordBaru');
-    const inputPasswordKonfirm = document.getElementById('inputPasswordKonfirm');
-    const btnGantiPassword = document.getElementById('btnGantiPassword');
-    const inputTemplateRapor = document.getElementById('inputTemplateRapor');
-    const inputTemplateWa = document.getElementById('inputTemplateWa');
-    const btnSimpanTemplateRapor = document.getElementById('btnSimpanTemplateRapor');
-    const btnSimpanTemplateWa = document.getElementById('btnSimpanTemplateWa');
-
-    let loggedInGuruId = localStorage.getItem('guru_id');
-    const userRole = localStorage.getItem('user_role');
-
-    // LOAD DATA GURU
-    const loadDataGuru = async () => {
-        try {
-            if (!loggedInGuruId) {
-                const dataGuru = await api.get('guru', 'select=*&limit=1');
-                if (dataGuru && dataGuru.length > 0) {
-                    loggedInGuruId = dataGuru[0].id;
-                    localStorage.setItem('guru_id', loggedInGuruId);
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                tabBtns.forEach(b => b.classList.remove('active'));
+                panels.forEach(p => p.style.display = 'none');
+                btn.classList.add('active');
+                
+                const targetId = btn.getAttribute('data-target');
+                const targetPanel = document.getElementById(targetId);
+                if (targetPanel) targetPanel.style.display = 'block';
+                
+                if (targetId === 'panelTtd') resizeCanvas();
+                if (targetId === 'panelAdminJP' && typeof window.loadDataJP === 'function') {
+                    window.loadDataJP();
                 }
-            }
+            });
+        });
 
-            if (loggedInGuruId) {
-                const profileData = await api.get('guru', `select=*&id=eq.${loggedInGuruId}`);
-                if (profileData && profileData.length > 0) {
-                    const guru = profileData[0];
-                    inputNamaProfil.value = guru.nama || '';
-                    inputWaProfil.value = guru.no_hp || '';
-                    document.getElementById('alertSimulasiLogin').style.display = 'flex';
-                    document.getElementById('namaLoginSimulasi').textContent = guru.nama || 'Anonim';
-                    if (guru.template_rapor) inputTemplateRapor.value = guru.template_rapor;
-                    if (guru.template_wa) inputTemplateWa.value = guru.template_wa;
-                    if (guru.ttd_digital) {
-                        ttdSudahAda = guru.ttd_digital;
-                        const img = new Image();
-                        img.onload = () => {
-                            ctx.clearRect(0, 0, canvas.width, canvas.height);
-                            ctx.drawImage(img, 0, 0);
-                        };
-                        img.src = ttdSudahAda;
+        const canvas = document.getElementById('canvasTtd');
+        let ctx = null;
+        if (canvas) ctx = canvas.getContext('2d');
+        
+        let isDrawing = false;
+        let ttdSudahAda = ''; 
+
+        const resizeCanvas = () => {
+            if (!canvas || !ctx) return;
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = 200; 
+            ctx.strokeStyle = "#1E3A8A"; 
+            ctx.lineWidth = 3;
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+            if (ttdSudahAda) {
+                const img = new Image();
+                img.onload = () => ctx.drawImage(img, 0, 0);
+                img.src = ttdSudahAda;
+            }
+        };
+
+        const inputNamaProfil = document.getElementById('inputNamaProfil');
+        const inputWaProfil = document.getElementById('inputWaProfil');
+        const btnSimpanProfil = document.getElementById('btnSimpanProfil');
+        const inputPasswordBaru = document.getElementById('inputPasswordBaru');
+        const inputPasswordKonfirm = document.getElementById('inputPasswordKonfirm');
+        const btnGantiPassword = document.getElementById('btnGantiPassword');
+        const inputTemplateRapor = document.getElementById('inputTemplateRapor');
+        const inputTemplateWa = document.getElementById('inputTemplateWa');
+        const btnSimpanTemplateRapor = document.getElementById('btnSimpanTemplateRapor');
+        const btnSimpanTemplateWa = document.getElementById('btnSimpanTemplateWa');
+
+        let loggedInGuruId = localStorage.getItem('guru_id');
+
+        const loadDataGuru = async () => {
+            try {
+                if (!loggedInGuruId) {
+                    const dataGuru = await api.get('guru', 'select=*&limit=1');
+                    if (dataGuru && dataGuru.length > 0) {
+                        loggedInGuruId = dataGuru[0].id;
+                        localStorage.setItem('guru_id', loggedInGuruId);
                     }
                 }
-            }
-        } catch (e) { console.error("Gagal memuat data guru:", e); }
-    };
-    await loadDataGuru(); 
 
-    // SIMPAN PROFIL
-    btnSimpanProfil.addEventListener('click', async () => {
-        if (!loggedInGuruId) return alert('Sesi login tidak ditemukan.');
-        const namaBaru = inputNamaProfil.value;
-        const waBaru = inputWaProfil.value;
-        if (!namaBaru) return alert('Nama tidak boleh kosong!');
-        const oriText = btnSimpanProfil.innerHTML;
-        btnSimpanProfil.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
-        btnSimpanProfil.disabled = true;
-        try {
-            await api.update('guru', loggedInGuruId, { nama: namaBaru, no_hp: waBaru });
-            
-            // UPDATE LOCAL STORAGE & TAMPILAN NAMA DI HEADER
-            localStorage.setItem('user_name', namaBaru);
-            const headerUserName = document.getElementById('headerUserName');
-            if(headerUserName) headerUserName.textContent = userRole === 'Admin' ? 'Halo, Admin' : `Ust. ${namaBaru}`;
-            const headerAvatar = document.getElementById('avatarHeader');
-            if(headerAvatar) headerAvatar.textContent = namaBaru.charAt(0).toUpperCase();
+                if (loggedInGuruId) {
+                    const profileData = await api.get('guru', `select=*&id=eq.${loggedInGuruId}`);
+                    if (profileData && profileData.length > 0) {
+                        const guru = profileData[0];
+                        if (inputNamaProfil) inputNamaProfil.value = guru.nama || '';
+                        if (inputWaProfil) inputWaProfil.value = guru.no_hp || '';
+                        const alertSimulasi = document.getElementById('alertSimulasiLogin');
+                        const namaSimulasi = document.getElementById('namaLoginSimulasi');
+                        if (alertSimulasi) alertSimulasi.style.display = 'flex';
+                        if (namaSimulasi) namaSimulasi.textContent = guru.nama || 'Anonim';
+                        
+                        if (guru.template_rapor && inputTemplateRapor) inputTemplateRapor.value = guru.template_rapor;
+                        if (guru.template_wa && inputTemplateWa) inputTemplateWa.value = guru.template_wa;
+                        
+                        if (guru.ttd_digital) {
+                            ttdSudahAda = guru.ttd_digital;
+                            if (ctx) {
+                                const img = new Image();
+                                img.onload = () => {
+                                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                                    ctx.drawImage(img, 0, 0);
+                                };
+                                img.src = ttdSudahAda;
+                            }
+                        }
+                    }
+                }
+            } catch (e) { console.error("Gagal memuat data guru:", e); }
+        };
+        await loadDataGuru(); 
 
-            alert('Alhamdulillah, profil berhasil diperbarui!');
-            document.getElementById('namaLoginSimulasi').textContent = namaBaru;
-        } catch (e) { alert('Gagal memperbarui profil. Cek koneksi.'); }
-        btnSimpanProfil.innerHTML = oriText;
-        btnSimpanProfil.disabled = false;
-    });
+        if (btnSimpanProfil) {
+            btnSimpanProfil.addEventListener('click', async () => {
+                if (!loggedInGuruId) return alert('Sesi login tidak ditemukan.');
+                const namaBaru = inputNamaProfil.value;
+                const waBaru = inputWaProfil.value;
+                if (!namaBaru) return alert('Nama tidak boleh kosong!');
+                
+                const oriText = btnSimpanProfil.innerHTML;
+                btnSimpanProfil.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+                btnSimpanProfil.disabled = true;
+                
+                try {
+                    await api.update('guru', loggedInGuruId, { nama: namaBaru, no_hp: waBaru });
+                    localStorage.setItem('user_name', namaBaru);
+                    
+                    const headerUserName = document.getElementById('headerUserName');
+                    if(headerUserName) headerUserName.textContent = userRole === 'Admin' ? 'Halo, Admin' : `Ust. ${namaBaru}`;
+                    
+                    const headerAvatar = document.getElementById('avatarHeader');
+                    if(headerAvatar) headerAvatar.textContent = namaBaru.charAt(0).toUpperCase();
 
-    // GANTI PASSWORD
-    btnGantiPassword.addEventListener('click', async () => {
-        if (!loggedInGuruId) return alert('Sesi login tidak ditemukan.');
-        const pw1 = inputPasswordBaru.value;
-        const pw2 = inputPasswordKonfirm.value;
-        if (!pw1 || !pw2) return alert('Password baru tidak boleh kosong!');
-        if (pw1 !== pw2) return alert('Konfirmasi password tidak cocok!');
-        if (pw1.length < 6) return alert('Untuk keamanan, password minimal 6 karakter!');
-        const oriText = btnGantiPassword.innerHTML;
-        btnGantiPassword.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
-        btnGantiPassword.disabled = true;
-        try {
-            await api.update('guru', loggedInGuruId, { password: pw1 });
-            alert('Password berhasil diganti! Harap ingat password baru Anda.');
-            inputPasswordBaru.value = ''; inputPasswordKonfirm.value = '';
-        } catch (e) { alert('Gagal mengganti password. Cek koneksi.'); }
-        btnGantiPassword.innerHTML = oriText;
-        btnGantiPassword.disabled = false;
-    });
-
-    // SIMPAN TEMPLATE RAPOR & WA
-    btnSimpanTemplateRapor.addEventListener('click', async () => {
-        if (!loggedInGuruId) return alert('Sesi login tidak ditemukan.');
-        const oriText = btnSimpanTemplateRapor.innerHTML;
-        btnSimpanTemplateRapor.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
-        btnSimpanTemplateRapor.disabled = true;
-        try {
-            await api.update('guru', loggedInGuruId, { template_rapor: inputTemplateRapor.value });
-            alert('Template Catatan Rapor berhasil tersimpan!');
-        } catch(e) { alert('Gagal menyimpan template Rapor.'); }
-        btnSimpanTemplateRapor.innerHTML = oriText;
-        btnSimpanTemplateRapor.disabled = false;
-    });
-
-    btnSimpanTemplateWa.addEventListener('click', async () => {
-        if (!loggedInGuruId) return alert('Sesi login tidak ditemukan.');
-        const oriText = btnSimpanTemplateWa.innerHTML;
-        btnSimpanTemplateWa.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
-        btnSimpanTemplateWa.disabled = true;
-        try {
-            await api.update('guru', loggedInGuruId, { template_wa: inputTemplateWa.value });
-            alert('Template Pesan WA berhasil tersimpan!');
-        } catch(e) { alert('Gagal menyimpan template WA.'); }
-        btnSimpanTemplateWa.innerHTML = oriText;
-        btnSimpanTemplateWa.disabled = false;
-    });
-
-    // SIMPAN TTD
-    canvas.addEventListener('mousedown', (e) => { isDrawing = true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY); });
-    canvas.addEventListener('mousemove', (e) => { if (isDrawing) { ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); } });
-    canvas.addEventListener('mouseup', () => isDrawing = false);
-    canvas.addEventListener('mouseout', () => isDrawing = false);
-    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); isDrawing = true; const touch = e.touches[0]; const rect = canvas.getBoundingClientRect(); ctx.beginPath(); ctx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top); });
-    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); if (!isDrawing) return; const touch = e.touches[0]; const rect = canvas.getBoundingClientRect(); ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top); ctx.stroke(); });
-    canvas.addEventListener('touchend', () => isDrawing = false);
-
-    document.getElementById('btnClearTtd').addEventListener('click', () => { ctx.clearRect(0, 0, canvas.width, canvas.height); ttdSudahAda = ''; });
-    window.addEventListener('resize', () => { if (document.getElementById('panelTtd').style.display === 'block') resizeCanvas(); });
-
-    const btnSimpanTtd = document.getElementById('btnSimpanTtd');
-    btnSimpanTtd.addEventListener('click', async () => {
-        if (!loggedInGuruId) return alert('Sesi login tidak ditemukan.');
-        const oriText = btnSimpanTtd.innerHTML;
-        btnSimpanTtd.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
-        btnSimpanTtd.disabled = true;
-        try {
-            const dataTtdBase64 = canvas.toDataURL("image/png");
-            await api.update('guru', loggedInGuruId, { ttd_digital: dataTtdBase64 });
-            ttdSudahAda = dataTtdBase64;
-            alert('Tanda tangan berhasil disimpan!');
-        } catch (e) { alert('Gagal menyimpan tanda tangan.'); }
-        btnSimpanTtd.innerHTML = oriText;
-        btnSimpanTtd.disabled = false;
-    });
-
-    // ==========================================
-    // LOGIKA FITUR ATUR LIBUR KELAS (DENGAN FILTER GURU_ID)
-    // ==========================================
-    const udzurTanggal = document.getElementById('udzurTanggal');
-    const udzurAlasan = document.getElementById('udzurAlasan');
-    const udzurAlasanManual = document.getElementById('udzurAlasanManual');
-    const radioSemua = document.getElementById('udzur_semua');
-    const radioPilih = document.getElementById('udzur_pilih');
-    const wadahPilihanKelas = document.getElementById('udzurPilihanKelas');
-    const btnSimpanLibur = document.getElementById('btnSimpanLibur');
-
-    udzurAlasan.addEventListener('change', (e) => { udzurAlasanManual.style.display = e.target.value === 'Lainnya' ? 'block' : 'none'; });
-    const togglePilihanKelas = () => { wadahPilihanKelas.style.display = radioPilih.checked ? 'block' : 'none'; };
-    radioSemua.addEventListener('change', togglePilihanKelas);
-    radioPilih.addEventListener('change', togglePilihanKelas);
-
-    // Ambil daftar kelas HANYA yang dimiliki guru ini (atau semua jika Admin)
-    let daftarKelasMilikGuru = [];
-    try {
-        const tabelKelas = await api.get('kelas', 'select=*');
-        if (tabelKelas && tabelKelas.length > 0) {
-            if (userRole !== 'Admin' && loggedInGuruId) {
-                daftarKelasMilikGuru = tabelKelas.filter(k => String(k.guru_id) === String(loggedInGuruId)).map(k => k.nama_kelas).sort();
-            } else {
-                daftarKelasMilikGuru = tabelKelas.map(k => k.nama_kelas).sort();
-            }
-
-            if (daftarKelasMilikGuru.length > 0) {
-                let htmlCheckbox = '';
-                daftarKelasMilikGuru.forEach(k => {
-                    htmlCheckbox += `<label class="checkbox-kelas"><input type="checkbox" name="chk_kelas_libur" value="${k}"> ${k}</label>`;
-                });
-                wadahPilihanKelas.innerHTML = htmlCheckbox;
-            } else {
-                wadahPilihanKelas.innerHTML = '<div style="text-align:center; font-size:0.85rem; color:#94a3b8;">Anda belum ditugaskan di kelas manapun.</div>';
-                btnSimpanLibur.disabled = true;
-                btnSimpanLibur.style.opacity = '0.5';
-            }
-        } else {
-            wadahPilihanKelas.innerHTML = '<div style="text-align:center; font-size:0.85rem; color:#94a3b8;">Belum ada data kelas di database.</div>';
-        }
-    } catch (e) { console.error("Gagal load kelas libur:", e); }
-
-    // AKSI SIMPAN STATUS LIBUR KE TABEL `libur_kelas`
-    btnSimpanLibur.addEventListener('click', async () => {
-        if (!loggedInGuruId) return alert('Sesi login tidak ditemukan.');
-        
-        const tgl = udzurTanggal.value;
-        let alasan = udzurAlasan.value;
-        if (alasan === 'Lainnya') alasan = udzurAlasanManual.value;
-
-        if (!tgl || !alasan.trim()) return alert('Mohon lengkapi tanggal dan alasan libur!');
-
-        const cakupan = radioSemua.checked ? 'Semua Kelas' : 'Pilih Kelas';
-        let kelasTerpilih = '';
-
-        if (cakupan === 'Pilih Kelas') {
-            const checkedBoxes = document.querySelectorAll('input[name="chk_kelas_libur"]:checked');
-            if (checkedBoxes.length === 0) return alert('Pilih minimal satu kelas yang diliburkan!');
-            kelasTerpilih = Array.from(checkedBoxes).map(cb => cb.value).join(', ');
-        } else {
-            // Jika pilih Semua Kelas, kita simpan string koma dari semua kelas milik ustadz ini
-            kelasTerpilih = daftarKelasMilikGuru.join(', ');
-        }
-
-        const oriText = btnSimpanLibur.innerHTML;
-        btnSimpanLibur.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
-        btnSimpanLibur.disabled = true;
-
-        try {
-            // Mengirim data ke tabel libur_kelas menggunakan api post
-            await api.post('libur_kelas', {
-                guru_id: loggedInGuruId,
-                tanggal: tgl,
-                alasan: alasan,
-                cakupan: cakupan,
-                kelas_terpilih: kelasTerpilih
+                    alert('Alhamdulillah, profil berhasil diperbarui!');
+                    const namaSimulasi = document.getElementById('namaLoginSimulasi');
+                    if(namaSimulasi) namaSimulasi.textContent = namaBaru;
+                } catch (e) { alert('Gagal memperbarui profil. Cek koneksi.'); }
+                
+                btnSimpanProfil.innerHTML = oriText;
+                btnSimpanProfil.disabled = false;
             });
-
-            alert('Alhamdulillah, status libur kelas berhasil disimpan!');
-            
-            // Reset form kembali ke kondisi awal
-            udzurAlasan.value = 'Ustadz Izin (Ada Keperluan)';
-            udzurAlasanManual.style.display = 'none';
-            udzurAlasanManual.value = '';
-            radioSemua.checked = true;
-            wadahPilihanKelas.style.display = 'none';
-            document.querySelectorAll('input[name="chk_kelas_libur"]').forEach(cb => cb.checked = false);
-
-        } catch (e) {
-            console.error("Gagal menyimpan libur:", e);
-            alert('Gagal menyimpan jadwal libur. Cek koneksi internet Anda.');
         }
 
-        btnSimpanLibur.innerHTML = oriText;
-        btnSimpanLibur.disabled = false;
-    });
+        if (btnGantiPassword) {
+            btnGantiPassword.addEventListener('click', async () => {
+                if (!loggedInGuruId) return alert('Sesi login tidak ditemukan.');
+                const pw1 = inputPasswordBaru.value;
+                const pw2 = inputPasswordKonfirm.value;
+                if (!pw1 || !pw2) return alert('Password baru tidak boleh kosong!');
+                if (pw1 !== pw2) return alert('Konfirmasi password tidak cocok!');
+                if (pw1.length < 6) return alert('Untuk keamanan, password minimal 6 karakter!');
+                
+                const oriText = btnGantiPassword.innerHTML;
+                btnGantiPassword.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+                btnGantiPassword.disabled = true;
+                
+                try {
+                    await api.update('guru', loggedInGuruId, { password: pw1 });
+                    alert('Password berhasil diganti! Harap ingat password baru Anda.');
+                    inputPasswordBaru.value = ''; inputPasswordKonfirm.value = '';
+                } catch (e) { alert('Gagal mengganti password. Cek koneksi.'); }
+                
+                btnGantiPassword.innerHTML = oriText;
+                btnGantiPassword.disabled = false;
+            });
+        }
+
+        if (btnSimpanTemplateRapor) {
+            btnSimpanTemplateRapor.addEventListener('click', async () => {
+                if (!loggedInGuruId) return alert('Sesi login tidak ditemukan.');
+                const oriText = btnSimpanTemplateRapor.innerHTML;
+                btnSimpanTemplateRapor.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+                btnSimpanTemplateRapor.disabled = true;
+                try {
+                    await api.update('guru', loggedInGuruId, { template_rapor: inputTemplateRapor.value });
+                    alert('Template Catatan Rapor berhasil tersimpan!');
+                } catch(e) { alert('Gagal menyimpan template Rapor.'); }
+                btnSimpanTemplateRapor.innerHTML = oriText;
+                btnSimpanTemplateRapor.disabled = false;
+            });
+        }
+
+        if (btnSimpanTemplateWa) {
+            btnSimpanTemplateWa.addEventListener('click', async () => {
+                if (!loggedInGuruId) return alert('Sesi login tidak ditemukan.');
+                const oriText = btnSimpanTemplateWa.innerHTML;
+                btnSimpanTemplateWa.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+                btnSimpanTemplateWa.disabled = true;
+                try {
+                    await api.update('guru', loggedInGuruId, { template_wa: inputTemplateWa.value });
+                    alert('Template Pesan WA berhasil tersimpan!');
+                } catch(e) { alert('Gagal menyimpan template WA.'); }
+                btnSimpanTemplateWa.innerHTML = oriText;
+                btnSimpanTemplateWa.disabled = false;
+            });
+        }
+
+        if (canvas) {
+            canvas.addEventListener('mousedown', (e) => { isDrawing = true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY); });
+            canvas.addEventListener('mousemove', (e) => { if (isDrawing) { ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); } });
+            canvas.addEventListener('mouseup', () => isDrawing = false);
+            canvas.addEventListener('mouseout', () => isDrawing = false);
+            canvas.addEventListener('touchstart', (e) => { e.preventDefault(); isDrawing = true; const touch = e.touches[0]; const rect = canvas.getBoundingClientRect(); ctx.beginPath(); ctx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top); });
+            canvas.addEventListener('touchmove', (e) => { e.preventDefault(); if (!isDrawing) return; const touch = e.touches[0]; const rect = canvas.getBoundingClientRect(); ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top); ctx.stroke(); });
+            canvas.addEventListener('touchend', () => isDrawing = false);
+        }
+
+        const btnClearTtd = document.getElementById('btnClearTtd');
+        if (btnClearTtd) {
+            btnClearTtd.addEventListener('click', () => { if(ctx) ctx.clearRect(0, 0, canvas.width, canvas.height); ttdSudahAda = ''; });
+        }
+        
+        window.addEventListener('resize', () => { 
+            const pTtd = document.getElementById('panelTtd');
+            if (pTtd && pTtd.style.display === 'block') resizeCanvas(); 
+        });
+
+        const btnSimpanTtd = document.getElementById('btnSimpanTtd');
+        if (btnSimpanTtd) {
+            btnSimpanTtd.addEventListener('click', async () => {
+                if (!loggedInGuruId) return alert('Sesi login tidak ditemukan.');
+                if (!canvas) return;
+                const oriText = btnSimpanTtd.innerHTML;
+                btnSimpanTtd.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+                btnSimpanTtd.disabled = true;
+                try {
+                    const dataTtdBase64 = canvas.toDataURL("image/png");
+                    await api.update('guru', loggedInGuruId, { ttd_digital: dataTtdBase64 });
+                    ttdSudahAda = dataTtdBase64;
+                    alert('Tanda tangan berhasil disimpan!');
+                } catch (e) { alert('Gagal menyimpan tanda tangan.'); }
+                btnSimpanTtd.innerHTML = oriText;
+                btnSimpanTtd.disabled = false;
+            });
+        }
+
+        // ==========================================
+        // LOGIKA ATUR LIBUR KELAS
+        // ==========================================
+        const udzurTanggal = document.getElementById('udzurTanggal');
+        const udzurAlasan = document.getElementById('udzurAlasan');
+        const udzurAlasanManual = document.getElementById('udzurAlasanManual');
+        const radioSemua = document.getElementById('udzur_semua');
+        const radioPilih = document.getElementById('udzur_pilih');
+        const wadahPilihanKelas = document.getElementById('udzurPilihanKelas');
+        const btnSimpanLibur = document.getElementById('btnSimpanLibur');
+
+        if (udzurAlasan && udzurAlasanManual) {
+            udzurAlasan.addEventListener('change', (e) => { udzurAlasanManual.style.display = e.target.value === 'Lainnya' ? 'block' : 'none'; });
+        }
+
+        const togglePilihanKelas = () => { if(wadahPilihanKelas && radioPilih) wadahPilihanKelas.style.display = radioPilih.checked ? 'block' : 'none'; };
+        if (radioSemua) radioSemua.addEventListener('change', togglePilihanKelas);
+        if (radioPilih) radioPilih.addEventListener('change', togglePilihanKelas);
+
+        let daftarKelasMilikGuru = [];
+        const loadKelasLibur = async () => {
+            try {
+                const tabelKelas = await api.get('kelas', 'select=*');
+                if (tabelKelas && tabelKelas.length > 0) {
+                    if (userRole !== 'Admin' && loggedInGuruId) {
+                        daftarKelasMilikGuru = tabelKelas.filter(k => String(k.guru_id) === String(loggedInGuruId)).map(k => k.nama_kelas).sort();
+                    } else {
+                        daftarKelasMilikGuru = tabelKelas.map(k => k.nama_kelas).sort();
+                    }
+
+                    if (daftarKelasMilikGuru.length > 0 && wadahPilihanKelas) {
+                        let htmlCheckbox = '';
+                        daftarKelasMilikGuru.forEach(k => {
+                            htmlCheckbox += `<label class="checkbox-kelas"><input type="checkbox" name="chk_kelas_libur" value="${k}"> ${k}</label>`;
+                        });
+                        wadahPilihanKelas.innerHTML = htmlCheckbox;
+                    } else if (wadahPilihanKelas) {
+                        wadahPilihanKelas.innerHTML = '<div style="text-align:center; font-size:0.85rem; color:#94a3b8;">Anda belum ditugaskan di kelas manapun.</div>';
+                        if(btnSimpanLibur) {
+                            btnSimpanLibur.disabled = true;
+                            btnSimpanLibur.style.opacity = '0.5';
+                        }
+                    }
+                } else if (wadahPilihanKelas) {
+                    wadahPilihanKelas.innerHTML = '<div style="text-align:center; font-size:0.85rem; color:#94a3b8;">Belum ada data kelas di database.</div>';
+                }
+            } catch (e) { console.error("Gagal load kelas libur:", e); }
+        };
+        await loadKelasLibur();
+
+        if (btnSimpanLibur) {
+            btnSimpanLibur.addEventListener('click', async () => {
+                if (!loggedInGuruId) return alert('Sesi login tidak ditemukan.');
+                
+                const tgl = udzurTanggal.value;
+                let alasan = udzurAlasan.value;
+                if (alasan === 'Lainnya') alasan = udzurAlasanManual.value;
+
+                if (!tgl || !alasan.trim()) return alert('Mohon lengkapi tanggal dan alasan libur!');
+
+                const cakupan = radioSemua.checked ? 'Semua Kelas' : 'Pilih Kelas';
+                let kelasTerpilih = '';
+
+                if (cakupan === 'Pilih Kelas') {
+                    const checkedBoxes = document.querySelectorAll('input[name="chk_kelas_libur"]:checked');
+                    if (checkedBoxes.length === 0) return alert('Pilih minimal satu kelas yang diliburkan!');
+                    kelasTerpilih = Array.from(checkedBoxes).map(cb => cb.value).join(', ');
+                } else {
+                    kelasTerpilih = daftarKelasMilikGuru.join(', ');
+                }
+
+                const oriText = btnSimpanLibur.innerHTML;
+                btnSimpanLibur.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+                btnSimpanLibur.disabled = true;
+
+                try {
+                    await api.post('libur_kelas', {
+                        guru_id: loggedInGuruId,
+                        tanggal: tgl,
+                        alasan: alasan,
+                        cakupan: cakupan,
+                        kelas_terpilih: kelasTerpilih
+                    });
+
+                    alert('Alhamdulillah, status libur kelas berhasil disimpan!');
+                    
+                    udzurAlasan.value = 'Ustadz Izin (Ada Keperluan)';
+                    udzurAlasanManual.style.display = 'none';
+                    udzurAlasanManual.value = '';
+                    radioSemua.checked = true;
+                    wadahPilihanKelas.style.display = 'none';
+                    document.querySelectorAll('input[name="chk_kelas_libur"]').forEach(cb => cb.checked = false);
+
+                } catch (e) {
+                    console.error("Gagal menyimpan libur:", e);
+                    alert('Gagal menyimpan jadwal libur. Cek koneksi internet Anda.');
+                }
+
+                btnSimpanLibur.innerHTML = oriText;
+                btnSimpanLibur.disabled = false;
+            });
+        }
+
+        // ==========================================
+        // LOGIKA KHUSUS ADMIN (TARGET KBM / JP)
+        // ==========================================
+        const jpTahun = document.getElementById('adminJpTahun');
+        const jpSemester = document.getElementById('adminJpSemester');
+        const jpBulan = document.getElementById('adminJpBulan');
+        const jpTarget = document.getElementById('adminJpTarget');
+        const jpId = document.getElementById('adminJpId');
+        const btnSimpanAdminJP = document.getElementById('btnSimpanAdminJP');
+
+        // Fungsi Render Daftar Bulan berdasarkan Semester
+        const renderBulanJP = () => {
+            if (!jpBulan || !jpSemester) return;
+            const isGanjil = jpSemester.value.includes('Ganjil');
+            const bulanList = isGanjil 
+                ? ['Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
+                : ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni'];
+            
+            let htmlBulan = '';
+            bulanList.forEach(b => {
+                htmlBulan += `<option value="${b}">${b}</option>`;
+            });
+            jpBulan.innerHTML = htmlBulan;
+            
+            if (typeof window.loadDataJP === 'function') window.loadDataJP();
+        };
+
+        // Fungsi Tarik Data dari Database `setting_jp`
+        window.loadDataJP = async () => {
+            if (userRole !== 'Admin') return;
+            if (!jpTahun || !jpSemester || !jpBulan || !jpTarget || !jpId) return;
+            
+            const tahun = jpTahun.value;
+            const semester = jpSemester.value;
+            const bulan = jpBulan.value;
+            
+            if (!tahun || !semester || !bulan) return;
+
+            jpTarget.value = ''; 
+            jpId.value = '';
+
+            try {
+                const dataJP = await api.get('setting_jp', `select=*&tahun_ajaran=eq.${encodeURIComponent(tahun)}&semester=eq.${encodeURIComponent(semester)}&bulan=eq.${encodeURIComponent(bulan)}`);
+                if (dataJP && dataJP.length > 0) {
+                    jpTarget.value = dataJP[0].jp_default;
+                    jpId.value = dataJP[0].id;
+                }
+            } catch (error) {
+                console.error('Gagal mengambil target JP:', error);
+            }
+        };
+
+        if (jpSemester && jpTahun && jpBulan) {
+            jpSemester.addEventListener('change', renderBulanJP);
+            jpTahun.addEventListener('change', window.loadDataJP);
+            jpBulan.addEventListener('change', window.loadDataJP);
+            
+            renderBulanJP(); // Panggilan awal
+        }
+
+        if (btnSimpanAdminJP) {
+            btnSimpanAdminJP.addEventListener('click', async () => {
+                const tahun = jpTahun.value;
+                const semester = jpSemester.value;
+                const bulan = jpBulan.value;
+                const targetAngka = jpTarget.value;
+                const idToUpdate = jpId.value;
+
+                if (!targetAngka || isNaN(targetAngka)) return alert("Mohon isi Target Hari Aktif dengan angka yang valid!");
+
+                const oriText = btnSimpanAdminJP.innerHTML;
+                btnSimpanAdminJP.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+                btnSimpanAdminJP.disabled = true;
+
+                const payload = {
+                    tahun_ajaran: tahun,
+                    semester: semester,
+                    bulan: bulan,
+                    jp_default: parseInt(targetAngka)
+                };
+
+                try {
+                    if (idToUpdate) {
+                        await api.update('setting_jp', idToUpdate, payload);
+                    } else {
+                        await api.post('setting_jp', payload);
+                    }
+                    alert(`Alhamdulillah, Target KBM untuk ${bulan} (${semester}) berhasil disetel ke ${targetAngka} hari.`);
+                    if (typeof window.loadDataJP === 'function') window.loadDataJP();
+                } catch (error) {
+                    console.error("Gagal menyimpan Target JP:", error);
+                    alert("Terjadi kesalahan. Cek koneksi Anda.");
+                }
+
+                btnSimpanAdminJP.innerHTML = oriText;
+                btnSimpanAdminJP.disabled = false;
+            });
+        }
+        
+    } catch (criticalError) {
+        console.error("Terjadi kesalahan pada inisialisasi Setting:", criticalError);
+        alert("Sistem mendeteksi adanya sedikit gangguan pada halaman ini. Silakan refresh halaman.");
+    }
 };
+// ============================================
+// AKHIR DARI FILE setting.js
+// ============================================
