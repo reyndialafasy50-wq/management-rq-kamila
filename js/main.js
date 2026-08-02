@@ -13,7 +13,7 @@ import { renderSetting, initSetting } from './setting.js';
 import { renderRaport, initRaport } from './raport.js';
 
 // ==========================================
-// FUNGSI LONCENG GLOBAL (ANTI-MELESET)
+// FUNGSI LONCENG GLOBAL (CERDAS & SINKRON)
 // ==========================================
 window.periksaNotifikasiGlobal = async () => {
     const bellIcon = document.getElementById('bellNotif') || document.querySelector('.fa-bell');
@@ -33,9 +33,12 @@ window.periksaNotifikasiGlobal = async () => {
                 display: inline-block !important;
                 transform-origin: top center !important;
             }
-            .bell-kritis-8 { color: #F59E0B !important; animation: shakeSuper 0.5s infinite; }
+            /* 8x Alpa = Kuning/Emas (Getar Pelan) */
+            .bell-kritis-8 { color: #F59E0B !important; animation: shakeSuper 0.6s infinite; }
+            /* 9x Alpa = Oranye Tua (Getar Agak Cepat) */
             .bell-kritis-9 { color: #EA580C !important; animation: shakeSuper 0.3s infinite; }
-            .bell-kritis-10 { color: #DC2626 !important; animation: shakeSuper 0.15s infinite; filter: drop-shadow(0 0 8px rgba(220, 38, 38, 0.6)); }
+            /* 10x Alpa = Merah Menyala & Glow (Getar Hebat) */
+            .bell-kritis-10 { color: #DC2626 !important; animation: shakeSuper 0.15s infinite; filter: drop-shadow(0 0 8px rgba(220, 38, 38, 0.8)); }
         `;
         document.head.appendChild(style);
     }
@@ -43,10 +46,15 @@ window.periksaNotifikasiGlobal = async () => {
     try {
         const d = new Date();
         const bulanIni = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        const userRole = localStorage.getItem('user_role') || 'Guru';
+        const guruId = localStorage.getItem('guru_id');
 
-        const [harianList, santriList] = await Promise.all([
-            api.get('input_harian', `select=*&tanggal=gte.${bulanIni}-01&status_hadir=eq.Alpa`),
-            api.get('dapodik_santri', 'select=id,nama_santri,hp_ortu,no_hp')
+        // Tarik data Alpa bulan ini, data kelas, data santri, dan Flag Evaluasi (Sinkronisasi DB)
+        const [harianAlpa, kelasData, santriList, logEvaluasi] = await Promise.all([
+            api.get('input_harian', `select=santri_id,nama_santri,nama_kelas&tanggal=gte.${bulanIni}-01&status_hadir=eq.Alpa`),
+            api.get('kelas', 'select=nama_kelas,guru_id'),
+            api.get('dapodik_santri', 'select=id,nama_santri,hp_ortu,no_hp'),
+            api.get('input_harian', `select=santri_id&status_hadir=eq.Evaluasi_Alpa_${bulanIni}`)
         ]);
 
         const areaKlik = bellIcon.closest('button, a, div[class*="nav"]') || bellIcon;
@@ -54,10 +62,24 @@ window.periksaNotifikasiGlobal = async () => {
         areaKlik.onclick = null;
         areaKlik.style.cursor = 'default';
 
-        if (!harianList || harianList.length === 0) return;
+        if (!harianAlpa || harianAlpa.length === 0) return;
+
+        // Tentukan kelas mana saja yang boleh dilihat oleh Ustadz yang login
+        let kelasMilikGuru = [];
+        if (userRole !== 'Admin' && guruId) {
+            kelasMilikGuru = kelasData.filter(k => String(k.guru_id) === String(guruId)).map(k => k.nama_kelas.toLowerCase());
+        }
+
+        // Daftar ID santri yang sudah dievaluasi bulan ini (SINKRON DARI DATABASE)
+        const disenyapkanSet = new Set((logEvaluasi || []).map(l => l.santri_id));
 
         let rekapAlpa = {};
-        harianList.forEach(log => {
+        harianAlpa.forEach(log => {
+            // Saring agar Ustadz hanya menghitung alpa dari kelas miliknya
+            if (userRole !== 'Admin') {
+                if (!log.nama_kelas || !kelasMilikGuru.includes(log.nama_kelas.toLowerCase())) return;
+            }
+
             const idKey = log.santri_id || log.nama_santri;
             if (!rekapAlpa[idKey]) rekapAlpa[idKey] = { id: log.santri_id, nama: log.nama_santri, count: 0 };
             rekapAlpa[idKey].count++;
@@ -68,9 +90,9 @@ window.periksaNotifikasiGlobal = async () => {
 
         for (const key in rekapAlpa) {
             const data = rekapAlpa[key];
-            const sudahDisenyapkan = localStorage.getItem(`bisu_alpa_${bulanIni}_${data.id}`);
             
-            if (data.count >= 8 && !sudahDisenyapkan) {
+            // Cek apakah santri ini belum dievaluasi di database
+            if (data.count >= 8 && !disenyapkanSet.has(data.id)) {
                 const s = santriList.find(x => x.id === data.id || x.nama_santri === data.nama);
                 data.hp = s ? (s.hp_ortu || s.no_hp || '') : '';
                 daftarKritis.push(data);
@@ -80,7 +102,7 @@ window.periksaNotifikasiGlobal = async () => {
 
         if (maxAlpa >= 10) bellIcon.classList.add('bell-kritis-10');
         else if (maxAlpa === 9) bellIcon.classList.add('bell-kritis-9');
-        else if (maxAlpa === 8) bellIcon.classList.add('bell-kritis-8');
+        else if (maxAlpa >= 8) bellIcon.classList.add('bell-kritis-8');
 
         if (daftarKritis.length > 0) {
             areaKlik.style.cursor = 'pointer';
@@ -109,15 +131,15 @@ window.tampilkanModalEvaluasi = (daftar, bulanIni) => {
     let htmlList = '';
     
     daftar.forEach(s => {
-        let color = s.count >= 10 ? '#DC2626' : '#EA580C';
+        let color = s.count >= 10 ? '#DC2626' : (s.count === 9 ? '#EA580C' : '#F59E0B');
         let hp = (s.hp || '').replace(/[^0-9]/g, '');
         if (hp.startsWith('0')) hp = '62' + hp.slice(1);
 
-        const msg = encodeURIComponent(`Assalamu'alaikum Bapak/Ibu Wali dari ananda *${s.nama}*.\n\nKami menginformasikan bahwa ananda telah mencapai batas *${s.count}x Alpa (Tanpa Keterangan)* di bulan ini.\nMohon perhatian dan kerjasamanya. Terima kasih.`);
-        const link = hp ? `https://wa.me/${hp}?text=${msg}` : '#';
+        const drafWa = `Assalamu'alaikum Warahmatullahi Wabarakatuh.\n\nAlhamdulillah, segala puji bagi Allah. Semoga Bapak/Ibu beserta keluarga senantiasa dalam keadaan sehat dan berada dalam lindungan-Nya.\n\nMohon maaf mengganggu waktunya. Kami dari pengurus Rumah Qur'an Kamila ingin menginformasikan terkait rekap kehadiran ananda *${s.nama}*.\nBerdasarkan catatan kami, pada bulan ini ananda telah tidak hadir tanpa keterangan (Alpa) sebanyak *${s.count} kali*.\n\nSebagai bentuk evaluasi dan komitmen disiplin KBM di RQ Kamila, kami ingin mengonfirmasi niat dan kesediaan ananda. Apakah ananda masih ingin melanjutkan program belajar tahfidz/tahsin di RQ Kamila, atau memilih untuk mengundurkan diri?\n\nMohon perkenan Bapak/Ibu untuk membalas pesan ini dengan mengetik salah satu konfirmasi berikut:\n✅ *LANJUT* (Jika ananda masih berkomitmen untuk disiplin)\n❌ *MUNDUR* (Jika memutuskan untuk berhenti)\n\nAtas perhatian dan kerja sama Bapak/Ibu, kami ucapkan Jazakumullah Khairan Katsiran.`;
+        const link = hp ? `https://wa.me/${hp}?text=${encodeURIComponent(drafWa)}` : '#';
 
         htmlList += `
-            <div style="padding: 12px 0; border-bottom: 1px dashed var(--border); display: flex; justify-content: space-between; align-items: center;">
+            <div style="padding: 12px 0; border-bottom: 1px dashed var(--border); display: flex; justify-content: space-between; align-items: center;" id="baris_kritis_${s.id}">
                 <div style="text-align: left; flex: 1; padding-right: 10px;">
                     <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-main); line-height: 1.2;">${s.nama}</div>
                     <div style="font-size: 0.75rem; font-weight: 800; color: ${color}; margin-top: 4px;">${s.count}x Alpa</div>
@@ -135,7 +157,7 @@ window.tampilkanModalEvaluasi = (daftar, bulanIni) => {
         <div style="background: var(--surface); width: 88%; max-width: 380px; border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 15px 50px rgba(0,0,0,0.3);">
             <div style="width:50px; height:50px; background:#FEE2E2; border-radius:50%; display:flex; align-items:center; justify-content:center; margin: 0 auto 10px auto;"><i class="fas fa-exclamation-triangle" style="font-size: 1.5rem; color: #EF4444;"></i></div>
             <h3 style="margin: 0 0 5px 0; color: var(--text-main); font-size: 1.1rem;">Evaluasi Kehadiran!</h3>
-            <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0 0 15px 0;">Tekan centang (✅) jika sudah dievaluasi agar lonceng berhenti bergetar.</p>
+            <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0 0 15px 0;">Tekan centang (✅) jika konfirmasi WA sudah dikirim agar lonceng berhenti bergetar.</p>
             <div style="max-height: 250px; overflow-y: auto; margin-bottom: 15px; padding-right:5px; border-top: 1px dashed var(--border);">${htmlList}</div>
             <button onclick="document.getElementById('modalLoncengGlobal').style.display='none'" style="background: var(--bg-main); border: 1px solid var(--border); padding: 12px; border-radius: 10px; font-weight: 700; color: var(--text-main); width: 100%; cursor: pointer; outline: none;">Tutup Peringatan</button>
         </div>
@@ -148,11 +170,32 @@ window.bukaProfilSantriLonceng = () => {
     window.location.hash = '#santri'; 
 };
 
-window.senyapkanLonceng = (id, bulan, nama) => {
-    if(confirm(`Tandai evaluasi ananda ${nama} SELESAI?\n\nLonceng peringatan untuk ananda ini akan dimatikan sampai bulan depan.`)) {
-        localStorage.setItem(`bisu_alpa_${bulan}_${id}`, 'true');
-        document.getElementById('modalLoncengGlobal').style.display = 'none';
-        window.periksaNotifikasiGlobal(); 
+window.senyapkanLonceng = async (id, bulan, nama) => {
+    if(confirm(`Tandai konfirmasi/evaluasi ananda ${nama} SELESAI?\n\nLonceng peringatan untuk ananda ini akan dimatikan di seluruh perangkat (termasuk milik Admin) sampai bulan depan.`)) {
+        
+        // Simpan tanda "Selesai" langsung ke Database agar Tersinkronisasi
+        const d = new Date();
+        const tglHariIni = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        
+        try {
+            await api.post('input_harian', {
+                santri_id: id,
+                nama_santri: nama,
+                tanggal: tglHariIni,
+                status_hadir: `Evaluasi_Alpa_${bulan}` // Ini adalah Flag/Radar kita
+            });
+            
+            // Hilangkan baris anak tersebut dari tampilan pop-up
+            const baris = document.getElementById(`baris_kritis_${id}`);
+            if (baris) baris.style.display = 'none';
+
+            // Refresh status lonceng global
+            window.periksaNotifikasiGlobal(); 
+            
+        } catch (error) {
+            console.error(error);
+            alert("Gagal menyingkronkan status evaluasi ke database. Silakan coba lagi.");
+        }
     }
 };
 
@@ -174,7 +217,6 @@ document.addEventListener('DOMContentLoaded', () => {
         userNameElement.textContent = `Halo, ${userName}`;
         if (avatarHeader) avatarHeader.textContent = userName.charAt(0).toUpperCase();
     }
-    // (Script penyembunyi menu Laporan & Setting sudah DIHAPUS TOTAL)
     // ------------------------------------------------
 
     const loadPage = () => {
