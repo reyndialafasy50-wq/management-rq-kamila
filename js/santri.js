@@ -1,6 +1,6 @@
 /**
  * ==================================================
- * BAGIAN 8: MODUL DATA SANTRI (RELASI GURU_ID MURNI + RECOVERY)
+ * BAGIAN 8: MODUL DATA SANTRI (RELASI GURU_ID MURNI + MUTASI ADMIN)
  * File: js/santri.js
  * ==================================================
  */
@@ -33,14 +33,15 @@ export function renderSantri() {
                 </p>
             </div>
             
-            <!-- MENU KHUSUS ADMIN -->
-            <div id="menuAdmin" style="display: none; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; margin-top: 5px;">
+            <!-- MENU KHUSUS ADMIN (3 TOMBOL) -->
+            <div id="menuAdmin" style="display: none; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; width: 100%; margin-top: 5px;">
                 <button class="btn-secondary" id="btnTambahSantri" style="width: 100%; justify-content: center;"><i class="fas fa-user-plus"></i> Tambah Santri</button>
                 <input type="file" id="fileExcel" accept=".xlsx, .xls" style="display: none;">
                 <button class="btn-secondary" id="btnImportExcel" style="width: 100%; justify-content: center;"><i class="fas fa-file-excel"></i> Upload Dapodik</button>
+                <button class="btn-secondary" id="btnMutasiSantri" style="width: 100%; justify-content: center; background-color: #F59E0B; color: white; border: none;"><i class="fas fa-exchange-alt"></i> Mutasi / Luluskan</button>
             </div>
 
-            <!-- MENU KHUSUS GURU -->
+            <!-- MENU KHUSUS GURU (2 TOMBOL) -->
             <div id="menuGuru" style="display: none; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; margin-top: 5px;">
                 <button class="btn-secondary" id="btnTambahKelas" style="width: 100%; justify-content: center;"><i class="fas fa-plus"></i> Buat Kelas</button>
                 <button class="btn-secondary" id="btnTarikSantri" style="background-color: var(--primary); color: white; border: none; width: 100%; justify-content: center;"><i class="fas fa-users-cog"></i> Tarik Santri</button>
@@ -62,7 +63,7 @@ export function renderSantri() {
             <table class="custom-table">
                 <thead>
                     <tr>
-                        <th style="width: 50px;">#</th>
+                        <th style="width: 50px; text-align:center;"><input type="checkbox" id="checkAllUtama" title="Pilih Semua"></th>
                         <th>NIS</th>
                         <th>Nama Lengkap</th>
                         <th>Kelas</th>
@@ -76,6 +77,36 @@ export function renderSantri() {
         </div>
 
         <!-- ================= MODALS ================= -->
+
+        <!-- MODAL MUTASI & KELULUSAN (KHUSUS ADMIN) -->
+        <div class="modal-overlay" id="modalMutasi">
+            <div class="modal-card" style="max-width: 450px; padding: 25px;">
+                <div class="modern-modal-header">
+                    <h3>Mutasi / Ubah Status Santri</h3>
+                    <button type="button" class="btn-close" onclick="document.getElementById('modalMutasi').classList.remove('active')"><i class="fas fa-times"></i></button>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label class="modern-label">Tujuan Mutasi / Status Baru:</label>
+                    <select id="mutasiTujuan" class="modern-input" required>
+                        <option value="">-- Pilih Tujuan --</option>
+                        <optgroup label="Naik / Pindah Kelas" id="optgroupKelasMutasi"></optgroup>
+                        <optgroup label="Status Akademik">
+                            <option value="ALUMNI">Lulus / Alumni</option>
+                            <option value="KELUAR">Keluarkan / Pindah Sekolah</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 20px; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    Aksi ini akan diterapkan secara masal pada <b id="countMutasi" style="color: #F59E0B; font-size: 1rem;">0</b> santri yang dicentang.
+                </p>
+
+                <button type="button" class="btn-modern-submit" id="btnProsesMutasi" style="background: linear-gradient(135deg, #F59E0B, #D97706); box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);">
+                    <i class="fas fa-exchange-alt"></i> Eksekusi Pemindahan
+                </button>
+            </div>
+        </div>
 
         <!-- MODAL TARIK SANTRI (KHUSUS GURU) -->
         <div class="modal-overlay" id="modalTarik">
@@ -216,7 +247,7 @@ export async function initSantri() {
     loadExcelLibrary(); 
     
     const currentUserRole = localStorage.getItem('user_role') || 'Guru';
-    const guruId = localStorage.getItem('guru_id'); // Identitas pemegang sertifikat yang valid
+    const guruId = localStorage.getItem('guru_id');
 
     if (currentUserRole === 'Admin') {
         document.getElementById('menuAdmin').style.display = 'grid';
@@ -229,6 +260,7 @@ export async function initSantri() {
     const filterKelas = document.getElementById('filterKelas');
     const selectKelasForm = document.getElementById('kelasId');
     const selectTarikKelas = document.getElementById('tarikKelasTujuan');
+    const checkAllUtama = document.getElementById('checkAllUtama');
 
     const loadData = async () => {
         try {
@@ -237,7 +269,6 @@ export async function initSantri() {
             // --- FILTER RELASIONAL BERDASARKAN GURU_ID ---
             let kelasMilikGuruData = kelasData;
             if (currentUserRole !== 'Admin' && guruId) {
-                // Hanya ambil data dari tabel kelas yang kolom guru_id nya sama dengan id guru yang login
                 kelasMilikGuruData = kelasData.filter(k => String(k.guru_id) === String(guruId));
             }
             
@@ -250,6 +281,12 @@ export async function initSantri() {
                 filterKelas.innerHTML = '<option value="">-- Semua Kelas --</option>' + opsiKelas;
                 if(selectKelasForm) selectKelasForm.innerHTML = '<option value="">Belum ada kelas</option>' + opsiKelas;
                 if(selectTarikKelas) selectTarikKelas.innerHTML = '<option value="">-- Pilih Kelas --</option>' + opsiKelas;
+                
+                // Isi Dropdown Tujuan Mutasi (Hanya Admin)
+                const optgroupMutasi = document.getElementById('optgroupKelasMutasi');
+                if(optgroupMutasi) {
+                    optgroupMutasi.innerHTML = kelasData.map(k => `<option value="${k.nama_kelas}">${k.nama_kelas}</option>`).join('');
+                }
             } else {
                 filterKelas.innerHTML = '<option value="">-- Tampilkan Kelas Anda --</option>' + opsiKelas;
                 if(selectKelasForm) selectKelasForm.innerHTML = opsiKelas;
@@ -261,7 +298,6 @@ export async function initSantri() {
             }
 
             santriDataUtama = await api.get('dapodik_santri', 'select=*&order=nama_santri.asc');
-            
             filterData();
             
         } catch (error) {
@@ -282,7 +318,7 @@ export async function initSantri() {
         
         tbody.innerHTML = data.map(s => `
             <tr>
-                <td data-label="Pilih"><input type="checkbox" class="check-item" value="${s.id}"></td>
+                <td data-label="Pilih" style="text-align:center;"><input type="checkbox" class="check-item" value="${s.id}"></td>
                 <td data-label="NIS" style="font-weight: 600; font-size: 0.85rem;">${s.nis || '-'}</td>
                 <td data-label="Nama Lengkap">
                     <span class="clickable-name" onclick="bukaProfil('${s.id}')">${s.nama_santri}</span>
@@ -291,7 +327,7 @@ export async function initSantri() {
                 <td data-label="Kelas">
                     <span style="background:var(--hover-bg); padding:4px 8px; border-radius:6px; font-size:0.75rem;"><i class="fas fa-tag text-info"></i> ${s.nama_kelas || 'Belum ada'}</span>
                 </td>
-                <td data-label="Aksi" style="white-space: nowrap;">
+                <td data-label="Aksi" style="white-space: nowrap; text-align:center;">
                     ${currentUserRole === 'Admin' ? `<button class="btn-action-sm text-info btn-edit" data-id="${s.id}" title="Edit Manual"><i class="fas fa-edit"></i></button>` : ''}
                     ${currentUserRole !== 'Admin' ? `<button class="btn-action-sm text-danger btn-keluarkan" data-id="${s.id}" title="Keluarkan dari Kelas"><i class="fas fa-sign-out-alt"></i></button>` : ''}
                 </td>
@@ -300,7 +336,74 @@ export async function initSantri() {
 
         document.querySelectorAll('.btn-edit').forEach(b => b.addEventListener('click', handleEdit));
         document.querySelectorAll('.btn-keluarkan').forEach(b => b.addEventListener('click', handleKeluarkan));
+        
+        // Reset check all jika render ulang
+        if(checkAllUtama) checkAllUtama.checked = false;
     };
+
+    // ============================================
+    // LOGIKA CENTANG SEMUA (CHECK ALL)
+    // ============================================
+    if(checkAllUtama) {
+        checkAllUtama.addEventListener('change', (e) => {
+            const checkboxes = document.querySelectorAll('.check-item');
+            checkboxes.forEach(chk => chk.checked = e.target.checked);
+        });
+    }
+
+    // ============================================
+    // LOGIKA MUTASI / KELULUSAN (KHUSUS ADMIN)
+    // ============================================
+    if(document.getElementById('btnMutasiSantri')) {
+        document.getElementById('btnMutasiSantri').addEventListener('click', () => {
+            const checked = document.querySelectorAll('.check-item:checked');
+            if(checked.length === 0) {
+                return alert("Silakan centang minimal 1 santri pada tabel terlebih dahulu.");
+            }
+            document.getElementById('countMutasi').textContent = checked.length;
+            document.getElementById('mutasiTujuan').value = '';
+            document.getElementById('modalMutasi').classList.add('active');
+        });
+    }
+
+    if(document.getElementById('btnProsesMutasi')) {
+        document.getElementById('btnProsesMutasi').addEventListener('click', async (e) => {
+            const tujuan = document.getElementById('mutasiTujuan').value;
+            if(!tujuan) return alert("Pilih tujuan mutasi atau status kelulusan!");
+
+            const checked = document.querySelectorAll('.check-item:checked');
+            if(checked.length === 0) return alert("Tidak ada santri yang dipilih.");
+
+            let konfirmasiMsg = `Yakin ingin memindahkan ${checked.length} santri ke kelas: ${tujuan}?`;
+            if(tujuan === 'ALUMNI') konfirmasiMsg = `Yakin ingin merubah status ${checked.length} santri menjadi LULUS/ALUMNI?`;
+            if(tujuan === 'KELUAR') konfirmasiMsg = `Yakin ingin merubah status ${checked.length} santri menjadi KELUAR/PINDAH SEKOLAH?`;
+
+            if(!confirm(konfirmasiMsg)) return;
+
+            const btn = e.currentTarget;
+            const oriHtml = btn.innerHTML;
+            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Memproses Data...`;
+            btn.disabled = true;
+
+            try {
+                // Proses update masal secara parallel
+                const promises = Array.from(checked).map(chk => 
+                    api.update('dapodik_santri', chk.value, { nama_kelas: tujuan })
+                );
+                await Promise.all(promises);
+                
+                document.getElementById('modalMutasi').classList.remove('active');
+                alert(`Alhamdulillah, eksekusi mutasi/perubahan status untuk ${checked.length} santri berhasil diselesaikan.`);
+                
+                await loadData(); // Segarkan tabel
+            } catch(error) {
+                alert("Terjadi kesalahan saat memproses mutasi. Cek koneksi Anda.");
+            } finally {
+                btn.innerHTML = oriHtml;
+                btn.disabled = false;
+            }
+        });
+    }
 
     // ============================================
     // LOGIKA TARIK SANTRI (KHUSUS GURU)
@@ -315,7 +418,7 @@ export async function initSantri() {
             const semuaKelasAktif = kelasData.map(k => k.nama_kelas.toLowerCase());
             
             const belumAdaKelas = santriDataUtama.filter(s => {
-                if (!s.nama_kelas || s.nama_kelas.trim() === '') return true;
+                if (!s.nama_kelas || s.nama_kelas.trim() === '' || s.nama_kelas === 'ALUMNI' || s.nama_kelas === 'KELUAR') return true;
                 return !semuaKelasAktif.includes(s.nama_kelas.toLowerCase());
             });
             // ------------------------------------------------------
@@ -325,7 +428,9 @@ export async function initSantri() {
                 listTbody.innerHTML = `<tr><td colspan="2" style="text-align:center;">Semua santri di database sudah memiliki kelas aktif.</td></tr>`;
             } else {
                 listTbody.innerHTML = belumAdaKelas.map(s => {
-                    let infoKelas = s.nama_kelas ? `<br><span style="color: #EF4444; font-weight:bold; font-size: 0.7rem;"><i class="fas fa-exclamation-triangle"></i> Kelas Lama: ${s.nama_kelas} (Terhapus)</span>` : '';
+                    let infoKelas = (s.nama_kelas && s.nama_kelas !== 'ALUMNI' && s.nama_kelas !== 'KELUAR') ? `<br><span style="color: #EF4444; font-weight:bold; font-size: 0.7rem;"><i class="fas fa-exclamation-triangle"></i> Kelas Lama: ${s.nama_kelas} (Terhapus)</span>` : '';
+                    let infoStatus = (s.nama_kelas === 'ALUMNI' || s.nama_kelas === 'KELUAR') ? `<br><span style="color: #F59E0B; font-weight:bold; font-size: 0.7rem;"><i class="fas fa-info-circle"></i> Status Saat Ini: ${s.nama_kelas}</span>` : '';
+                    
                     return `
                     <tr>
                         <td style="text-align:center;"><input type="checkbox" class="chk-tarik" value="${s.id}"></td>
@@ -333,7 +438,7 @@ export async function initSantri() {
                             <div style="font-weight:600; font-size:0.9rem;">${s.nama_santri}</div>
                             <div style="font-size:0.75rem; color:var(--text-muted);">
                                 NIS: ${s.nis || '-'} • JK: ${s.jenis_kelamin}
-                                ${infoKelas}
+                                ${infoKelas} ${infoStatus}
                             </div>
                         </td>
                     </tr>
@@ -629,7 +734,7 @@ export async function initSantri() {
                     alert(successCount > 0 ? `Upload Sukses! Berhasil mengimpor ${successCount} data santri secara lengkap.` : `Gagal: Tidak ada data valid yang tersimpan.`);
                     await loadData(); 
                 } catch (error) { alert("Gagal mengunggah: " + error.message); } 
-                finally { btnImport.innerHTML = `<i class="fas fa-file-excel"></i> Dapodik`; fileInput.value = ''; }
+                finally { btnImport.innerHTML = `<i class="fas fa-file-excel"></i> Upload Dapodik`; fileInput.value = ''; }
             };
             reader.readAsArrayBuffer(file);
         });
