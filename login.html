@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#2b394a">
-    <title>Masuk - RQ Kamila</title>
+    <title>Masuk - RQ KAMILA</title>
     
     <link rel="manifest" href="manifest.json">
     
@@ -149,6 +149,7 @@
             justify-content: center; align-items: center;
             z-index: 9999;
             transition: opacity 0.6s ease-out, visibility 0.6s ease-out;
+            padding: 0 20px;
         }
         
         #splashScreen.hidden {
@@ -160,27 +161,45 @@
             width: 120px; 
             height: 120px; 
             object-fit: contain; 
-            margin-bottom: 20px; 
-            animation: pulse 1.8s infinite ease-in-out; 
+            margin-bottom: 25px; 
+            animation: pulse-glow 1.8s infinite ease-in-out; 
+            border-radius: 50%;
         }
         
         .splash-title { 
             font-size: 1.8rem; 
             font-weight: 700; 
             color: #ffffff; 
-            margin: 0 0 5px 0; 
+            margin: 0 0 15px 0; 
             letter-spacing: 1px;
         }
         
         .splash-subtitle { 
-            font-size: 0.9rem; 
+            font-size: 0.85rem; 
             color: #a0aec0; 
+            text-align: center;
+            max-width: 350px; /* Diperlebar sedikit agar teksnya rapi */
+            line-height: 1.6;
+            font-style: italic;
         }
         
-        @keyframes pulse {
-            0% { transform: scale(0.95); opacity: 0.8; }
-            50% { transform: scale(1.05); opacity: 1; }
-            100% { transform: scale(0.95); opacity: 0.8; }
+        /* Animasi detak jantung yang dilengkapi dengan shadow bersinar (glow) */
+        @keyframes pulse-glow {
+            0% { 
+                transform: scale(0.95); 
+                opacity: 0.8; 
+                filter: drop-shadow(0 0 0px rgba(44, 165, 141, 0)); 
+            }
+            50% { 
+                transform: scale(1.05); 
+                opacity: 1; 
+                filter: drop-shadow(0 0 25px rgba(44, 165, 141, 0.8)); 
+            }
+            100% { 
+                transform: scale(0.95); 
+                opacity: 0.8; 
+                filter: drop-shadow(0 0 0px rgba(44, 165, 141, 0)); 
+            }
         }
     </style>
 </head>
@@ -189,17 +208,15 @@
     <!-- ================= SPLASH SCREEN ================= -->
     <div id="splashScreen">
         <img src="logokamilamodern.png?v=5" alt="Logo RQ Kamila" class="splash-logo" onerror="this.src='https://ui-avatars.com/api/?name=RQ&background=2b394a&color=fff'">
-        <h1 class="splash-title">RQ Kamila</h1>
-        <p class="splash-subtitle">."Ahlan wa sahlan.
-            Ingatlah selalu bahwa sebaik-baik manusia adalah yang belajar Al-Qur'an dan mengajarkannya.
-            Luruskan niat, teguhkan hati, dan mari cetak generasi Rabbani yang hatinya terpaut pada ayat-ayat suci".<"/p>
+        <h1 class="splash-title">RQ KAMILA</h1>
+        <p class="splash-subtitle">"Ahlan wa sahlan. Ingatlah selalu bahwa sebaik-baik manusia adalah yang belajar Al-Qur'an dan mengajarkannya. Luruskan niat, teguhkan hati, dan mari cetak generasi Rabbani yang hatinya terpaut pada ayat-ayat suci…"</p>
     </div>
 
     <!-- ================= KARTU LOGIN ================= -->
     <div class="login-card" id="loginCard">
         <img src="logokamilamodern.png?v=5" alt="Logo RQ Kamila" class="login-logo" onerror="this.src='https://ui-avatars.com/api/?name=RQ&background=2b394a&color=fff'">
         
-        <h1 class="login-title">RQ Kamila</h1>
+        <h1 class="login-title">RQ KAMILA</h1>
         <p class="login-subtitle">Sistem Informasi Akademik Santri</p>
 
         <form id="loginForm">
@@ -229,7 +246,7 @@
     </div>
 
     <script>
-        // Logika Menghilangkan Splash Screen
+        // Logika Menghilangkan Splash Screen (diperpanjang menjadi 3.5 detik)
         window.addEventListener('load', () => {
             setTimeout(() => {
                 const splash = document.getElementById('splashScreen');
@@ -241,7 +258,7 @@
                 
                 // Menghapus splash screen dari memori
                 setTimeout(() => splash.remove(), 600);
-            }, 2000); // Tampil selama 2 detik
+            }, 3500); // Tampil selama 3.5 detik agar kalimat sempat dibaca
         });
 
         // Logika Toggle Password
@@ -260,7 +277,6 @@
         }
     </script>
 
-    <!-- UPDATE: Menambahkan type="module" -->
     <script type="module" src="login.js?v=7"></script>
     
     <script>
