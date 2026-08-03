@@ -5,7 +5,7 @@
  * ==================================================
  */
 
-const CACHE_NAME = 'rq-kamila-v3.0';
+const CACHE_NAME = 'rq-kamila-v3.1';
 const urlsToCache = [
     './',
     './index.html',
