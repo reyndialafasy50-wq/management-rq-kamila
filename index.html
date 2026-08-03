@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Management RQ Kamila V3</title>
     
-    <!-- SCRIPT PENJAGA HALAMAN (OTENTIKASI) -->
+    <!-- SCRIPT PENJAGA HALAMAN (OTENTIKASI BARU) -->
     <script>
-        // Jika belum login, tendang ke halaman login
-        if (localStorage.getItem('status_login') !== 'aktif') {
+        // Jika tidak ada tiket guru_id, tendang ke halaman login
+        if (!localStorage.getItem('guru_id')) {
             window.location.href = 'login.html';
         }
     </script>
