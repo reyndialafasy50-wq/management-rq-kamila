@@ -13,6 +13,13 @@ import { renderSetting, initSetting } from './setting.js';
 import { renderRaport, initRaport } from './raport.js';
 
 // ==========================================
+// SATPAM PENJAGA HALAMAN INTERNAL
+// ==========================================
+if (!localStorage.getItem('guru_id')) {
+    window.location.href = 'login.html';
+}
+
+// ==========================================
 // FUNGSI LONCENG GLOBAL (CERDAS & SINKRON)
 // ==========================================
 window.periksaNotifikasiGlobal = async () => {
@@ -305,18 +312,21 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ==========================================
-    // FUNGSI LOGOUT
+    // FUNGSI LOGOUT (MEMBERSIHKAN SEMUA TIKET)
     // ==========================================
     const btnLogout = document.querySelector('a[href="#logout"]');
     if (btnLogout) {
         btnLogout.addEventListener('click', (e) => {
             e.preventDefault();
             if(confirm('Yakin ingin keluar dari sistem?')) {
+                // Hapus semua jejak login lama dan baru
                 localStorage.removeItem('status_login');
                 localStorage.removeItem('guru_id');
                 localStorage.removeItem('user_role'); 
-                localStorage.removeItem('kelas_pegangan'); // Hapus jejak sistem lama
+                localStorage.removeItem('kelas_pegangan');
                 localStorage.removeItem('user_name');
+                
+                // Arahkan kembali ke halaman login
                 window.location.href = 'login.html';
             }
         });
