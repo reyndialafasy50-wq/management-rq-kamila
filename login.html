@@ -2,269 +2,276 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Masuk - SIAKAD RQ Kamila</title>
-    <meta name="theme-color" content="#4F567D" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2b394a">
+    <title>Masuk - RQ Kamila</title>
     
-    <!-- Google Fonts & FontAwesome -->
+    <link rel="manifest" href="manifest.json">
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <style>
-        body { 
+        body {
             margin: 0; 
-            font-family: 'Poppins', sans-serif; 
-            background: linear-gradient(135deg, #4F567D 0%, #313651 100%);
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            min-height: 100vh; 
-            color: #333; 
-        }
-        
-        .login-wrapper {
-            width: 100%;
-            padding: 20px;
-            box-sizing: border-box;
-            display: flex;
-            justify-content: center;
-        }
-
-        .login-card { 
-            background: rgba(255, 255, 255, 0.98); 
-            padding: 40px 30px; 
-            border-radius: 20px; 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.2); 
-            width: 100%; 
-            max-width: 380px; 
-            text-align: center; 
-            animation: slideUp 0.5s ease-out;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .login-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 5px;
-            background: #F39B96;
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .logo-area {
-            margin-bottom: 20px;
-        }
-
-        .logo-area img { 
-            width: 90px; 
-            height: 90px;
-            object-fit: cover;
-            border-radius: 50%;
-            border: 4px solid #F0DCD7; 
-            padding: 2px;
-            background: #fff;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-        }
-
-        .login-title { 
-            color: #4F567D; 
-            margin: 0 0 5px; 
-            font-size: 1.4rem;
-            font-weight: 700;
-        }
-
-        .login-subtitle { 
-            color: #666; 
-            font-size: 0.85rem; 
-            margin-bottom: 30px; 
-        }
-
-        .input-group { 
-            text-align: left; 
-            margin-bottom: 20px; 
-            position: relative; 
-        }
-
-        .input-group label { 
-            display: block; 
-            font-size: 0.85rem; 
-            font-weight: 600; 
-            margin-bottom: 8px; 
-            color: #434750; 
-        }
-
-        .input-group input { 
-            width: 100%; 
-            padding: 12px 15px 12px 42px; 
-            border: 1px solid #c4c6d1; 
-            border-radius: 10px; 
-            font-size: 0.95rem; 
+            padding: 0;
             font-family: 'Poppins', sans-serif;
-            box-sizing: border-box; 
-            outline: none; 
-            transition: all 0.3s ease; 
-            background: #f8f9fb;
+            background-color: #2b394a;
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+            min-height: 100vh; 
+            min-height: 100dvh;
+            color: #333;
+            overflow: hidden; /* Mencegah scroll saat splash screen muncul */
         }
 
-        .input-group input:focus { 
-            border-color: #4F567D; 
-            background: #fff;
-            box-shadow: 0 0 0 3px rgba(79, 86, 125, 0.15);
-        }
-
-        .input-group i { 
-            position: absolute; 
-            left: 15px; 
-            top: 39px; 
-            color: #8999B8; 
-            font-size: 1.1rem;
+        .login-card {
+            background: white; 
+            width: 90%; 
+            max-width: 400px; 
+            padding: 40px 30px;
+            border-radius: 16px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            text-align: center; 
+            box-sizing: border-box;
+            
+            /* Tambahan efek transisi masuk untuk kartu login */
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
         }
         
-        #errorMsg {
-            display: none;
-            background: #fee2e2;
-            color: #dc2626;
-            font-size: 0.85rem;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            text-align: left;
-            border-left: 4px solid #dc2626;
+        .login-card.visible {
+            opacity: 1;
+            transform: translateY(0);
         }
 
-        .btn-login { 
-            background: #4F567D; 
-            color: #fff; 
+        .login-logo {
+            width: 100px; 
+            height: 100px; 
+            object-fit: contain; 
+            margin-bottom: 10px;
+        }
+
+        .login-title { font-size: 1.5rem; font-weight: 700; color: #1a252f; margin: 0 0 5px 0; }
+        .login-subtitle { font-size: 0.85rem; color: #7f8c8d; margin-bottom: 30px; }
+
+        .input-group { text-align: left; margin-bottom: 20px; }
+        .input-group label { display: block; font-size: 0.85rem; font-weight: 600; color: #34495e; margin-bottom: 8px; }
+        
+        .input-field-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .input-field-container input {
             width: 100%; 
-            padding: 14px; 
-            border: none; 
-            border-radius: 10px; 
-            font-size: 1rem; 
-            font-weight: 600; 
+            padding: 12px 15px 12px 40px; 
+            border: 1px solid #e1e5eb;
+            border-radius: 8px; 
+            font-family: inherit; 
+            font-size: 0.95rem; 
+            box-sizing: border-box;
+            background: #fafafa; 
+            transition: all 0.3s ease;
+            color: #2c3e50;
+        }
+
+        .input-field-container input:focus {
+            outline: none; 
+            border-color: #2ca58d; 
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(44, 165, 141, 0.1);
+        }
+
+        .input-field-container i.icon-left { 
+            position: absolute; 
+            top: 50%;
+            transform: translateY(-50%);
+            left: 15px; 
+            color: #95a5a6; 
+            pointer-events: none;
+        }
+        
+        .input-field-container i.icon-right { 
+            position: absolute; 
+            top: 50%;
+            transform: translateY(-50%);
+            right: 15px; 
+            color: #95a5a6; 
             cursor: pointer; 
-            transition: 0.2s ease; 
-            margin-top: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
+            padding: 5px; 
         }
 
-        .btn-login:hover { 
-            background: #3a3f5c; 
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(79, 86, 125, 0.3);
+        .btn-login {
+            width: 100%; 
+            background: #2ca58d; 
+            color: white; 
+            border: none; 
+            padding: 14px;
+            border-radius: 8px; 
+            font-weight: 600; 
+            font-size: 1rem; 
+            cursor: pointer;
+            margin-top: 10px; 
+            transition: all 0.2s ease;
+            font-family: 'Poppins', sans-serif;
+            box-shadow: 0 4px 10px rgba(44, 165, 141, 0.2);
+        }
+        .btn-login:hover { background: #218c76; transform: translateY(-1px); }
+        .btn-login:active { transform: translateY(1px); }
+
+        .error-msg {
+            color: #e74c3c; 
+            font-size: 0.85rem; 
+            margin-bottom: 15px; 
+            display: none;
+            background: rgba(231, 76, 60, 0.08); 
+            padding: 10px 12px; 
+            border-radius: 8px;
+            border: 1px solid rgba(231, 76, 60, 0.2);
+            text-align: left;
         }
 
-        .footer-text {
-            margin-top: 25px;
-            font-size: 0.75rem;
-            color: #888;
+        /* =========================================
+           TAMBAHAN: SPLASH SCREEN STYLES
+           ========================================= */
+        #splashScreen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #2b394a;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            z-index: 9999;
+            transition: opacity 0.6s ease-out, visibility 0.6s ease-out;
+        }
+        
+        #splashScreen.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .splash-logo { 
+            width: 120px; 
+            height: 120px; 
+            object-fit: contain; 
+            margin-bottom: 20px; 
+            animation: pulse 1.8s infinite ease-in-out; 
+        }
+        
+        .splash-title { 
+            font-size: 1.8rem; 
+            font-weight: 700; 
+            color: #ffffff; 
+            margin: 0 0 5px 0; 
+            letter-spacing: 1px;
+        }
+        
+        .splash-subtitle { 
+            font-size: 0.9rem; 
+            color: #a0aec0; 
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.8; }
         }
     </style>
 </head>
 <body>
 
-    <div class="login-wrapper">
-        <div class="login-card">
-            <div class="logo-area">
-                <img src="logokamilamodern.png" alt="Logo RQ Kamila" onerror="this.src='https://ui-avatars.com/api/?name=RQ&background=F0DCD7&color=4F567D&bold=true'">
-            </div>
-            <h2 class="login-title">RQ Kamila</h2>
-            <p class="login-subtitle">Silakan masuk menggunakan akun Anda</p>
-            
-            <form id="formLogin">
-                <div id="errorMsg"><i class="fas fa-exclamation-circle"></i> Username atau sandi salah!</div>
-                
-                <div class="input-group">
-                    <label>Username</label>
-                    <i class="fas fa-user"></i>
-                    <input type="text" id="inputUsername" placeholder="Contoh: dani" required autocomplete="off">
-                </div>
-                
-                <div class="input-group">
-                    <label>Kata Sandi</label>
-                    <i class="fas fa-lock"></i>
-                    <input type="password" id="inputPassword" placeholder="Masukkan kata sandi" required>
-                </div>
-                
-                <button type="submit" class="btn-login" id="btnLogin">
-                    Masuk ke Sistem <i class="fas fa-arrow-right"></i>
-                </button>
-            </form>
-            
-            <div class="footer-text">
-                &copy; 2026 Rumah Qur'an Kamila. All rights reserved.
-            </div>
-        </div>
+    <!-- ================= SPLASH SCREEN ================= -->
+    <div id="splashScreen">
+        <img src="logorqkamila.png?v=5" alt="Logo RQ Kamila" class="splash-logo" onerror="this.src='https://ui-avatars.com/api/?name=RQ&background=2b394a&color=fff'">
+        <h1 class="splash-title">RQ Kamila</h1>
+        <p class="splash-subtitle">Memuat sistem akademik...</p>
     </div>
 
-    <!-- Menghubungkan langsung dengan API Supabase kita -->
-    <script type="module">
-        import { api } from './js/api.js';
+    <!-- ================= KARTU LOGIN ================= -->
+    <div class="login-card" id="loginCard">
+        <img src="logorqkamila.png?v=5" alt="Logo RQ Kamila" class="login-logo" onerror="this.src='https://ui-avatars.com/api/?name=RQ&background=2b394a&color=fff'">
+        
+        <h1 class="login-title">RQ Kamila</h1>
+        <p class="login-subtitle">Sistem Informasi Akademik Santri</p>
 
-        const formLogin = document.getElementById('formLogin');
-        const btnLogin = document.getElementById('btnLogin');
-        const inputUsername = document.getElementById('inputUsername');
-        const inputPassword = document.getElementById('inputPassword');
-        const errorMsg = document.getElementById('errorMsg');
-
-        formLogin.addEventListener('submit', async function(e) {
-            e.preventDefault();
+        <form id="loginForm">
+            <div class="input-group">
+                <label>Username Ustadz</label>
+                <div class="input-field-container">
+                    <i class="fas fa-user icon-left"></i>
+                    <input type="text" id="username" placeholder="Contoh: reyndi" required autocomplete="username">
+                </div>
+            </div>
             
-            const originalText = btnLogin.innerHTML;
-            btnLogin.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Memeriksa Akses...';
-            btnLogin.style.opacity = '0.8';
-            btnLogin.disabled = true;
-            errorMsg.style.display = 'none';
-            
-            const username = inputUsername.value.trim();
-            const password = inputPassword.value.trim();
+            <div class="input-group">
+                <label>Kata Sandi</label>
+                <div class="input-field-container">
+                    <i class="fas fa-lock icon-left"></i>
+                    <input type="password" id="password" placeholder="Masukkan kata sandi..." required autocomplete="current-password">
+                    <i class="far fa-eye icon-right" onclick="togglePass()" id="eyeIcon"></i>
+                </div>
+            </div>
 
-            try {
-                // Mengecek kecocokan data ke tabel 'guru' di Supabase
-                const result = await api.get('guru', `select=*&username=eq.${username}&password=eq.${password}`);
+            <div id="pesanError" class="error-msg">
+                <i class="fas fa-exclamation-circle"></i> Username atau kata sandi salah.
+            </div>
+
+            <button type="submit" class="btn-login" id="btnLogin">Masuk ke Dashboard</button>
+        </form>
+    </div>
+
+    <script>
+        // Logika Menghilangkan Splash Screen
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const splash = document.getElementById('splashScreen');
+                const loginCard = document.getElementById('loginCard');
                 
-                if (result && result.length > 0) {
-                    // JIKA COCOK (BERHASIL LOGIN)
-                    const user = result[0];
-                    
-                    // Simpan identitas penting ke memori lokal HP/Laptop (MURNI TANPA KELAS_PEGANGAN)
-                    localStorage.setItem('status_login', 'aktif');
-                    localStorage.setItem('guru_id', user.id);
-                    localStorage.setItem('user_name', user.nama);
-                    localStorage.setItem('user_role', user.role); // 'Admin' atau 'Wali Kelas'
-                    
-                    // Buka pintu ke aplikasi utama
-                    window.location.href = 'index.html';
-                } else {
-                    // JIKA SALAH
-                    errorMsg.innerHTML = '<i class="fas fa-exclamation-circle"></i> Username atau sandi salah!';
-                    errorMsg.style.display = 'block';
-                    
-                    btnLogin.innerHTML = originalText;
-                    btnLogin.style.opacity = '1';
-                    btnLogin.disabled = false;
-                }
-            } catch (err) {
-                console.error("Gagal terhubung ke database:", err);
-                errorMsg.innerHTML = '<i class="fas fa-wifi"></i> Gagal koneksi ke server database.';
-                errorMsg.style.display = 'block';
+                splash.classList.add('hidden');
+                loginCard.classList.add('visible');
+                document.body.style.overflow = 'auto'; // Mengaktifkan scroll kembali jika layar HP kecil
                 
-                btnLogin.innerHTML = originalText;
-                btnLogin.style.opacity = '1';
-                btnLogin.disabled = false;
-            }
+                // Menghapus splash screen dari memori
+                setTimeout(() => splash.remove(), 600);
+            }, 2000); // Tampil selama 2 detik
         });
+
+        // Logika Toggle Password
+        function togglePass() {
+            const p = document.getElementById('password');
+            const eye = document.getElementById('eyeIcon');
+            if (p.type === 'password') {
+                p.type = 'text';
+                eye.classList.remove('fa-eye');
+                eye.classList.add('fa-eye-slash');
+            } else {
+                p.type = 'password';
+                eye.classList.remove('fa-eye-slash');
+                eye.classList.add('fa-eye');
+            }
+        }
+    </script>
+
+    <script src="login.js?v=7"></script>
+    
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                .then(registration => {
+                    console.log('Mesin Aplikasi PWA Aktif!', registration.scope);
+                })
+                .catch(err => {
+                    console.log('PWA gagal dimuat: ', err);
+                });
+            });
+        }
     </script>
 </body>
 </html>
