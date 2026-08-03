@@ -1,0 +1,24 @@
+{
+  "name": "Sistem Akademik RQ Kamila",
+  "short_name": "RQ Kamila",
+  "description": "Aplikasi Manajemen Akademik dan Presensi Rumah Qur'an Kamila",
+  "start_url": "./login.html",
+  "display": "standalone",
+  "background_color": "#2b394a",
+  "theme_color": "#2ca58d",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "logokamilamodern.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logokamilamodern.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
